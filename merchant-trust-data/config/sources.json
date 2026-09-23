@@ -16,7 +16,7 @@
     "api_base": "https://api.gleif.org/api/v1/lei-records",
     "countries": ["CH"],
     "page_size": 200,
-    "max_pages": 142,
+    "max_pages": 200,
     "sleep_seconds": 0.35,
     "license": "GLEIF LEI data: free and open; see GLEIF terms of use (attribution, no warranty)",
     "notes": "Authoritative legal-entity identities. CH slice is Phase-1 Swiss subset; LEI population skews financial/large firms."
@@ -42,5 +42,86 @@
     "sleep_seconds": 0.05,
     "license": "n/a (protocol lookups)",
     "notes": "A/MX/TXT existence via dnspython. NXDOMAIN recorded as dns_error=nxdomain, all False (domain gone)."
+  },
+
+  "tranco": {
+    "enabled": true,
+    "list_url": "https://tranco-list.eu/top-1m.csv.zip",
+    "license": "Tranco list: free for research with attribution (see tranco-list.eu); kit excluded data",
+    "notes": "Daily aggregated top-1M domain ranking; 307-redirects to /download/daily/top-1m.csv.zip."
+  },
+  "majestic": {
+    "enabled": true,
+    "csv_url": "https://downloads.majestic.com/majestic_million.csv",
+    "license": "Majestic Million: free; attribution required; commercial use needs license (https://majestic.com/reports/majestic-million)",
+    "notes": "Top-1M domains by referring subnets/IPs; independent benign-domain reference."
+  },
+  "google_taxonomy": {
+    "enabled": true,
+    "taxonomy_url": "https://www.google.com/basepages/producttype/taxonomy-with-ids.en-US.txt",
+    "license": "Google product taxonomy: free to use for product categorization; attribution appreciated",
+    "notes": "Category id -> full path; used for product-category normalization and intent mismatch."
+  },
+  "viseca": {
+    "enabled": true,
+    "tarball_url": "https://codeload.github.com/Swiss-ai-Weeks/viseca-2026/tar.gz/refs/heads/main",
+    "members": ["viseca-2026-main/data"],
+    "license": "Viseca public synthetic pack (Swiss-ai-Weeks/viseca-2026); synthetic data, license per repo README",
+    "notes": "Swiss synthetic authorization/merchant/customer CSVs + JSON schemas; LLM-agent shopping scenario fixtures."
+  },
+  "tabformer": {
+    "enabled": true,
+    "tgz_url": "https://media.githubusercontent.com/media/IBM/TabFormer/main/data/credit_card/transactions.tgz",
+    "license": "IBM TabFormer credit-card dataset: synthetic, released for research (IBM/TabFormer repo, CDLA-style research use; see repo)",
+    "notes": "~24M synthetic transactions (9 users/100 cards era), git-lfs object (266MB tgz). Box fallback: https://ibm.box.com/v/tabformer-data"
+  },
+  "ieee_cis": {
+    "enabled": true,
+    "hf_repo": "aliceczr/ieee-fraud-detection",
+    "files": ["train_transaction.csv", "train_identity.csv"],
+    "auth_env_var": "LEASH_HF_TOKEN",
+    "license": "IEEE-CIS Fraud Detection (Kaggle competition data); unofficial HF mirror; research use per competition rules",
+    "notes": "Mirror of Vesta/IEEE-CIS train files; verified post-download (row counts / label rate). Official source needs Kaggle creds."
+  },
+  "ulb_creditcard": {
+    "enabled": true,
+    "arff_url": "https://api.openml.org/data/v1/download/1673544/creditcard.arff",
+    "license": "ULB Credit Card Fraud dataset (OpenML did 1597); CC BY 4.0 (per OpenML/ULB)",
+    "notes": "284,807 PCA transactions, 492 frauds; baseline/benchmark only, not a feature-training source."
+  },
+  "hackaprompt": {
+    "enabled": true,
+    "hf_repo": "hackaprompt/hackaprompt-dataset",
+    "files": ["hackaprompt.parquet"],
+    "auth_env_var": "LEASH_HF_TOKEN",
+    "license": "MIT (per HF hackaprompt/hackaprompt-dataset)",
+    "notes": "Gated on HF (auto-approve): requires LEASH_HF_TOKEN with accepted terms; collector is token-ready."
+  },
+  "bipia": {
+    "enabled": true,
+    "tarball_url": "https://codeload.github.com/microsoft/BIPIA/tar.gz/refs/heads/main",
+    "members": ["BIPIA-main/benchmark"],
+    "license": "Microsoft BIPIA: MIT (per repo LICENSE/NOTICE)",
+    "notes": "Indirect prompt-injection benchmark: QA/email/table/code/abstract attack+context files."
+  },
+  "agentdojo": {
+    "enabled": true,
+    "tarball_url": "https://codeload.github.com/ethz-spylab/agentdojo/tar.gz/refs/heads/main",
+    "members": ["agentdojo-main/src", "agentdojo-main/runs"],
+    "license": "AgentDojo (ETH): MIT (per repo LICENSE); benchmark results included as published",
+    "notes": "Task suites (banking/workspace/travel/slack) + injection vectors in Python; runs/ holds published attack/utility results."
+  },
+  "tensortrust": {
+    "enabled": true,
+    "base_url": "https://raw.githubusercontent.com/HumanCompatibleAI/tensor-trust-data/main/",
+    "files": [
+      "raw-data/v2/raw_dump_attacks.jsonl.bz2",
+      "raw-data/v2/raw_dump_defenses.jsonl.bz2",
+      "benchmarks/hijacking-robustness/v1/hijacking_robustness_dataset.jsonl",
+      "benchmarks/extraction-robustness/v1/extraction_robustness_dataset.jsonl",
+      "detecting-extractions/v1/prompt_extraction_detection.jsonl"
+    ],
+    "license": "Tensor Trust data: permissively licensed (see repo README; CC0/Apache-2.0 per project)",
+    "notes": "126k+ crowdsource prompt-injection attacks / 46k defenses + derived robustness benchmarks."
   }
 }

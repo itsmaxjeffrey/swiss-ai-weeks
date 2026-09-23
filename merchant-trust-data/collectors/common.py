@@ -104,3 +104,91 @@ def get(
     }
     meta_path.write_text(json.dumps(meta, indent=2))
     return path, meta, False
+
+
+def get_stream(
+    url: str,
+    source: str,
+    filename: str,
+    headers: dict | None = None,
+    timeout: int = 180,
+    chunk_size: int = 1 << 20,
+    session: requests.Session | None = None,
+    sleep_seconds: float = 0.0,
+    overwrite: bool = False,
+    cache_key: str | None = None,
+) -> tuple[pathlib.Path, dict, bool]:
+    """Streaming GET for large files (same sidecar/caching contract as get).
+
+    Writes chunk-by-chunk to <filename>.part then atomically renames, so an
+    interrupted download never poisons the cache. Use for anything >50MB.
+    """
+    s = session or requests.Session()
+    s.headers.update({"User-Agent": UA})
+    if headers:
+        s.headers.update(headers)
+
+    d = raw_dir(source)
+    meta_path = d / f"{filename}.meta.json"
+    key = cache_key or _request_key(url, {}, headers or {})
+
+    if not overwrite and meta_path.exists():
+        try:
+            old = json.loads(meta_path.read_text())
+            if old.get("request_key") == key and (d / old["file"]).exists():
+                return d / old["file"], old, True
+        except Exception:
+            pass
+
+    if sleep_seconds:
+        time.sleep(sleep_seconds)
+
+    tmp = d / f"{filename}.part"
+    hasher = hashlib.sha256()
+    total = 0
+    with s.get(url, stream=True, timeout=timeout) as r:
+        r.raise_for_status()
+        with tmp.open("wb") as f:
+            for chunk in r.iter_content(chunk_size=chunk_size):
+                if not chunk:
+                    continue
+                f.write(chunk)
+                hasher.update(chunk)
+                total += len(chunk)
+
+    path = d / filename
+    tmp.replace(path)
+    meta = {
+        "source": source,
+        "url": str(r.url),
+        "file": filename,
+        "http_status": r.status_code,
+        "bytes": total,
+        "sha256": hasher.hexdigest(),
+        "retrieved_at": utcnow(),
+        "request_key": key,
+        "collector_version": COLLECTOR_VERSION,
+        "final_url": str(r.url),
+    }
+    meta_path.write_text(json.dumps(meta, indent=2))
+    return path, meta, False
+
+
+def extract_tarball(archive: pathlib.Path, source: str, members: list[str] | None = None) -> pathlib.Path:
+    """Extract a tar.gz into data/raw/<source>/extracted/ (idempotent).
+
+    `members` optionally restricts extracted top-level paths (prefix match).
+    Returns the extraction root.
+    """
+    import tarfile
+
+    out = raw_dir(source) / "extracted"
+    if out.exists() and any(out.iterdir()):
+        return out
+    out.mkdir(parents=True, exist_ok=True)
+    with tarfile.open(archive, "r:gz") as tf:
+        if members:
+            tf.extractall(out, filter="data", members=[m for m in tf.getmembers() if m.name.startswith(tuple(members))])
+        else:
+            tf.extractall(out, filter="data")
+    return out

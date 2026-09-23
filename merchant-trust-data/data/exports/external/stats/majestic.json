@@ -1,0 +1,6 @@
+{
+  "status": "ok",
+  "rows_raw": 1000000,
+  "rows_clean": 999416,
+  "invalid_domains": 584
+}

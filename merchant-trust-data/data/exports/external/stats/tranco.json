@@ -1,0 +1,8 @@
+{
+  "status": "ok",
+  "rows_raw": 1000000,
+  "rows_clean": 999356,
+  "invalid_domains": 644,
+  "dup_domains": 0,
+  "list_date": "2026-09-23"
+}

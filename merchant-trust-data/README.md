@@ -17,6 +17,10 @@ make enrich       # bounded RDAP + DNS enrichment over collected domains
 make build        # build dataset_raw/clean/features parquet (+ csv)
 make report       # reports/data_quality_report.md
 make test         # unit tests
+
+make collect-external            # Phase-2 external datasets (11 sources)
+make collect-external SRC=viseca # one source
+make clean-external              # clean/normalize them (chunked, RAM-safe)
 ```
 
 Every step is resumable: raw downloads are cached with provenance sidecars
@@ -29,13 +33,38 @@ unchanged data.
 merchant-trust-data/
 ├── config/sources.json      # endpoints, rate limits, batch bounds, licenses
 ├── schemas/canonical_schema.py   # canonical columns + conventions + API feature object
-├── collectors/              # openphish, urlhaus, gleif, zefix, rdap, dns
+├── collectors/              # openphish, urlhaus, gleif, zefix, rdap, dns +
+│                            # tabformer, ieee_cis, ulb_creditcard, hackaprompt,
+│                            # bipia, agentdojo, tensortrust, tranco, majestic,
+│                            # google_taxonomy, viseca
 ├── processing/              # normalization, entity resolution, lookalike,
-│                            # labeling, feature engineering, build, quality report
+│                            # labeling, feature engineering, build, quality report,
+│                            # collect_external + clean_external (Phase-2 datasets)
 ├── data/{raw,intermediate,processed,samples}
+├── data/exports/external/   # tracked Phase-2 exports + stats + EXTERNAL_QUALITY_REPORT.md
 ├── reports/                 # data_quality_report.md
 └── tests/
 ```
+
+## External datasets (Phase 2)
+
+Eleven owner-requested sources beyond the merchant-trust core, covering
+transaction risk (TabFormer 24.4M synthetic card transactions, IEEE-CIS
+590,540 rows / 20,663 frauds verified, ULB 284,807 / 492 baseline),
+prompt-injection robustness (HackAPrompt — gated, BIPIA, AgentDojo,
+TensorTrust 563k attacks + 118k defenses), and benign-domain references
+(Tranco, Majestic Million) + Google Product Taxonomy + the Viseca synthetic
+Swiss pack (sha256-verified).
+
+- Full cleaned parquet: `data/processed/external/<source>/` (gitignored,
+  reproducible via `make clean-external`).
+- Tracked exports, per-source stats, and the generated quality report:
+  `data/exports/external/`.
+- Big files stream to disk; nothing large is committed. HackAPrompt stays
+  blocked until `LEASH_HF_TOKEN` is exported (gated HF dataset; collector is
+  token-ready).
+- Integrity: publisher-constant checks are asserted per source (row counts,
+  fraud counts, Viseca sha256 manifest); see `EXTERNAL_QUALITY_REPORT.md`.
 
 ## Canonical schema conventions (critical)
 

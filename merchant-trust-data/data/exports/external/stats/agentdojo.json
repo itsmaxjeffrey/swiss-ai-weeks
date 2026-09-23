@@ -1,0 +1,14 @@
+{
+  "status": "ok",
+  "result_files": 36679,
+  "models": 29,
+  "suites": [
+    "banking",
+    "slack",
+    "travel",
+    "workspace"
+  ],
+  "utility_true_rate": 0.5441,
+  "security_true_rate": 0.2403,
+  "suite_files": 60
+}

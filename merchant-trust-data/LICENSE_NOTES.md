@@ -15,6 +15,17 @@ Applies a conservative rule: **if a license is unclear, the source is flagged
 | Zefix | (c) Confederation/cantons; API terms on registration | blocked until token | `LICENSE_REVIEW_REQUIRED` | `LICENSE_REVIEW_REQUIRED` | review terms when registering for the free token |
 | RDAP responses | factual registration metadata, per-registry terms | yes (parsed fields only) | yes | yes | we store only factual fields; no registrant personal data is intentionally stored |
 | DNS lookups | n/a | yes | yes | yes | factual existence signals |
+| Tranco Top Sites | free for research with attribution | yes | yes (research, w/ attribution) | yes | daily list; cite Tranco + list date in any publication |
+| Majestic Million | free w/ attribution; commercial use needs license | yes | research use w/ attribution | yes | commercial productization ⇒ Majestic license |
+| Google Product Taxonomy | free for product categorization | yes | yes | yes | snapshot dated in sidecar |
+| Viseca synthetic pack | SYNTHETIC TEST DATA per repo (no real persons/transactions) | yes | yes per repo terms | yes | sha256-verified vs pack manifest at clean time |
+| IBM TabFormer | synthetic, IBM research release | yes (research) | synthetic ⇒ low risk; keep IBM attribution | yes | do not present as real transactions |
+| IEEE-CIS (via HF mirror) | Kaggle competition data; mirror is unofficial | yes (research) | `LICENSE_REVIEW_REQUIRED` for redistribution (competition rules govern) | yes | integrity-checked 590,540/20,661; official source needs Kaggle account |
+| ULB Credit Card (OpenML 1597) | CC BY 4.0 | yes | yes w/ attribution | yes | benchmark/baseline only per project brief |
+| HackAPrompt | MIT but gated access | once tokenized | yes (MIT) w/ access terms | yes | `LEASH_HF_TOKEN` via env only; never commit |
+| Microsoft BIPIA | MIT | yes | yes, keep LICENSE/NOTICE | yes | |
+| AgentDojo | MIT | yes | yes, keep LICENSE | yes | runs/ results included as published |
+| Tensor Trust | permissive (per repo README) | yes | yes w/ attribution | yes | raw dumps contain anonymized player content |
 
 ## Provenance requirements
 

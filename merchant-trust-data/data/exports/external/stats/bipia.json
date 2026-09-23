@@ -1,0 +1,13 @@
+{
+  "status": "ok",
+  "rows": 1450,
+  "attack_texts": 250,
+  "context_pairs": {
+    "email.train": 50,
+    "email.test": 50,
+    "table.train": 900,
+    "table.test": 100,
+    "code.train": 50,
+    "code.test": 50
+  }
+}

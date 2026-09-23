@@ -1,0 +1,11 @@
+{
+  "status": "ok",
+  "rows": 284807,
+  "duplicates_kept": 1081,
+  "frauds": 492,
+  "fraud_rate": 0.001727,
+  "integrity_checks": {
+    "rows_ok": true,
+    "frauds_ok": true
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "status": "ok",
+  "attacks": {
+    "rows": 563349,
+    "sample_rows": 15000,
+    "granted_rate_sample": 0.1409
+  },
+  "defenses": {
+    "rows": 118377,
+    "sample_rows": 5941
+  },
+  "benchmarks": {
+    "benchmarks__hijacking-robustness__v1__hijacking_robustness_dataset.jsonl": 776,
+    "benchmarks__extraction-robustness__v1__extraction_robustness_dataset.jsonl": 570,
+    "detecting-extractions__v1__prompt_extraction_detection.jsonl": 230
+  }
+}

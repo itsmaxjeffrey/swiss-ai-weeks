@@ -1,0 +1,51 @@
+{
+  "status": "ok",
+  "sha256_verified": 11,
+  "sha256_mismatch": [],
+  "tables": {
+    "accounts": {
+      "rows": 31,
+      "cols": 9
+    },
+    "authorization_history": {
+      "rows": 4701,
+      "cols": 40
+    },
+    "cards": {
+      "rows": 41,
+      "cols": 10
+    },
+    "customers": {
+      "rows": 20,
+      "cols": 8
+    },
+    "fx_rates": {
+      "rows": 4,
+      "cols": 5
+    },
+    "items": {
+      "rows": 66,
+      "cols": 7
+    },
+    "merchants": {
+      "rows": 58,
+      "cols": 8
+    },
+    "purchase_attempt_items": {
+      "rows": 56,
+      "cols": 9
+    },
+    "purchase_attempts": {
+      "rows": 45,
+      "cols": 25
+    },
+    "scenario_authorities": {
+      "rows": 5,
+      "cols": 6
+    },
+    "scenario_catalogue": {
+      "rows": 5,
+      "cols": 7
+    }
+  }
+}

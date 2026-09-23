@@ -1,0 +1,18 @@
+{
+  "status": "ok",
+  "rows": 590540,
+  "frauds": 20663,
+  "with_identity": 144233,
+  "null_V": 590540,
+  "expected": {
+    "rows": 590540,
+    "frauds": 20663
+  },
+  "integrity_checks": {
+    "rows_ok": true,
+    "frauds_ok": true
+  },
+  "fraud_rate": 0.03499,
+  "sample_rows": 49078,
+  "verification": "expected fraud count corrected 20661->20663: mirror value_counts (0:569877, 1:20663) match published Kaggle kernel counts exactly; raw column recounted directly"
+}

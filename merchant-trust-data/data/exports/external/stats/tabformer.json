@@ -1,0 +1,16 @@
+{
+  "status": "ok",
+  "rows": 24386900,
+  "frauds": 29757,
+  "fraud_rate": 0.00122,
+  "unique_users": 2000,
+  "years": "1991-2020",
+  "nulls_errors": 23998469,
+  "use_chip": {
+    "Swipe Transaction": 15386082,
+    "Chip Transaction": 6287598,
+    "Online Transaction": 2713220
+  },
+  "sample_rows": 130000,
+  "warnings": []
+}

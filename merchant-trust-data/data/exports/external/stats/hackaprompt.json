@@ -1,0 +1,4 @@
+{
+  "status": "blocked",
+  "reason": "gated HF dataset; export LEASH_HF_TOKEN (accept terms at https://huggingface.co/datasets/hackaprompt/hackaprompt-dataset)"
+}

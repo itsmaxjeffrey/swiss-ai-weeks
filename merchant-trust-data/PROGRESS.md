@@ -25,6 +25,10 @@
 - 2026-09-23: **dataset v1 built**: 20,267 raw rows → 11,484 entities →
   raw/clean/features parquet + csv + quality report + sample feature object.
   0 duplicate entity keys, 0 validation problems.
+- 2026-09-23 (evening): GLEIF collector rewritten to cursor pagination; full
+  CH slice collected: 28,222 records in 142 cached pages (`gleif_ch_c*.json`).
+  RDAP/DNS limits raised (rdap 6000, dns 6000); full-domain enrichment run
+  started (see IN PROGRESS).
 
 ### Bugs found & fixed while building (documented to avoid repeats)
 
@@ -38,18 +42,63 @@
 - `common.get()` lacked the `cache_key` kwarg its callers passed.
 - pandas 3.0 maps None→NaN in mixed columns; date parsing must be
   type-defensive.
+- GLEIF API rejects page-number pagination beyond 10,000 results (HTTP 400:
+  `page[number] * page[size] must not exceed 10000`) even while meta reports
+  `lastPage: 142` — a full CH slice (28,222) silently dies at page 51. Fix:
+  cursor pagination (`page[cursor]=*`, follow `links.next`). The
+  `filter[entity.legalAddress.region]` filter is NOT supported on lei-records
+  (400 "Filter should contain only allowed values"), so region-splitting is
+  not an option. Cached cursor pages resume by reading the next cursor from
+  the previous page's `links.next`.
 - **Semantic caveat**: GLEIF `initialRegistrationDate` = LEI issuance date,
   NOT company founding date. `company_age_days`/`incorporation_date` on
   GLEIF-sourced rows currently mean "age of the LEI record". True incorporation
   dates come from Zefix once the token exists (NEXT). Do not use
   company_age_days as company age for GLEIF rows without this caveat.
 
+- 2026-09-23 (evening): **Phase-2 external datasets collected + cleaned** (11 sources,
+  owner-requested batch): TabFormer, IEEE-CIS, ULB CC fraud, HackAPrompt, BIPIA,
+  AgentDojo, TensorTrust, Tranco, Majestic Million, Google Product Taxonomy,
+  Viseca synthetic pack. Collectors in `collectors/`, runner
+  `processing/collect_external.py`, cleaner `processing/clean_external.py`,
+  `make collect-external` / `make clean-external`. Full cleaned parquet in
+  `data/processed/external/` (gitignored); tracked exports + stats + report in
+  `data/exports/external/` (largest file 24MB).
+  - Tranco 1,000,000 rows (584 invalid dropped) · Majestic 1,000,000 (644 dropped)
+  - Google taxonomy 5,595 categories, depth ≤7
+  - Viseca 11 CSV tables, **sha256 all verified vs pack manifest**
+  - TabFormer 24,386,900 rows / 29,757 frauds (0.122%), 2,000 users, 1991–2020,
+    chunk-streamed to parquet + 130k stratified sample
+  - IEEE-CIS (HF mirror) 590,540 rows / **20,663 frauds — verified**: value
+    counts (0:569877 / 1:20663) match published Kaggle kernel counts exactly;
+    initial 20,661 expectation was wrong, not the data
+  - ULB via OpenML did 1597: 284,807 rows / 492 frauds, integrity PASS (1,081
+    duplicate rows kept, documented)
+  - BIPIA 1,450 rows (250 attack texts + qa/email/table/code context pairs)
+  - AgentDojo 36,679 published benchmark results (29 models × 4 suites),
+    utility-true 54.4% / security-true 24.0%; suites inventory extracted
+  - TensorTrust 563,349 attacks + 118,377 defenses (typed parquet; streaming
+    schema-fixed) + 3 derived benchmark files as-is
+  - HackAPrompt **BLOCKED**: HF-gated (auto-approve) — needs `LEASH_HF_TOKEN`
+    with accepted terms; collector is token-ready, no other work pending.
+
 ## IN PROGRESS
 
-- Nothing right now. RDAP coverage for the remaining threat domains is a
-  config bump away (`rdap.max_domains`), resumable via cached lookups.
+- 2026-09-23 (evening): **v2 data expansion run** (collect → enrich → build → report):
+  - GLEIF CH full slice: 28,222 records pulled via cursor pagination (was 6,000).
+  - RDAP + DNS enrichment over all 5,484 threat domains (was 167); the 14 stale
+    error stubs (11× http_429, 3× http_403) were moved to
+    `data/raw/rdap/_retry_stash/` so this run re-fetches them.
+  - RDAP pace ≈ 0.8 s + latency per uncached domain → roughly 60–90 min for the
+    full set; cached lookups are skipped, so the run is resumable at any point.
 
 ## BLOCKED
+
+- **HackAPrompt (Phase-2)**: dataset is gated on Hugging Face (auto-approve
+  terms). Action: accept terms at
+  huggingface.co/datasets/hackaprompt/hackaprompt-dataset with an HF account,
+  create a token, `export LEASH_HF_TOKEN=***`, then rerun
+  `make collect-external SRC=hackaprompt && make clean-external SRC=hackaprompt`.
 
 - **Zefix API**: requires registered (free) token. Unauthenticated POST → 401
   (verified). Action needed by human: email **zefix@bj.admin.ch** (official
@@ -67,8 +116,8 @@
 
 ## NEXT
 
-1. Raise `rdap.max_domains`/`dns.max_domains` and re-run `make enrich` to
-   extend coverage from 167 to all 5,484 threat domains (resumable, cached).
+1. ~~Raise `rdap.max_domains`/`dns.max_domains` and re-run `make enrich`~~
+   → running now (see IN PROGRESS); verify coverage after build, rebuild v2.
 2. Website crawler (Phase 2): homepage/Impressum fetch, legal-page detection,
    identity extraction → registry-vs-website consistency features.
 3. Zefix token → full Swiss registry pull incl. UID, canton, true
@@ -79,7 +128,9 @@
    DBs) — Phase 3, low weight, never ground truth.
 7. Baseline models (Phase 4): LogReg/RF/XGBoost, entity-level + temporal
    splits, calibration, SHAP sanity checks.
-8. Retry the 11 http_429 + 3 http_403 RDAP lookups (backoff, later run).
+8. ~~Retry the 11 http_429 + 3 http_403 RDAP lookups~~ → folded into the
+   current run (stubs stashed in `data/raw/rdap/_retry_stash/`); check
+   residual 403s afterwards (some registries block rdap.org by policy).
 
 ## Source status table
 
