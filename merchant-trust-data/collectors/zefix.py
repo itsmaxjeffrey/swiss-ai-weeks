@@ -1,9 +1,14 @@
 """Zefix (Swiss central business index) collector — INTERFACE ONLY until token.
 
 The public REST API requires a registered (free) API token:
-  https://www.zefix.ch  ->  "technische Informationen" / API registration
-  (contact: Zefix, Bundesamt für Justiz). Unauthenticated calls return 401
-  (verified 2026-09-23).
+  - Request access / info: *** (official Federal Office of
+    Justice contact, verified on bj.admin.ch 2026-09-23)
+  - API docs (Swagger): https://www.zefix.admin.ch/ZefixPublicREST/swagger-ui/index.html
+  Unauthenticated calls return 401 (verified 2026-09-23).
+
+Token-free alternative (official): opendata.swiss dataset "Zefix – Zentraler
+Firmenindex" exposes daily core data (name, seat, domicile of active entities)
+queryable via SPARQL on Lindas.
 
 Set the token in the environment variable configured under
 config/sources.json -> zefix.auth_env_var (default LEASH_ZEFIX_TOKEN),

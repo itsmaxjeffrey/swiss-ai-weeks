@@ -52,9 +52,13 @@
 ## BLOCKED
 
 - **Zefix API**: requires registered (free) token. Unauthenticated POST → 401
-  (verified). Action needed by human: register at zefix.ch for API access,
-  export `LEASH_ZEFIX_TOKEN`, then set `zefix.enabled=true` in
+  (verified). Action needed by human: email **zefix@bj.admin.ch** (official
+  contact per bj.admin.ch, verified 2026-09-23) to request REST API access.
+  Then export `LEASH_ZEFIX_TOKEN=***, set `zefix.enabled=true` in
   `config/sources.json`. Collector is ready; nothing else blocks on it.
+  **Token-free alternative found**: opendata.swiss hosts the official Zefix
+  dataset (daily core data: name, seat, domicile of active entities) queryable
+  via SPARQL on Lindas — worth wiring regardless of token timing.
 - **OpenCorporates / Companies House**: both need API keys (free tiers exist
   via account signup). Collectors to be added once keys exist.
 - **URLhaus API v2**: auth key now required for API endpoints (free from
