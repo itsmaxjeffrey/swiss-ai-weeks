@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Viseca Shopper — Personal Shopping Concierge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..600&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23e3001b'/%3E%3Cpath d='M14 6h4v8h8v4h-8v8h-4v-8H6v-4h8z' fill='%23f6f2e8'/%3E%3C/svg%3E">
+</head>
+<body>
+
+<aside class="rail">
+  <header class="masthead">
+    <div class="masthead-cross" aria-hidden="true">+</div>
+    <h1 class="masthead-title">
+      <span class="line">Viseca</span>
+      <span class="line line--outline">Shopper</span>
+    </h1>
+    <p class="masthead-tag">Grüezi. Your personal shopping concierge, powered by an OpenClaw agent.</p>
+  </header>
+
+  <section class="status-card" id="statusCard">
+    <div class="status-row">
+      <span class="mono-label">Agent</span>
+      <span class="status-value" id="statusAgent">viseca-shopper</span>
+    </div>
+    <div class="status-row">
+      <span class="mono-label">Bridge</span>
+      <span class="status-value" id="statusBridge">OpenClaw CLI → Gateway</span>
+    </div>
+    <div class="status-row">
+      <span class="mono-label">State</span>
+      <span class="status-value status-state">
+        <span class="dot" id="statusDot"></span>
+        <span id="statusText">connecting…</span>
+      </span>
+    </div>
+  </section>
+
+  <nav class="prompt-index" aria-label="Suggested prompts">
+    <h2 class="mono-label index-heading"><span class="index-no">00</span> Start here</h2>
+    <button class="prompt-item" data-prompt="Find a birthday gift under 50 CHF for a friend who loves hiking. Suggest 3 options with links.">
+      <span class="index-no">01</span>
+      <span class="prompt-text">Find a birthday gift under 50 CHF for a hiker</span>
+    </button>
+    <button class="prompt-item" data-prompt="Compare prices in Swiss online shops for Sony WH-1000XM6 headphones. Where is it cheapest right now?">
+      <span class="index-no">02</span>
+      <span class="prompt-text">Compare headphone prices across Switzerland</span>
+    </button>
+    <button class="prompt-item" data-prompt="Plan a weekly grocery shop for two people with a 120 CHF budget at Migros and Coop.">
+      <span class="index-no">03</span>
+      <span class="prompt-text">Weekly groceries for two, 120 CHF budget</span>
+    </button>
+    <button class="prompt-item" data-prompt="Which Swiss online shops sell sustainable kids' clothing? Give me your top picks.">
+      <span class="index-no">04</span>
+      <span class="prompt-text">Sustainable kids' clothing, Swiss shops</span>
+    </button>
+  </nav>
+
+  <footer class="rail-footer mono-label">
+    OpenClaw agent · session <span id="footerSession">webui</span>
+  </footer>
+</aside>
+
+<main class="stage">
+  <div class="stage-head">
+    <span class="mono-label stage-head-label"><span class="red">+</span> Konversation / Conversation</span>
+    <span class="mono-label" id="turnCounter">no messages yet</span>
+  </div>
+
+  <div class="feed" id="feed" aria-live="polite">
+    <div class="welcome">
+      <p class="welcome-kicker mono-label">01 — Willkommen</p>
+      <p class="welcome-lede">Ask me to <em>find things</em>, <em>compare prices</em>, <em>plan purchases</em> or <em>hunt deals</em> across Swiss shops. I shop, you decide.</p>
+    </div>
+  </div>
+
+  <div class="typing" id="typing" hidden>
+    <span class="typing-cross">+</span><span class="typing-cross">+</span><span class="typing-cross">+</span>
+    <span class="typing-text mono-label" id="typingText">thinking…</span>
+  </div>
+
+  <form class="composer" id="composer">
+    <textarea id="input" rows="1" placeholder="What are we shopping for?" autocomplete="off"></textarea>
+    <button type="submit" class="send" id="sendBtn" aria-label="Send message">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square">
+        <path d="M4 12h14M13 6l6 6-6 6"/>
+      </svg>
+    </button>
+  </form>
+  <p class="composer-hint mono-label">Enter to send · Shift+Enter for a new line · replies come from the live agent</p>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
