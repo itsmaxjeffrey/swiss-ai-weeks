@@ -1,0 +1,16 @@
+# venv / python
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+
+# bulk data is reproducible via the pipeline; do not commit raw/intermediate/processed
+data/raw/*
+data/intermediate/*
+data/processed/*
+!data/raw/.gitkeep
+!data/intermediate/.gitkeep
+!data/processed/.gitkeep
+
+# reports: keep markdown, ignore generated csv dumps
+reports/*.csv

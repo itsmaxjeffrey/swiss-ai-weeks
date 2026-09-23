@@ -1,0 +1,35 @@
+{
+  "merchant": {
+    "name": "Dr. Nagler & Company AG",
+    "country": "CH",
+    "domain": null
+  },
+  "identity": {
+    "registry_verified": true,
+    "registry_id": "3912003RJTLNVZ5HWQ31",
+    "registry_age_days": 1,
+    "registry_status": "ACTIVE"
+  },
+  "domain": {
+    "domain_age_days": null,
+    "registrar": null,
+    "tls_valid": null,
+    "lookalike_score": 0.5,
+    "possible_brand_impersonation": false
+  },
+  "threat_intelligence": {
+    "openphish": null,
+    "urlhaus": null,
+    "sources": null
+  },
+  "label": {
+    "label": "likely_legitimate",
+    "confidence": 0.7,
+    "reason": "Active legal entity in GLEIF (authoritative registry). Registry-level evidence only: website identity not yet verified (Phase 2), so not verified_legitimate."
+  },
+  "provenance": {
+    "sources": "gleif",
+    "collected_at": "2026-09-23T08:06:54Z",
+    "data_license": "GLEIF LEI data (free and open, GLEIF terms of use)"
+  }
+}

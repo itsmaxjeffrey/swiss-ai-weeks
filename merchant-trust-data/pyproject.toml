@@ -1,0 +1,15 @@
+[project]
+name = "merchant-trust-data"
+version = "0.1.0"
+description = "LEASH merchant trust dataset: collection, normalization, entity resolution, labeling"
+requires-python = ">=3.10"
+dependencies = [
+  "requests",
+  "pandas",
+  "pyarrow",
+  "rapidfuzz",
+  "dnspython",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

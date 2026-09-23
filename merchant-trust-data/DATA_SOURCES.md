@@ -1,0 +1,38 @@
+# Data Sources
+
+Every source used by this pipeline, with access method, license, and
+redistribution status. **Never ingest a source with unknown license into a
+redistributable dataset** — flag it `LICENSE_REVIEW_REQUIRED` and leave it out.
+
+Status legend: ✅ collected · 🟡 interface ready, awaiting credential · ⏳ planned
+
+| source | what it gives us | access | license | raw data redistributable? | status |
+|---|---|---|---|---|---|
+| OpenPhish community feed | confirmed phishing URLs (active) | `https://openphish.com/feed.txt`, no auth | free for **non-commercial** use, attribution required; commercial use requires paid subscription | non-commercial only; keep derived features + URLs for research, do not resell | ✅ |
+| URLhaus (abuse.ch) | malware-distribution URLs + tags | `https://urlhaus.abuse.ch/downloads/csv_recent/`, no auth (API v2 requires free auth key from auth.abuse.ch) | free to use and share; attribution appreciated (abuse.ch, URLhaus) | yes, per abuse.ch terms | ✅ |
+| GLEIF LEI records | authoritative legal-entity identity (name, status, address, legal form, LEI, dates) | `https://api.gleif.org/api/v1/lei-records`, no auth, paginated | free and open; GLEIF terms of use (attribution, no warranty) | yes, per GLEIF terms | ✅ |
+| Zefix (Swiss central business index) | Swiss registry of commerce: legal name, UID, status, canton | REST API `zefix.ch/ZefixPublicREST/api/v1` — **requires registered (free) API token**; unauthenticated calls return 401 (verified 2026-09-23) | Zefix data (c) Confederation/cantons; API terms apply | review Zefix terms after token; `LICENSE_REVIEW_REQUIRED` until then | 🟡 collector implemented (`collectors/zefix.py`); set `LEASH_ZEFIX_TOKEN`, flip `zefix.enabled` |
+| RDAP (rdap.org → registry RDAP) | domain registration: creation/expiry, registrar, nameservers, status | `https://rdap.org/domain/{domain}`, redirects to authoritative registry (rdap.nic.ch for .ch, Verisign for .com); cached per domain, polite sleep | registry factual metadata; per-registry terms | yes (factual registration data; no WHOIS privacy content stored) | ✅ bounded (250 domains/run) |
+| DNS | A / MX / TXT existence, NXDOMAIN | dnspython resolver, cached batches | n/a (protocol lookups) | yes | ✅ bounded (400 domains/run) |
+
+## Planned / queued
+
+| source | purpose | blocker |
+|---|---|---|
+| opendata.swiss (CKAN API) | discover further Swiss open datasets | probe reachable (HTTP 302 → OK); dataset selection pending |
+| Companies House (UK) | UK registry | free API key requires account signup |
+| OpenCorporates | multi-country registry aggregation | API key required; license restricts redistribution — `LICENSE_REVIEW_REQUIRED` |
+| SEC EDGAR | US company identities | free, no key; queued for Phase 3 |
+| UID-Register (uid.admin.ch) | Swiss UID validation | API registration required |
+| Reddit / consumer complaints | reputation signals (low weight, aggregates only) | Phase 3; official interfaces only, no scraping of restricted surfaces |
+
+## Notes
+
+- Switzerland-first: the Phase-1 Swiss subset comes from the GLEIF
+  `filter[entity.legalAddress.country]=CH` slice (28,215 CH-registered LEI
+  records exist; we sample). Bias: LEI population skews financial/large
+  firms — documented, and Zefix will broaden coverage once the token exists.
+- Threat-intel sources are treated as *evidence*, not absolute truth: every
+  row keeps `threat_sources`, `threat_first_seen/last_seen`, and sample URLs
+  so labels stay traceable and reversible.
+- `PROGRESS.md` tracks per-source run status, counts, and errors.

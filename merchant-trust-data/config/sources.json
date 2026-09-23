@@ -1,0 +1,46 @@
+{
+  "openphish": {
+    "enabled": true,
+    "feed_url": "https://openphish.com/feed.txt",
+    "license": "OpenPhish community feed: free for non-commercial use, attribution required; commercial use requires subscription",
+    "notes": "Active/confirmed phishing URLs. Treat every URL as untrusted data."
+  },
+  "urlhaus": {
+    "enabled": true,
+    "csv_url": "https://urlhaus.abuse.ch/downloads/csv_recent/",
+    "license": "abuse.ch URLhaus: free to use/share (CC0-style dedication), attribution appreciated; see https://urlhaus.abuse.ch/api/",
+    "notes": "Recent malware-distribution URLs (csv_recent = recent subset; csv = full archive)."
+  },
+  "gleif": {
+    "enabled": true,
+    "api_base": "https://api.gleif.org/api/v1/lei-records",
+    "countries": ["CH"],
+    "page_size": 200,
+    "max_pages": 30,
+    "sleep_seconds": 0.35,
+    "license": "GLEIF LEI data: free and open; see GLEIF terms of use (attribution, no warranty)",
+    "notes": "Authoritative legal-entity identities. CH slice is Phase-1 Swiss subset; LEI population skews financial/large firms."
+  },
+  "zefix": {
+    "enabled": false,
+    "api_base": "https://www.zefix.ch/ZefixPublicREST/api/v1",
+    "auth_env_var": "LEASH_ZEFIX_TOKEN",
+    "license": "Swiss commercial registry (Zefix); API access requires free registered token; data (c) Confederation/cantons",
+    "notes": "Collector interface implemented; blocked until token is registered (see BLOCKED in PROGRESS.md)."
+  },
+  "rdap": {
+    "endpoint": "https://rdap.org/domain/{domain}",
+    "max_domains": 250,
+    "sleep_seconds": 0.8,
+    "timeout_seconds": 25,
+    "license": "Registry RDAP responses; per-registry terms, generally factual registration metadata",
+    "notes": "rdap.org redirects to authoritative registry RDAP. Rate-limit friendly: cached per domain, resume-safe."
+  },
+  "dns": {
+    "max_domains": 400,
+    "timeout_seconds": 4,
+    "sleep_seconds": 0.05,
+    "license": "n/a (protocol lookups)",
+    "notes": "A/MX/TXT existence via dnspython. NXDOMAIN recorded as dns_error=nxdomain, all False (domain gone)."
+  }
+}
