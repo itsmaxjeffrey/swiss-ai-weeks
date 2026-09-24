@@ -173,6 +173,11 @@ test("chat works over SSE with a cookie and gets a per-user session", async () =
   assert.ok(done, "expected a done frame");
   assert.match(done.reply, /webui-u/, "reply embeds the per-user session key");
   assert.notEqual(done.session, "webui", "session key is not the shared base");
+  const activities = frames.filter((f) => f.type === "activity");
+  assert.ok(activities.length >= 3, `expected live activity frames, got ${activities.length}`);
+  assert.ok(done.trail && done.trail.length >= 3, "done frame carries the activity trail");
+  assert.ok(done.trail.some((t) => /digitec\.ch/.test(t.label)), "trail records the site visit");
+  assert.ok(done.timings && Array.isArray(done.timings.processes), "done carries the timings report");
 });
 
 test("usage counted after a turn", async () => {

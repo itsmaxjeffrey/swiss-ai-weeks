@@ -102,7 +102,42 @@ let activeTurns = 0;
 
 /** One timing record per in-flight chat turn: ordered stage marks plus an
  *  optional live listener (SSE) so the UI sees stages as they happen. */
-const turnStageLogs = new Map(); // userId -> { marks: [], onStage: fn|null }
+const turnStageLogs = new Map(); // userId -> { marks: [], onStage: fn|null, activityToken }
+const activityTokens = new Map(); // per-turn token -> userId (agent activity reports)
+const ACTIVITY_MAX = 40; // trail entries kept per turn
+
+/** System note appended to the shopper's prompt so it reports progress steps
+ *  live; the token scopes reports to exactly this turn. */
+function activityNote(token) {
+  return "\n\n(System: the customer watches progress live. Each time you START a step, immediately run:\n" +
+    `curl -s -X POST http://127.0.0.1:${PORT}/api/chat/activity -H "X-Activity-Token: ${token}" -H "Content-Type: application/json" -d '{"label":"..."}'\n` +
+    "Steps: every web search → \"Searching the web for <topic>\"; every shop site you open → \"Visiting <domain>\"; comparing offers → \"Comparing prices at <domains>\"; drafting the order policy → \"Preparing order policy\"; payment/filing → \"Filing payment\". Keep labels short and plain.)";
+}
+
+/** Record one agent-reported activity step for the in-flight turn. */
+function recordActivity(userId, label) {
+  const log = turnStageLogs.get(userId);
+  if (!log) return false;
+  if (log.marks.filter((m) => m.kind === "activity").length >= ACTIVITY_MAX) return false;
+  recordTurnStage(userId, { kind: "activity", label: String(label).slice(0, 200), ok: true });
+  return true;
+}
+
+/** The finished-turn trail: agent-reported steps + Viseca-control gate events
+ *  in order, kept client-side above the reply so nothing is lost. */
+function trailFromMarks(marks) {
+  return marks.map((m) => m.kind === "activity"
+    ? { kind: "activity", label: m.label, ts: m.at, ok: true }
+    : {
+        kind: "stage",
+        stage: m.stage,
+        label: m.ok === false ? "Viseca control — order policy refused" : "Viseca control — order policy signed",
+        ts: m.at,
+        ok: m.ok !== false,
+        durationMs: m.durationMs || null,
+        policyId: m.policyId || null,
+      });
+}
 
 /** Record a process-stage mark for the user's in-flight turn (no-op when no
  *  turn is running, e.g. a policy card approved after the reply arrived). */
@@ -148,6 +183,7 @@ function buildTimings({ receivedAt, started, finished, stats, marks }) {
     },
   ];
   for (const m of marks) {
+    if (m.kind === "activity") continue; // agent-reported steps live in the trail, not the timings grid
     processes.push({
       label: m.ok === false
         ? "Viseca control — order policy refused"
@@ -652,8 +688,16 @@ async function runChatTurn(req, res, user, message, mode) {
   const started = Date.now();
   const sessionKey = userSessionKey(user);
   stoppedTurns.delete(user.id);
-  const stageLog = { marks: [], onStage: null };
+  const stageLog = { marks: [], onStage: null, activityToken: null };
   turnStageLogs.set(user.id, stageLog);
+  // Per-turn activity reporting: the agent POSTs progress steps to the bridge
+  // while it works; each one streams to the UI as a live checkmark trail.
+  let fullMessage = message;
+  if (process.env.ACTIVITY_REPORTING !== "off") {
+    stageLog.activityToken = crypto.randomBytes(16).toString("hex");
+    activityTokens.set(stageLog.activityToken, user.id);
+    fullMessage = message + activityNote(stageLog.activityToken);
+  }
   console.log(`[chat] turn start  (${message.length} chars) user=${user.email} session=${sessionKey} mode=${mode}`);
   appendHistory(user.id, "user", message);
 
@@ -669,7 +713,7 @@ async function runChatTurn(req, res, user, message, mode) {
   const turn = (async () => {
     activeTurns += 1;
     try {
-      return await turnWithRetry(message, sessionKey, (child) => userProcs.set(user.id, child));
+      return await turnWithRetry(fullMessage, sessionKey, (child) => userProcs.set(user.id, child));
     } finally {
       activeTurns -= 1;
       userProcs.delete(user.id);
@@ -691,14 +735,20 @@ async function runChatTurn(req, res, user, message, mode) {
     send({ type: "start", agent: AGENT, session: sessionKey });
     // Live process-stage events (e.g. the Viseca control policy gate) reach
     // the UI the moment they happen, not only in the final done frame.
-    stageLog.onStage = (mark) => send({
-      type: "stage",
-      stage: mark.stage,
-      ok: mark.ok,
-      policyId: mark.policyId || null,
-      detail: mark.detail || null,
-      durationMs: mark.durationMs,
-    });
+    stageLog.onStage = (mark) => {
+      if (mark.kind === "activity") {
+        send({ type: "activity", label: mark.label, ts: mark.at });
+      } else {
+        send({
+          type: "stage",
+          stage: mark.stage,
+          ok: mark.ok,
+          policyId: mark.policyId || null,
+          detail: mark.detail || null,
+          durationMs: mark.durationMs,
+        });
+      }
+    };
 
     const poll = setInterval(() => {
       sessionSnapshot(sessionKey).then((snap) => {
@@ -724,7 +774,7 @@ async function runChatTurn(req, res, user, message, mode) {
         console.log(`[chat] turn done    in ${(timings.agentTurnMs / 1000).toFixed(1)}s (${reply.length} chars back) user=${user.email}`);
         console.log(`[chat] timings     total=${fmtMs(timings.totalMs)} · queue=${fmtMs(timings.processes[0].durationMs)} · think=${fmtMs(timings.processes[1].durationMs)} · tools=${fmtMs(timings.processes[2].durationMs)}${gateBit} user=${user.email}`);
         appendHistory(user.id, "agent", reply);
-        send({ type: "done", reply, timings, agent: AGENT, session: sessionKey });
+        send({ type: "done", reply, timings, trail: trailFromMarks(stageLog.marks), agent: AGENT, session: sessionKey });
       })
       .catch((err) => {
         console.log(`[chat] turn FAILED  after ${((Date.now() - started) / 1000).toFixed(1)}s: ${err.message} user=${user.email}`);
@@ -734,6 +784,7 @@ async function runChatTurn(req, res, user, message, mode) {
       })
       .finally(() => {
         clearInterval(poll);
+        if (stageLog.activityToken) activityTokens.delete(stageLog.activityToken);
         turnStageLogs.delete(user.id);
         res.end();
         userInFlight.delete(user.id);
@@ -747,13 +798,14 @@ async function runChatTurn(req, res, user, message, mode) {
     const timings = buildTimings({ receivedAt, started, finished: Date.now(), stats, marks: stageLog.marks });
     console.log(`[chat] turn done    in ${(timings.agentTurnMs / 1000).toFixed(1)}s (${reply.length} chars back) user=${user.email}`);
     appendHistory(user.id, "agent", reply);
-    sendJson(res, 200, { reply, agent: AGENT, session: sessionKey, usage, timings });
+    sendJson(res, 200, { reply, agent: AGENT, session: sessionKey, usage, timings, trail: trailFromMarks(stageLog.marks) });
   } catch (err) {
     console.log(`[chat] turn FAILED  after ${((Date.now() - started) / 1000).toFixed(1)}s: ${err.message} user=${user.email}`);
     const friendly = friendlyError(err);
     appendHistory(user.id, "error", friendly);
     sendJson(res, 502, { error: friendly });
   } finally {
+    if (stageLog.activityToken) activityTokens.delete(stageLog.activityToken);
     turnStageLogs.delete(user.id);
     userInFlight.delete(user.id);
   }
@@ -1175,6 +1227,24 @@ async function handle(req, res) {
   }
 
   /* ----- chat ----- */
+
+  /* ----- agent activity reports (token-scoped, per-turn) ----- */
+
+  if (req.method === "POST" && pathname === "/api/chat/activity") {
+    const token = String(req.headers["x-activity-token"] || "");
+    const userId = token && activityTokens.get(token);
+    if (!userId) return sendJson(res, 404, { ok: false, error: "No active turn for this token." });
+    let body;
+    try {
+      body = await readJsonBody(req, 2);
+    } catch {
+      return sendJson(res, 413, { error: "Payload too large." });
+    }
+    const label = body && typeof body.label === "string" ? body.label.trim() : "";
+    if (!label) return sendJson(res, 400, { error: "Field 'label' is required." });
+    recordActivity(userId, label);
+    return sendJson(res, 200, { ok: true });
+  }
 
   if (req.method === "POST" && pathname === "/api/chat/stop") {
     const auth = authenticate(req);

@@ -24,20 +24,50 @@ if (args[0] === "agent") {
     process.stderr.write("stub: empty message\n");
     process.exit(3);
   }
-  setTimeout(() => {
-    process.stdout.write(
-      JSON.stringify({
-        sessionKey,
-        events: [{ type: "assistant", text: `Stub reply for ${sessionKey}: you said "${message.slice(0, 40)}"` }],
-        finalAssistantVisibleText: `Stub reply for **${sessionKey}** — got "${message.slice(0, 60)}"`,
-        assistantTurns: 2,
-        toolSummary: { calls: 3, tools: ["browser", "read"], totalToolTimeMs: 120 },
-        model: "stub-model",
-        provider: "stub",
-      })
-    );
-    process.exit(0);
-  }, 250);
+  // Activity reporting: when the bridge asks for progress steps, POST a few
+  // labels exactly like the real agent would, then reply.
+  const tokM = /X-Activity-Token: ([0-9a-f]+)/.exec(message);
+  const portM = /http:\/\/127\.0\.0\.1:(\d+)\/api\/chat\/activity/.exec(message);
+  const stepDelay = parseInt(process.env.STUB_STEP_DELAY_MS || "200", 10);
+  const echo = message.split("\n\n(System:")[0]; // never echo the activity-reporting note
+  const report = (tokM && portM)
+    ? (async () => {
+        delete process.env.NODE_USE_ENV_PROXY;
+        process.env.NO_PROXY = "127.0.0.1,localhost";
+        const base = `http://127.0.0.1:${portM[1]}/api/chat/activity`;
+        const labels = [
+          "Searching the web for running shoes",
+          "Visiting digitec.ch",
+          "Comparing prices at digitec.ch, galaxus.ch",
+        ];
+        for (const label of labels) {
+          await new Promise((r) => setTimeout(r, stepDelay));
+          try {
+            await fetch(base, {
+              method: "POST",
+              headers: { "X-Activity-Token": tokM[1], "Content-Type": "application/json" },
+              body: JSON.stringify({ label }),
+            });
+          } catch { /* bridge may be shutting down */ }
+        }
+      })()
+    : Promise.resolve();
+  report.then(() => {
+    setTimeout(() => {
+      process.stdout.write(
+        JSON.stringify({
+          sessionKey,
+          events: [{ type: "assistant", text: `Stub reply for ${sessionKey}: you said "${message.slice(0, 40)}"` }],
+          finalAssistantVisibleText: `Stub reply for **${sessionKey}** — got "${echo.slice(0, 60)}"`,
+          assistantTurns: 2,
+          toolSummary: { calls: 3, tools: ["browser", "read"], totalToolTimeMs: 120 },
+          model: "stub-model",
+          provider: "stub",
+        })
+      );
+      process.exit(0);
+    }, 150);
+  });
   return;
 }
 

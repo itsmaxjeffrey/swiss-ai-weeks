@@ -108,7 +108,8 @@
   let thinkingTimer = null;
   let thinkingStep = 0;
   let lastProgress = null;
-  let lastStage = null;
+  let activityTrail = []; // live steps: {kind, label, ts, ok, durationMs?}
+  let trailHost = null;
 
   function fmtElapsed(ms) {
     const s = Math.max(0, Math.round((ms || 0) / 1000));
@@ -129,28 +130,53 @@
     return n >= 1000 ? `${(n / 1000).toFixed(1)}k tok` : `${n} tok`;
   }
 
-  /** Renders the live status line: friendly word + real data when available.
-   *  A live process-stage event (e.g. the Viseca control gate) takes over. */
+  /** Renders the live status area: the growing activity trail (real steps
+   *  reported by the agent: searches, sites visited, gate events) with the
+   *  current step pulsing, plus a footer readout with elapsed + tokens.
+   *  Before the first real step arrives it falls back to friendly words. */
   function renderBusyLine() {
-    if (lastStage) {
-      const label = lastStage.ok === false
-        ? "Viseca control refused the order policy"
-        : "Viseca control — order policy signed";
-      const bits = [`${label} ✓`, fmtDuration(lastStage.durationMs)];
-      if (lastStage.policyId) bits.push(lastStage.policyId);
-      typingText.textContent = bits.join(" · ");
-      return;
+    renderTrailLive();
+    const bits = [];
+    if (activityTrail.length) {
+      if (lastProgress) {
+        bits.push(fmtElapsed(lastProgress.elapsedMs));
+        const tok = fmtTokens(lastProgress.totalTokens);
+        if (tok) bits.push(tok);
+      }
+    } else {
+      bits.push(THINKING_WORDS[thinkingStep % THINKING_WORDS.length]);
+      if (lastProgress) {
+        bits.push(fmtElapsed(lastProgress.elapsedMs));
+        const tok = fmtTokens(lastProgress.totalTokens);
+        if (tok) bits.push(tok);
+        if (lastProgress.status && lastProgress.status !== "running") bits.push(lastProgress.status);
+      }
     }
-    const base = THINKING_WORDS[thinkingStep % THINKING_WORDS.length];
-    if (!lastProgress) {
-      typingText.textContent = base;
-      return;
-    }
-    const bits = [base, fmtElapsed(lastProgress.elapsedMs)];
-    const tok = fmtTokens(lastProgress.totalTokens);
-    if (tok) bits.push(tok);
-    if (lastProgress.status && lastProgress.status !== "running") bits.push(lastProgress.status);
-    typingText.textContent = bits.join(" · ");
+    typingText.textContent = bits.join(" · ") || "thinking…";
+  }
+
+  /** Live trail panel: earlier steps ✓ with per-step time, current pulsing. */
+  function renderTrailLive() {
+    if (!trailHost) trailHost = document.getElementById("activityTrail");
+    if (!trailHost) return;
+    trailHost.hidden = activityTrail.length === 0;
+    const now = Date.now();
+    trailHost.innerHTML = activityTrail.map((e, i) => {
+      const isLast = i === activityTrail.length - 1;
+      const dur = e.durationMs != null
+        ? fmtDuration(e.durationMs)
+        : isLast
+          ? fmtElapsed(now - (e.ts || now))
+          : fmtElapsed((activityTrail[i + 1].ts || now) - (e.ts || now));
+      const mark = isLast
+        ? "<span class=\"trail-mark trail-mark--live\"></span>"
+        : e.ok === false
+          ? "<span class=\"trail-mark trail-mark--fail\">✕</span>"
+          : "<span class=\"trail-mark trail-mark--done\">✓</span>";
+      const gate = e.kind === "stage" ? " trail-step--gate" : "";
+      return `<div class="trail-step${gate}">${mark}<span class="trail-label">${esc(e.label)}</span><span class="trail-ms">${dur}</span></div>`;
+    }).join("");
+    trailHost.scrollTop = trailHost.scrollHeight;
   }
 
   /* ---------- tiny markdown renderer ---------- */
@@ -270,6 +296,33 @@
     el.innerHTML = `
       <div class="msg-meta"><span class="red">⏱</span> Process timings — total ${fmtDuration(timings.totalMs)}</div>
       <div class="msg-body timing-list">${rows}</div>`;
+    feed.appendChild(el);
+    feed.scrollTop = feed.scrollHeight;
+    return el;
+  }
+
+  /** Frozen activity-trail card, kept in the feed above the reply so the
+   *  full step-by-step story stays visible after the turn finishes. */
+  function addTrailCard(trail, opts) {
+    if (!trail || !trail.length) return null;
+    const el = document.createElement("div");
+    el.className = "msg msg--trail";
+    const rows = trail.map((e, i) => {
+      const dur = e.durationMs != null
+        ? fmtDuration(e.durationMs)
+        : i < trail.length - 1 && trail[i + 1].ts && e.ts
+          ? fmtElapsed(trail[i + 1].ts - e.ts)
+          : "";
+      const gate = e.kind === "stage" ? " trail-step--gate" : "";
+      const mark = e.ok === false
+        ? "<span class=\"trail-mark trail-mark--fail\">✕</span>"
+        : "<span class=\"trail-mark trail-mark--done\">✓</span>";
+      return `<div class="trail-step${gate}">${mark}<span class="trail-label">${esc(e.label || "")}</span><span class="trail-ms">${dur}</span></div>`;
+    }).join("");
+    const head = opts && opts.interrupted ? "Activity — interrupted" : "What the agent did";
+    el.innerHTML = `
+      <div class="msg-meta"><span class="red">⏱</span> ${head} — ${trail.length} step${trail.length === 1 ? "" : "s"}</div>
+      <div class="msg-body trail-list">${rows}</div>`;
     feed.appendChild(el);
     feed.scrollTop = feed.scrollHeight;
     return el;
@@ -536,7 +589,7 @@
     addMessage("user", text.trim());
     input.value = "";
     input.style.height = "auto";
-    lastStage = null;
+    activityTrail = [];
     setBusy(true);
     turns += 1;
     turnCounter.textContent = `${turns} message${turns === 1 ? "" : "s"}`;
@@ -595,16 +648,27 @@
             if (ev.type === "progress") {
               lastProgress = ev;
               renderBusyLine();
+            } else if (ev.type === "activity") {
+              activityTrail.push({ kind: "activity", label: ev.label, ts: ev.ts || Date.now(), ok: true });
+              renderBusyLine();
             } else if (ev.type === "stage") {
-              lastStage = ev;
+              activityTrail.push({
+                kind: "stage",
+                label: ev.ok === false ? "Viseca control refused the order policy" : "Viseca control — order policy signed",
+                ts: Date.now(),
+                ok: ev.ok !== false,
+                durationMs: ev.durationMs,
+              });
               renderBusyLine();
             } else if (ev.type === "done") {
               settled = true;
+              if (Array.isArray(ev.trail) && ev.trail.length) addTrailCard(ev.trail);
               addMessage("agent", ev.reply);
               if (ev.timings) addTimingsCard(ev.timings);
               refreshMe(); // keep the usage chip honest
             } else if (ev.type === "error") {
               settled = true;
+              if (activityTrail.length) addTrailCard(activityTrail, { interrupted: true });
               addMessage("error", ev.error || "Agent error.");
             }
           }

@@ -1006,6 +1006,68 @@ body::after {
 
 .timing-ms { font-weight: 600; color: var(--ink); white-space: nowrap; }
 
+/* ---------- live activity trail (agent-reported steps) ---------- */
+
+.activity-trail {
+  max-height: 150px;
+  overflow-y: auto;
+  margin: 2px 0 6px 27px;
+}
+
+.trail-step {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 2.5px 0;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--ink-soft);
+}
+
+.trail-step--gate .trail-label { color: var(--red-deep); }
+
+.trail-mark { width: 15px; flex: none; text-align: center; }
+
+.trail-mark--done { color: #1c7c33; font-weight: 700; }
+
+.trail-mark--fail { color: var(--red); font-weight: 700; }
+
+.trail-mark--live::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--red);
+  animation: trailPulse 1s ease-in-out infinite;
+}
+
+@keyframes trailPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+.trail-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.trail-ms { flex: none; }
+
+.msg--trail {
+  max-width: 74%;
+  margin: -14px 0 26px;
+  padding: 12px 16px 10px;
+  border: 1px solid var(--hairline);
+  border-left: 3px solid var(--ink);
+  background: var(--paper-deep);
+  animation: msgIn 0.5s var(--ease) both;
+}
+
+.msg--trail .msg-meta { margin-bottom: 8px; }
+
+@media (max-width: 760px) {
+  .msg--trail { max-width: 92%; }
+  .activity-trail { margin-left: 20px; }
+}
+
 @media (max-width: 760px) {
   .msg--timings { max-width: 92%; }
 }
