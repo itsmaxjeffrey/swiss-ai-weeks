@@ -1,0 +1,10 @@
+{
+  "status": "ok",
+  "rows_raw": 5,
+  "rows_clean": 5,
+  "unique_ips": 5,
+  "malware_families": {
+    "QakBot": 4,
+    "Emotet": 1
+  }
+}

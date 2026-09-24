@@ -26,6 +26,15 @@ Applies a conservative rule: **if a license is unclear, the source is flagged
 | Microsoft BIPIA | MIT | yes | yes, keep LICENSE/NOTICE | yes | |
 | AgentDojo | MIT | yes | yes, keep LICENSE | yes | runs/ results included as published |
 | Tensor Trust | permissive (per repo README) | yes | yes w/ attribution | yes | raw dumps contain anonymized player content |
+| ThreatFox (abuse.ch) | free to use/share, attribution appreciated; non-commercial spirit per abuse.ch ToS (threatfox.abuse.ch/faq/#tos) | yes | yes per abuse.ch terms | yes | recent IOC export; API v2 would need free auth key |
+| FeodoTracker (abuse.ch) | free to use/share, attribution appreciated; non-commercial per abuse.ch ToS | yes | yes per abuse.ch terms | yes | C2 IP blocklist (JSON preferred, CSV fallback) |
+| MalwareBazaar (abuse.ch) | free, attribution appreciated; API needs free auth key | once reachable | yes per abuse.ch terms | yes | blob + API both 502 via egress proxy 2026-09-24 — BLOCKED; if unblocked, register free key at auth.abuse.ch (env `LEASH_ABUSECH_KEY`) |
+| UN consolidated list | public data, (c) United Nations; no explicit reuse license — factual sanctions data | yes (research) | with attribution + UN disclaimer | yes | consolidated.xml streamed; keep "nor necessarily endorsed by the UN" style disclaimer on publication |
+| OFAC SDN list | US Government work → public domain | yes | yes (keep Treasury attribution) | yes | legacy CSV with `-0-` placeholders |
+| SECO Swiss sanctions | Swiss public data; collected via OpenSanctions mirror (source.xml as published); mirror adds CC BY-SA 4.0 | yes | mirror copy: CC BY-SA 4.0 w/ attribution (OpenSanctions + SECO) | yes | SECO site has no stable anonymous bulk URL (verified 2026-09-24); we store the original source.xml via OpenSanctions |
+| EU consolidated list | EU public data | blocked | `LICENSE_REVIEW_REQUIRED` (needs EU Login) | — | bulk CSV redirects to EU Login even with `?anonymous=true` (verified 2026-09-24); probe recorded |
+| AbuseIPDB | free tier: non-commercial w/ attribution; responses not for redistribution as-is | once keyed | `LICENSE_REVIEW_REQUIRED` for raw responses | derived features yes | API key required (401 unauthenticated, probe recorded 2026-09-24); env `LEASH_ABUSEIPDB_KEY` |
+| Domain-health lookups (DNS/HTTP/Wayback CDX/crt.sh) | protocol lookups + public services, factual metadata | yes | yes | yes | Wayback/crt.sh used politely: bounded, cached, resumable; crt.sh capped at ≤500 domains/run |
 
 ## Provenance requirements
 

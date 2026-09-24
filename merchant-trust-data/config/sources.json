@@ -44,6 +44,50 @@
     "notes": "A/MX/TXT existence via dnspython. NXDOMAIN recorded as dns_error=nxdomain, all False (domain gone)."
   },
 
+  "threatfox": {
+    "enabled": true,
+    "csv_url": "https://threatfox.abuse.ch/export/csv/recent/",
+    "license": "abuse.ch ThreatFox: free to use/share, attribution appreciated; non-commercial spirit per abuse.ch terms",
+    "notes": "Recent IOCs (IP:port / URL / domain) with malware type + confidence. CSV has # comment headers."
+  },
+  "feodotracker": {
+    "enabled": true,
+    "json_url": "https://feodotracker.abuse.ch/downloads/ipblocklist.json",
+    "csv_url": "https://feodotracker.abuse.ch/downloads/ipblocklist.csv",
+    "license": "abuse.ch FeodoTracker: free to use/share, attribution appreciated; non-commercial per abuse.ch terms",
+    "notes": "C2 IP blocklist w/ malware family. JSON preferred, CSV fallback."
+  },
+  "malwarebazaar": {
+    "enabled": true,
+    "blob_url": "https://mbexport.blob.core.windows.net/malwaredata/{date}_malwarebazaar.json",
+    "api_url": "https://malwarebazaar.abuse.ch/api/v1/",
+    "auth_env_var": "LEASH_ABUSECH_KEY",
+    "license": "abuse.ch MalwareBazaar: free to use/share, attribution appreciated; API needs free auth key",
+    "notes": "Daily sample blob preferred; API get-recent needs free abuse.ch auth key. Blob+API were 502 via egress proxy 2026-09-24."
+  },
+  "sanctions": {
+    "un_xml_url": "https://scsanctions.un.org/resources/xml/en/consolidated.xml",
+    "ofac_sdn_url": "https://www.treasury.gov/ofac/downloads/sdn.csv",
+    "eu_csv_url": "https://webgate.ec.europa.eu/fsd/resources/trade-sanctions/consolidated-list/sanctions_conso.csv",
+    "seco_mirror": "https://www.opensanctions.org/datasets/ch_seco_sanctions/",
+    "license": "UN consolidated list: public data (c) United Nations; OFAC SDN: US public domain; SECO: Swiss public data via OpenSanctions mirror (CC BY-SA 4.0 on the mirror); EU consolidated list: EU public data but bulk download now sits behind EU Login",
+    "notes": "EU probed 2026-09-24: redirects to EU Login even with ?anonymous=true -> BLOCKED-needs-login. SECO has no stable anonymous bulk URL -> collected via OpenSanctions source.xml mirror."
+  },
+  "abuseipdb": {
+    "enabled": false,
+    "api_base": "https://api.abuseipdb.com/api/v2",
+    "auth_env_var": "LEASH_ABUSEIPDB_KEY",
+    "license": "AbuseIPDB free tier: non-commercial, attribution; responses not for redistribution as-is",
+    "notes": "Scaffold key-ready; 401 without key (probe recorded). Flip enabled after LEASH_ABUSEIPDB_KEY is set."
+  },
+  "domain_health": {
+    "crtsh_sample_limit": 500,
+    "max_workers": 10,
+    "timeout_seconds": 6,
+    "license": "n/a (protocol lookups; Wayback CDX + crt.sh public services, bounded + cached)",
+    "notes": "DNS MX/NS/A/SPF + HTTP liveness/parked-sniff + Wayback first-seen for all confirmed-malicious root domains; crt.sh bounded sample."
+  },
+
   "tranco": {
     "enabled": true,
     "list_url": "https://tranco-list.eu/top-1m.csv.zip",

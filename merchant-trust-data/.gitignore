@@ -14,3 +14,6 @@ data/processed/*
 
 # reports: keep markdown, ignore generated csv dumps
 reports/*.csv
+
+# local secrets — never commit
+.env

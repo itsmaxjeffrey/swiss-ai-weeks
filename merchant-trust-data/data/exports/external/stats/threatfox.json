@@ -1,0 +1,12 @@
+{
+  "status": "ok",
+  "rows_raw": 9331,
+  "rows_clean": 8812,
+  "no_host_extracted": 519,
+  "unique_domains_ips": 7611,
+  "ioc_types": {
+    "domain": 5042,
+    "ip:port": 3207,
+    "url": 563
+  }
+}

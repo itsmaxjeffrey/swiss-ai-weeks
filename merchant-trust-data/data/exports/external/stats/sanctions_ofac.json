@@ -1,0 +1,19 @@
+{
+  "status": "ok",
+  "rows_raw": 19392,
+  "rows_clean": 19392,
+  "programs": {
+    "RUSSIA-EO14024": 5666,
+    "SDGT": 2180,
+    "SDNTK": 1333,
+    "IRAN-EO13902": 920,
+    "GLOMAG": 723,
+    "NPWMD] [IFSR": 636,
+    "UKRAINE-EO13662] [RUSSIA-EO14024": 507,
+    "IRAN-EO13846": 481,
+    "ILLICIT-DRUGS-EO14059": 476,
+    "IRAN": 473,
+    "SDGT] [IFSR": 436,
+    "TCO": 385
+  }
+}

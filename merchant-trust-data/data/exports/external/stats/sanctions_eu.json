@@ -1,0 +1,11 @@
+{
+  "status": "blocked",
+  "reason": "EU consolidated-list bulk CSV now requires EU Login (verified 2026-09-24; 307->EU Login HTML even with ?anonymous=true)",
+  "probe": {
+    "url": "https://webgate.ec.europa.eu/fsd/resources/trade-sanctions/consolidated-list/sanctions_conso.csv?anonymous=true",
+    "http_status": 401,
+    "redirected_to_login": false,
+    "probed_at": "2026-09-24T09:47:19Z",
+    "status": "BLOCKED-needs-login"
+  }
+}

@@ -584,6 +584,286 @@ def clean_hackaprompt() -> dict:
     return {"status": "ok", "rows": len(df), "cols": int(df.shape[1])}
 
 
+# --------------------------------------------------------------- threatfox
+
+def _read_comment_csv(path: pathlib.Path) -> pd.DataFrame:
+    """abuse.ch-style CSV: header (and notes) live in `#` comment lines.
+
+    The column header is the comment line starting with `# "col1","col2"...`.
+    """
+    header: str | None = None
+    lines = []
+    with path.open(encoding="utf-8", errors="replace") as f:
+        for line in f:
+            if line.startswith("# ") and '"' in line and header is None \
+                    and "," in line:
+                header = line[1:].lstrip()
+                continue
+            if not line.startswith("#"):
+                lines.append(line)
+    if header:
+        lines.insert(0, header)
+    return pd.read_csv(io.StringIO("".join(lines)), skipinitialspace=True)
+
+
+def _newest_data(pattern: str) -> pathlib.Path | None:
+    """_newest but excluding .meta.json sidecars that share the glob."""
+    hits = sorted(p for p in RAW.glob(pattern) if not p.name.endswith(".meta.json"))
+    return hits[-1] if hits else None
+
+
+def _host_from_ioc(value: str, ioc_type: str) -> str | None:
+    v = (value or "").strip()
+    if not v:
+        return None
+    if ioc_type == "url":
+        from urllib.parse import urlparse
+        try:
+            return (urlparse(v).hostname or "").lower() or None
+        except ValueError:
+            return None
+    if ioc_type == "domain":
+        return v.lower()
+    if ioc_type == "ip:port":
+        return v.rsplit(":", 1)[0].strip("[]").lower()
+    if ioc_type in ("ip", "ipv4", "ipv6"):
+        return v.lower()
+    return None
+
+
+def clean_threatfox() -> dict:
+    src = _newest("threatfox/threatfox_csv_recent_*.csv")
+    if not src:
+        return {"status": "missing_raw"}
+    df = _read_comment_csv(src)
+    n_raw = len(df)
+    df.columns = [c.strip().lower() for c in df.columns]
+    for c in df.select_dtypes("object"):
+        df[c] = df[c].astype("string").str.strip()
+    df["entity"] = [_host_from_ioc(v, t) for v, t in zip(df["ioc_value"], df["ioc_type"])]
+    n_no_entity = int(df["entity"].isna().sum())
+    df = df.dropna(subset=["entity"])
+    df["confidence_level"] = pd.to_numeric(df["confidence_level"], errors="coerce").astype("Int64")
+    out = _fresh(PEXT / "threatfox")
+    df.to_parquet(out / "threatfox_recent.parquet", index=False)
+    df.to_csv(_fresh(EXPORTS / "threatfox") / "threatfox_recent.csv.gz",
+              index=False, compression="gzip")
+    return {"status": "ok", "rows_raw": n_raw, "rows_clean": len(df),
+            "no_host_extracted": n_no_entity,
+            "unique_domains_ips": int(df["entity"].nunique()),
+            "ioc_types": {k: int(v) for k, v in df["ioc_type"].value_counts().items()}}
+
+
+# ------------------------------------------------------------ feodotracker
+
+def clean_feodotracker() -> dict:
+    src = _newest_data("feodotracker/feodotracker_ipblocklist_*.json")
+    if not src:
+        return {"status": "missing_raw"}
+    rows = json.loads(src.read_text())
+    df = pd.DataFrame(rows)
+    n_raw = len(df)
+    if "ip_address" not in df.columns:
+        return {"status": "error", "error": "unexpected feodotracker json schema"}
+    df["ip_address"] = df["ip_address"].astype("string").str.strip().str.lower()
+    df = df.drop_duplicates(["ip_address", "port", "malware"])
+    out = _fresh(PEXT / "feodotracker")
+    df.to_parquet(out / "feodotracker_ipblocklist.parquet", index=False)
+    df.to_csv(_fresh(EXPORTS / "feodotracker") / "feodotracker_ipblocklist.csv.gz",
+              index=False, compression="gzip")
+    return {"status": "ok", "rows_raw": n_raw, "rows_clean": len(df),
+            "unique_ips": int(df["ip_address"].nunique()),
+            "malware_families": {k: int(v) for k, v in df["malware"].value_counts().items()}}
+
+
+# ----------------------------------------------------------- malwarebazaar
+
+def clean_malwarebazaar() -> dict:
+    probe = RAW / "malwarebazaar" / "probe_status.json"
+    src = _newest("malwarebazaar/malwarebazaar_daily_*.json") \
+        or _newest("malwarebazaar/malwarebazaar_get_recent_*.json")
+    if not src:
+        return {"status": "blocked",
+                "reason": "no raw data; blob + API unreachable (see probe_status.json)",
+                "probe": json.loads(probe.read_text()) if probe.exists() else None}
+    rows = json.loads(src.read_text())
+    if isinstance(rows, dict):
+        rows = rows.get("data", [])
+    df = pd.DataFrame(rows)
+    out = _fresh(PEXT / "malwarebazaar")
+    df.to_parquet(out / "malwarebazaar_sample.parquet", index=False)
+    return {"status": "ok", "rows": len(df), "file": src.name}
+
+
+# --------------------------------------------------------------- sanctions
+
+def _xml_first(el, *path: str) -> str | None:
+    cur = el
+    for p in path:
+        cur = cur.find(p)
+        if cur is None:
+            return None
+    return (cur.text or "").strip() or None
+
+
+def clean_sanctions_un() -> dict:
+    import xml.etree.ElementTree as ET
+    src = _newest("sanctions_un/un_consolidated_*.xml")
+    if not src:
+        return {"status": "missing_raw"}
+    rows: list[dict] = []
+    counts = {"individual": 0, "entity": 0}
+    for ev, el in ET.iterparse(str(src), events=("end",)):
+        if el.tag not in ("INDIVIDUAL", "ENTITY"):
+            continue
+        kind = el.tag.lower()
+        counts[kind] += 1
+        aliases = [a.text.strip() for a in
+                   el.findall("INDIVIDUAL_ALIAS/ALIAS_NAME")
+                   + el.findall("ENTITY_ALIAS/ALIAS_NAME")
+                   if a.text and a.text.strip()]
+        name = " ".join(p for p in [_xml_first(el, "FIRST_NAME"),
+                                    _xml_first(el, "SECOND_NAME"),
+                                    _xml_first(el, "THIRD_NAME"),
+                                    _xml_first(el, "FOURTH_NAME")] if p)
+        rows.append({
+            "dataid": _xml_first(el, "DATAID"),
+            "list_type": kind,
+            "name": name or None,
+            "n_aliases": len(aliases),
+            "aliases": aliases[:10],
+            "listed_on": _xml_first(el, "LISTED_ON"),
+            "un_ref": _xml_first(el, "REFERENCE_NUMBER"),
+            "comments": (_xml_first(el, "COMMENTS1") or "")[:500],
+        })
+        el.clear()
+    df = pd.DataFrame(rows)
+    out = _fresh(PEXT / "sanctions_un")
+    df.to_parquet(out / "un_consolidated.parquet", index=False)
+    keep = ["dataid", "list_type", "name", "n_aliases", "listed_on", "un_ref"]
+    df[keep].to_csv(_fresh(EXPORTS / "sanctions_un") / "un_consolidated.csv.gz",
+                    index=False, compression="gzip")
+    return {"status": "ok", "rows": len(df), "individuals": counts["individual"],
+            "entities": counts["entity"]}
+
+
+_OFAC_COLS = ["ent_num", "sdn_name", "sdn_type", "program", "title", "call_sign",
+              "vessel_type", "tonnage", "grt", "vessel_flag", "vessel_owner", "remarks"]
+
+
+def clean_sanctions_ofac() -> dict:
+    src = _newest("sanctions_ofac/ofac_sdn_*.csv")
+    if not src:
+        return {"status": "missing_raw"}
+    df = pd.read_csv(src, header=None, names=_OFAC_COLS, dtype="string",
+                     skipinitialspace=True)
+    n_raw = len(df)
+    for c in df.columns:
+        df[c] = df[c].str.strip().str.strip('"').replace("-0-", None)
+    df["ent_num"] = pd.to_numeric(df["ent_num"], errors="coerce").astype("Int64")
+    df = df.drop_duplicates("ent_num")
+    out = _fresh(PEXT / "sanctions_ofac")
+    df.to_parquet(out / "ofac_sdn.parquet", index=False)
+    df.to_csv(_fresh(EXPORTS / "sanctions_ofac") / "ofac_sdn.csv.gz",
+              index=False, compression="gzip")
+    return {"status": "ok", "rows_raw": n_raw, "rows_clean": len(df),
+            "programs": {k: int(v) for k, v in df["program"].value_counts().head(12).items()}}
+
+
+def clean_sanctions_seco() -> dict:
+    import xml.etree.ElementTree as ET
+    src = _newest("sanctions_seco/seco_source_*.xml")
+    if not src:
+        return {"status": "missing_raw"}
+    rows: list[dict] = []
+    n_targets = 0
+    list_date = None
+    for ev, el in ET.iterparse(str(src), events=("start",)):
+        if el.tag == "swiss-sanctions-list" and list_date is None:
+            list_date = el.get("date")
+        if el.tag != "target":
+            continue
+        n_targets += 1
+        names = []
+        for nm in el.findall(".//name"):
+            parts = [np.findtext("value", default="").strip()
+                     for np in nm.findall("name-part")]
+            whole = " ".join(p for p in parts if p)
+            if whole:
+                names.append(whole)
+        if names:
+            rows.append({"ssid": el.get("ssid"), "name": names[0],
+                         "n_name_variants": len(names),
+                         "alt_names": names[1:10]})
+        el.clear()
+    df = pd.DataFrame(rows).drop_duplicates("ssid")
+    out = _fresh(PEXT / "sanctions_seco")
+    df.to_parquet(out / "seco_sanctions.parquet", index=False)
+    df.to_csv(_fresh(EXPORTS / "sanctions_seco") / "seco_sanctions.csv.gz",
+              index=False, compression="gzip")
+    return {"status": "ok", "list_date": list_date, "targets_seen": n_targets,
+            "rows_clean": len(df),
+            "via": "OpenSanctions ch_seco_sanctions source.xml mirror"}
+
+
+def clean_sanctions_eu() -> dict:
+    probe = RAW / "sanctions_eu" / "probe_status.json"
+    return {"status": "blocked",
+            "reason": ("EU consolidated-list bulk CSV now requires EU Login "
+                       "(verified 2026-09-24; 307->EU Login HTML even with "
+                       "?anonymous=true)"),
+            "probe": json.loads(probe.read_text()) if probe.exists() else None}
+
+
+# ----------------------------------------------------------- domain_health
+
+def clean_domain_health() -> dict:
+    src = _newest("domain_health/domain_health_*.jsonl")
+    if not src:
+        return {"status": "missing_raw"}
+    merged: dict[str, dict] = {}
+    with src.open() as f:
+        for line in f:
+            try:
+                r = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            d = r.pop("domain", None)
+            if not d:
+                continue
+            merged.setdefault(d, {}).update(r)
+    df = pd.DataFrame([{"domain": d, **v} for d, v in merged.items()])
+    n = len(df)
+    for c in ("dns_mx_exists", "dns_ns_exists", "dns_a_exists", "has_spf",
+              "http_live", "https_ok", "parked_like"):
+        if c in df:
+            df[c] = df[c].astype("boolean")
+    if "wayback_first_seen" in df:
+        df["wayback_first_seen"] = pd.to_datetime(
+            df["wayback_first_seen"], errors="coerce", utc=True)
+    if "crtsh_first_seen" in df:
+        df["crtsh_first_seen"] = pd.to_datetime(
+            df["crtsh_first_seen"], errors="coerce", utc=True)
+    out = _fresh(PEXT / "domain_health")
+    df.to_parquet(out / "domain_health.parquet", index=False)
+    df.to_csv(_fresh(EXPORTS / "domain_health") / "domain_health.csv.gz",
+              index=False, compression="gzip")
+
+    def cov(col: str):
+        return round(float(df[col].notna().mean()), 4) if col in df else None
+
+    def count_true(col: str) -> int:
+        return int((df[col] == True).sum()) if col in df else 0  # noqa: E712
+
+    return {"status": "ok", "rows": n,
+            "coverage_dns": cov("dns_a_exists"), "coverage_http": cov("http_live"),
+            "coverage_wayback": cov("wayback_first_seen"),
+            "coverage_crtsh": cov("crtsh_first_seen"),
+            "dead_domains": n - count_true("dns_a_exists"),
+            "parked_like": count_true("parked_like"),
+            "http_live": count_true("http_live")}
+
+
 # -------------------------------------------------------------------- main
 
 CLEANERS = {
@@ -598,6 +878,14 @@ CLEANERS = {
     "agentdojo": clean_agentdojo,
     "tensortrust": clean_tensortrust,
     "hackaprompt": clean_hackaprompt,
+    "threatfox": clean_threatfox,
+    "feodotracker": clean_feodotracker,
+    "malwarebazaar": clean_malwarebazaar,
+    "sanctions_un": clean_sanctions_un,
+    "sanctions_ofac": clean_sanctions_ofac,
+    "sanctions_seco": clean_sanctions_seco,
+    "sanctions_eu": clean_sanctions_eu,
+    "domain_health": clean_domain_health,
 }
 
 _LICENSES = {
@@ -612,6 +900,14 @@ _LICENSES = {
     "agentdojo": "AgentDojo (ETH; MIT)",
     "tensortrust": "Tensor Trust (HumanCompatibleAI; permissive)",
     "hackaprompt": "HackAPrompt (MIT; gated access)",
+    "threatfox": "abuse.ch ThreatFox (free, attribution appreciated)",
+    "feodotracker": "abuse.ch FeodoTracker (free, attribution appreciated)",
+    "malwarebazaar": "abuse.ch MalwareBazaar (free, attribution; auth key for API)",
+    "sanctions_un": "UN consolidated list (public data, (c) United Nations)",
+    "sanctions_ofac": "OFAC SDN list (US Treasury, public domain)",
+    "sanctions_seco": "SECO Swiss sanctions via OpenSanctions mirror (CC BY-SA 4.0 on mirror; Swiss public data)",
+    "sanctions_eu": "EU consolidated list (public data; bulk download behind EU Login)",
+    "domain_health": "protocol lookups + Wayback CDX + crt.sh (public services, bounded/cached)",
 }
 
 

@@ -1,0 +1,7 @@
+{
+  "status": "ok",
+  "list_date": "2026-09-04",
+  "targets_seen": 17312,
+  "rows_clean": 8609,
+  "via": "OpenSanctions ch_seco_sanctions source.xml mirror"
+}
