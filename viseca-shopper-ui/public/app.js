@@ -13,8 +13,40 @@
   const statusAgent = document.getElementById("statusAgent");
   const turnCounter = document.getElementById("turnCounter");
 
+  const authOverlay = document.getElementById("authOverlay");
+  const authView = document.getElementById("authView");
+  const accountView = document.getElementById("accountView");
+  const tabLogin = document.getElementById("tabLogin");
+  const tabRegister = document.getElementById("tabRegister");
+  const loginForm = document.getElementById("loginForm");
+  const registerForm = document.getElementById("registerForm");
+  const loginError = document.getElementById("loginError");
+  const registerError = document.getElementById("registerError");
+  const accountSignedOut = document.getElementById("accountSignedOut");
+  const accountSignedIn = document.getElementById("accountSignedIn");
+  const acctName = document.getElementById("acctName");
+  const acctPlan = document.getElementById("acctPlan");
+  const acctUsage = document.getElementById("acctUsage");
+  const acctEmail = document.getElementById("acctEmail");
+  const plansGrid = document.getElementById("plansGrid");
+  const usageFill = document.getElementById("usageFill");
+  const usageText = document.getElementById("usageText");
+  const keyList = document.getElementById("keyList");
+  const keyForm = document.getElementById("keyForm");
+  const newKeyBox = document.getElementById("newKeyBox");
+  const newKeyValue = document.getElementById("newKeyValue");
+  const btnCopyKey = document.getElementById("btnCopyKey");
+  const btnCloseAuth = document.getElementById("btnCloseAuth");
+  const btnShowAuth = document.getElementById("btnShowAuth");
+  const btnAccount = document.getElementById("btnAccount");
+  const btnLogout = document.getElementById("btnLogout");
+
   let turns = 0;
   let busy = false;
+  let locked = true; // composer locked until signed in
+  let authed = false;
+  let currentUser = null;
+  let plansCache = null;
 
   const THINKING_WORDS = [
     "thinking…",
@@ -251,6 +283,9 @@
           result.hidden = false;
           const missing = (j.missing || []).map((m) => `<li><code>${esc(m)}</code></li>`).join("");
           result.innerHTML = `<p><strong>The authority refused to sign — the policy is incomplete.</strong> The agent must ask you for:</p><ul>${missing}</ul>`;
+        } else if (r.status === 401) {
+          openAuth("login");
+          throw new Error("Your session expired — sign in again.");
         } else {
           throw new Error(j.error || `HTTP ${r.status}`);
         }
@@ -277,7 +312,7 @@
   function setBusy(on) {
     busy = on;
     composer.classList.toggle("busy", on);
-    sendBtn.disabled = on;
+    sendBtn.disabled = on || locked;
     typing.hidden = !on;
     if (on) {
       thinkingStep = 0;
@@ -308,8 +343,9 @@
       if (j.ok) {
         setStatus("on", "connected");
         if (j.agent) statusAgent.textContent = j.agent;
+        if (j.plans) plansCache = j.plans;
         const fs = document.getElementById("footerSession");
-        if (fs && j.session) fs.textContent = j.session;
+        if (fs && j.session) fs.textContent = `${j.session}-u<account>`;
       } else {
         setStatus("off", "bridge error");
       }
@@ -342,7 +378,16 @@
         });
         if (!r.ok) {
           const j = await r.json().catch(() => ({}));
-          addMessage("error", j.error || `Request failed (HTTP ${r.status}).`);
+          if (r.status === 401) {
+            renderSignedOut();
+            addMessage("error", "Please sign in to chat.");
+            openAuth("login");
+          } else if (r.status === 429) {
+            addMessage("error", j.error || "Daily message limit reached — see Account for plans.");
+            refreshMe();
+          } else {
+            addMessage("error", j.error || `Request failed (HTTP ${r.status}).`);
+          }
           return;
         }
         if (!r.body) {
@@ -372,6 +417,7 @@
             } else if (ev.type === "done") {
               settled = true;
               addMessage("agent", ev.reply);
+              refreshMe(); // keep the usage chip honest
             } else if (ev.type === "error") {
               settled = true;
               addMessage("error", ev.error || "Agent error.");
@@ -420,6 +466,201 @@
     btn.addEventListener("click", () => send(btn.dataset.prompt));
   });
 
-  health();
-  input.focus();
+  /* ---------- auth & account ---------- */
+
+  function setLocked(on) {
+    locked = on;
+    input.disabled = on;
+    input.placeholder = on ? "Sign in to start shopping…" : "What are we shopping for?";
+    sendBtn.disabled = on || busy;
+  }
+
+  function renderSignedIn(user) {
+    currentUser = user;
+    authed = true;
+    accountSignedOut.hidden = true;
+    accountSignedIn.hidden = false;
+    acctName.textContent = user.name;
+    acctPlan.textContent = user.planLabel;
+    acctUsage.textContent = `${user.usage.used}/${user.usage.limit} msgs`;
+    setLocked(false);
+    if (!authOverlay.hidden && !accountView.hidden) renderAccountView(user);
+  }
+
+  function renderSignedOut() {
+    currentUser = null;
+    authed = false;
+    accountSignedOut.hidden = false;
+    accountSignedIn.hidden = true;
+    setLocked(true);
+  }
+
+  async function refreshMe() {
+    try {
+      const r = await fetch("/api/auth/me");
+      if (!r.ok) { renderSignedOut(); return null; }
+      const j = await r.json();
+      renderSignedIn(j.user);
+      return j.user;
+    } catch { renderSignedOut(); return null; }
+  }
+
+  function showTab(which) {
+    const login = which !== "register";
+    tabLogin.classList.toggle("tab--active", login);
+    tabRegister.classList.toggle("tab--active", !login);
+    loginForm.hidden = !login;
+    registerForm.hidden = login;
+    loginError.hidden = true;
+    registerError.hidden = true;
+  }
+
+  function openAuth(view) {
+    authOverlay.hidden = false;
+    newKeyBox.hidden = true;
+    if (view === "account" && authed) {
+      authView.hidden = true;
+      accountView.hidden = false;
+      renderAccountView(currentUser);
+    } else if (view === "register") {
+      authView.hidden = false;
+      accountView.hidden = true;
+      showTab("register");
+    } else {
+      authView.hidden = false;
+      accountView.hidden = true;
+      showTab("login");
+    }
+  }
+
+  function closeAuth() { authOverlay.hidden = true; }
+
+  function renderAccountView(user) {
+    acctEmail.textContent = user.email;
+
+    if (plansCache) {
+      plansGrid.innerHTML = "";
+      Object.entries(plansCache).forEach(([id, p]) => {
+        const card = document.createElement("button");
+        card.type = "button";
+        card.className = "plan-card" + (user.plan === id ? " plan-card--current" : "");
+        card.innerHTML = `<span class="plan-name">${esc(p.label)}</span>
+          <span class="plan-price">${esc(p.price)}</span>
+          <span class="plan-note">${esc(p.note)}</span>
+          <span class="mono-label plan-state">${user.plan === id ? "● current" : "switch →"}</span>`;
+        card.addEventListener("click", async () => {
+          if (user.plan === id) return;
+          card.disabled = true;
+          await fetch("/api/account/plan", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ plan: id }),
+          }).catch(() => {});
+          await refreshMe();
+        });
+        plansGrid.appendChild(card);
+      });
+    }
+
+    const u = user.usage;
+    usageText.textContent = `${u.used} of ${u.limit} messages used today · ${u.remaining} left`;
+    usageFill.style.width = `${Math.min(100, Math.round((u.used / Math.max(1, u.limit)) * 100))}%`;
+
+    keyList.innerHTML = "";
+    const keys = user.apiKeys || [];
+    if (!keys.length) {
+      keyList.innerHTML = '<p class="form-note">No keys yet.</p>';
+    }
+    keys.forEach((k) => {
+      const row = document.createElement("div");
+      row.className = "key-row";
+      row.innerHTML = `<span class="key-name">${esc(k.name)}</span>
+        <code class="key-masked">${esc(k.masked)}</code>
+        <button class="acct-btn acct-btn--danger" type="button">Revoke</button>`;
+      row.querySelector("button").addEventListener("click", async () => {
+        await fetch("/api/account/keys/revoke", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: k.id }),
+        });
+        await refreshMe();
+      });
+      keyList.appendChild(row);
+    });
+
+    document.getElementById("urlOpenapi").textContent = `${location.origin}/openapi.json`;
+    document.getElementById("urlPlugin").textContent = `${location.origin}/.well-known/ai-plugin.json`;
+  }
+
+  loginForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    loginError.hidden = true;
+    const r = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: loginForm.email.value, password: loginForm.password.value }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok) { loginForm.reset(); closeAuth(); refreshMe(); }
+    else { loginError.textContent = j.error || `Sign-in failed (HTTP ${r.status}).`; loginError.hidden = false; }
+  });
+
+  registerForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    registerError.hidden = true;
+    const r = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: registerForm.name.value, email: registerForm.email.value, password: registerForm.password.value }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok) { registerForm.reset(); closeAuth(); refreshMe(); addMessage("system", "Welcome — your account is ready. Open Account for plans and API keys."); }
+    else { registerError.textContent = j.error || `Registration failed (HTTP ${r.status}).`; registerError.hidden = false; }
+  });
+
+  keyForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const r = await fetch("/api/account/keys", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: keyForm.name.value.trim() || "api key" }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok && j.key) {
+      newKeyValue.textContent = j.key;
+      newKeyBox.hidden = false;
+      keyForm.reset();
+      refreshMe();
+    }
+  });
+
+  btnCopyKey.addEventListener("click", () => {
+    if (navigator.clipboard) navigator.clipboard.writeText(newKeyValue.textContent).catch(() => {});
+    btnCopyKey.textContent = "Copied ✓";
+    setTimeout(() => (btnCopyKey.textContent = "Copy"), 1500);
+  });
+
+  btnLogout.addEventListener("click", async () => {
+    await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+    closeAuth();
+    renderSignedOut();
+    addMessage("system", "Signed out.");
+  });
+
+  btnShowAuth.addEventListener("click", () => openAuth(authed ? "account" : "login"));
+  btnAccount.addEventListener("click", () => openAuth("account"));
+  btnCloseAuth.addEventListener("click", closeAuth);
+  tabLogin.addEventListener("click", () => showTab("login"));
+  tabRegister.addEventListener("click", () => showTab("register"));
+  authOverlay.addEventListener("click", (e) => { if (e.target === authOverlay) closeAuth(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !authOverlay.hidden) closeAuth(); });
+
+  /* ---------- boot ---------- */
+
+  (async () => {
+    const me = await refreshMe();
+    if (!me) openAuth("login"); // registration-first: gate the concierge
+    health();
+    input.focus();
+  })();
 })();

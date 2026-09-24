@@ -6,14 +6,23 @@
  *   1. serves the static UI from ./public
  *   2. proxies chat messages to the viseca-shopper OpenClaw agent via the
  *      Gateway CLI:  openclaw agent --agent <id> --session-key <key> --json -m <msg>
+ *   3. multi-user: registration/login (scrypt + cookie sessions), per-user agent
+ *      sessions, subscription plans with daily message caps  (accounts.js)
+ *   4. external surfaces: bearer API keys, POST /api/v1/chat (plain JSON for
+ *      ChatGPT Actions & skills), /.well-known/ai-plugin.json + /openapi.json
  *
  * Config (env):
- *   PORT                 default 8794
- *   HOST                 default 127.0.0.1
- *   OPENCLAW_AGENT       default viseca-shopper
- *   OPENCLAW_SESSION     default webui  (session key suffix; keeps history)
- *   OPENCLAW_BIN         default openclaw
- *   OPENCLAW_TIMEOUT_MS  default 300000
+ *   PORT                  default 8794
+ *   HOST                  default 127.0.0.1
+ *   OPENCLAW_AGENT        default viseca-shopper
+ *   OPENCLAW_SESSION      default webui   (base; users get <base>-u<id>)
+ *   OPENCLAW_BIN          default openclaw
+ *   OPENCLAW_TIMEOUT_MS   default 600000
+ *   AGENT_MAX_CONCURRENT  default 2       (global agent-turn slots across users)
+ *   PUBLIC_BASE_URL       default derived (x-forwarded-proto/host) — plugin manifest
+ *   REGISTRATION_OPEN     default true ("false" closes signup)
+ *   PLANS_JSON            optional override of plan caps, e.g. '{"free":{"daily":2}}'
+ *   ACCOUNTS_DATA_DIR     default ./data
  */
 
 const http = require("http");
@@ -22,6 +31,7 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const crypto = require("crypto");
+const accounts = require("./accounts");
 
 const PORT = parseInt(process.env.PORT || "8794", 10);
 const HOST = process.env.HOST || "127.0.0.1";
@@ -29,6 +39,7 @@ const AGENT = process.env.OPENCLAW_AGENT || "viseca-shopper";
 const SESSION = process.env.OPENCLAW_SESSION || "webui";
 const BIN = process.env.OPENCLAW_BIN || "openclaw";
 const TIMEOUT_MS = parseInt(process.env.OPENCLAW_TIMEOUT_MS || "600000", 10);
+const MAX_CONCURRENT = Math.max(1, parseInt(process.env.AGENT_MAX_CONCURRENT || "2", 10));
 const PUBLIC_DIR = path.join(__dirname, "public");
 
 /* Order Policy Gate — the bridge is the trusted signing authority.
@@ -65,17 +76,63 @@ const MIME = {
   ".json": "application/json; charset=utf-8",
 };
 
-/* one agent turn at a time — the session is sequential */
-let inFlight = null;
+/* one agent turn at a time per user session; global cap across users */
+const userInFlight = new Map(); // userId -> promise
+let activeTurns = 0;
 
-function sendJson(res, code, obj) {
+function sendJson(res, code, obj, extraHeaders) {
   const body = JSON.stringify(obj);
-  res.writeHead(code, {
+  res.writeHead(code, Object.assign({
     "Content-Type": "application/json; charset=utf-8",
     "Content-Length": Buffer.byteLength(body),
     "Cache-Control": "no-store",
-  });
+  }, extraHeaders || {}));
   res.end(body);
+}
+
+function baseUrl(req) {
+  if (process.env.PUBLIC_BASE_URL) return process.env.PUBLIC_BASE_URL.replace(/\/$/, "");
+  const proto = (req.headers["x-forwarded-proto"] || (req.socket.encrypted ? "https" : "http")).toString().split(",")[0].trim();
+  const host = (req.headers["x-forwarded-host"] || req.headers.host || `127.0.0.1:${PORT}`).toString().split(",")[0].trim();
+  return `${proto}://${host}`;
+}
+
+function isSecure(req) {
+  return (req.headers["x-forwarded-proto"] || "").toString().split(",")[0].trim() === "https" || Boolean(req.socket.encrypted);
+}
+
+/* ---------- auth glue ---------- */
+
+/** Resolve the requesting user: cookie session or Bearer API key. */
+function authenticate(req) {
+  const cookies = accounts.parseCookies(req.headers.cookie);
+  const viaCookie = accounts.userBySessionToken(cookies[accounts.SESSION_COOKIE]);
+  if (viaCookie) return { user: viaCookie, via: "session" };
+  const authz = req.headers.authorization || "";
+  if (/^Bearer\s+/i.test(authz)) {
+    const hit = accounts.userByApiKey(authz.replace(/^Bearer\s+/i, ""));
+    if (hit) return { user: hit.user, via: "apikey", key: hit.key };
+  }
+  return null;
+}
+
+function readBody(req, limitKB) {
+  return new Promise((resolve, reject) => {
+    let body = "";
+    let oversize = false;
+    req.on("data", (chunk) => {
+      body += chunk;
+      if (body.length > limitKB * 1024) { oversize = true; req.destroy(); }
+    });
+    req.on("end", () => (oversize ? reject(new Error("oversize")) : resolve(body)));
+    req.on("error", reject);
+  });
+}
+
+async function readJsonBody(req, limitKB) {
+  const raw = await readBody(req, limitKB);
+  if (raw === undefined) throw new Error("oversize");
+  try { return JSON.parse(raw || "{}"); } catch { return null; }
 }
 
 /** Recursively find the first value under `key` in a parsed JSON object. */
@@ -92,12 +149,12 @@ function findKey(node, key) {
 }
 
 /** Run one agent turn through the Gateway CLI and resolve the reply text. */
-function agentTurn(message) {
+function agentTurn(message, sessionKey) {
   return new Promise((resolve, reject) => {
     const child = spawn(BIN, [
       "agent",
       "--agent", AGENT,
-      "--session-key", SESSION,
+      "--session-key", sessionKey,
       "--json",
       "-m", message,
     ], { stdio: ["ignore", "pipe", "pipe"] });
@@ -175,8 +232,8 @@ function signPolicy(policy, res) {
   }
 }
 
-/** Snapshot of this agent's session from the local store (status, tokens). */
-function sessionSnapshot() {
+/** Snapshot of one agent session from the local store (status, tokens). */
+function sessionSnapshot(sessionKey) {
   return new Promise((resolve) => {
     execFile(
       BIN,
@@ -187,7 +244,7 @@ function sessionSnapshot() {
         try {
           const parsed = JSON.parse(stdout);
           const entry = (parsed.sessions || []).find(
-            (s) => s.key === `agent:${AGENT}:${SESSION}`
+            (s) => s.key === `agent:${AGENT}:${sessionKey}`
           );
           resolve(entry || null);
         } catch {
@@ -215,14 +272,243 @@ function serveStatic(req, res) {
   });
 }
 
+/* ---------- chat: shared turn runner (SSE for the UI, JSON for /api/v1) ---------- */
+
+const userSessionKey = (user) => `${SESSION}-u${user.sid}`;
+
+async function runChatTurn(req, res, user, message, mode) {
+  // one turn at a time per user (their agent session is sequential)
+  if (userInFlight.has(user.id)) {
+    return sendJson(res, 409, { error: "Your previous message is still being answered — one turn at a time." }, { "Retry-After": "20" });
+  }
+  // global agent capacity
+  if (activeTurns >= MAX_CONCURRENT) {
+    return sendJson(res, 503, { error: "All agent slots are busy right now — please try again in a moment." }, { "Retry-After": "30" });
+  }
+  // plan limit
+  const quota = accounts.countMessage(user.id);
+  if (!quota.ok) {
+    return sendJson(res, 429, {
+      error: `Daily limit reached on the ${quota.plan.label} plan (${quota.plan.daily} messages/day). Upgrade in Account to continue.`,
+      plan: user.plan, used: quota.used, limit: quota.limit,
+    });
+  }
+  const usage = accounts.usageInfo(user);
+
+  const started = Date.now();
+  const sessionKey = userSessionKey(user);
+  console.log(`[chat] turn start  (${message.length} chars) user=${user.email} session=${sessionKey} mode=${mode}`);
+
+  const turn = (async () => {
+    activeTurns += 1;
+    try {
+      return await agentTurn(message, sessionKey);
+    } finally {
+      activeTurns -= 1;
+    }
+  })();
+  userInFlight.set(user.id, turn);
+
+  if (mode === "sse") {
+    res.writeHead(200, {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-store",
+      "X-Accel-Buffering": "no",
+    });
+    const send = (obj) => {
+      try {
+        if (!res.writableEnded) res.write(`data: ${JSON.stringify(obj)}\n\n`);
+      } catch { /* client gone — the turn still completes server-side */ }
+    };
+    send({ type: "start", agent: AGENT, session: sessionKey });
+
+    const poll = setInterval(() => {
+      sessionSnapshot(sessionKey).then((snap) => {
+        if (!snap) return;
+        send({
+          type: "progress",
+          status: snap.status,
+          totalTokens: snap.totalTokens,
+          updatedAt: snap.updatedAt,
+          model: snap.model,
+          elapsedMs: Date.now() - started,
+        });
+      });
+    }, 4000);
+
+    turn
+      .then((reply) => {
+        console.log(`[chat] turn done    in ${((Date.now() - started) / 1000).toFixed(1)}s (${reply.length} chars back) user=${user.email}`);
+        send({ type: "done", reply, agent: AGENT, session: sessionKey });
+      })
+      .catch((err) => {
+        console.log(`[chat] turn FAILED  after ${((Date.now() - started) / 1000).toFixed(1)}s: ${err.message} user=${user.email}`);
+        send({ type: "error", error: err.message });
+      })
+      .finally(() => {
+        clearInterval(poll);
+        res.end();
+        userInFlight.delete(user.id);
+      });
+    return;
+  }
+
+  // plain JSON (ChatGPT Actions / skills cannot consume SSE)
+  try {
+    const reply = await turn;
+    console.log(`[chat] turn done    in ${((Date.now() - started) / 1000).toFixed(1)}s (${reply.length} chars back) user=${user.email}`);
+    sendJson(res, 200, { reply, agent: AGENT, session: sessionKey, usage });
+  } catch (err) {
+    console.log(`[chat] turn FAILED  after ${((Date.now() - started) / 1000).toFixed(1)}s: ${err.message} user=${user.email}`);
+    sendJson(res, 502, { error: err.message });
+  } finally {
+    userInFlight.delete(user.id);
+  }
+}
+
+/* ---------- plugin manifest + OpenAPI (ChatGPT plugin / GPT Action) ---------- */
+
+function aiPluginManifest(base) {
+  return {
+    schema_version: "v1",
+    name_for_human: "Viseca Shopper",
+    name_for_model: "viseca_shopper",
+    description_for_human: "Your Swiss personal shopping concierge — find products, compare prices, and plan purchases across Swiss online shops.",
+    description_for_model: [
+      "Personal shopping concierge for Swiss online shops backed by a live agent.",
+      "Relay the user's shopping request VERBATIM via sendChatMessage (finding products, comparing prices across shops, planning purchases, hunting deals, order policies).",
+      "The agent browses real shops; a reply can take several minutes — keep waiting, do not invent answers.",
+      "Relay the final reply verbatim (it is markdown with product links).",
+      "On HTTP 409 the user's previous turn is still running — retry after 30s. On 429 the daily plan limit is exhausted — point the user to the account page to upgrade.",
+    ].join(" "),
+    auth: { type: "service_http", authorization_type: "bearer" },
+    api: { type: "openapi", url: `${base}/openapi.json`, is_user_authenticated: false },
+    logo_url: `${base}/logo.svg`,
+    contact_email: "concierge@pixerful.com",
+    legal_info_url: `${base}/`,
+  };
+}
+
+function openApiSpec(base) {
+  const replySchema = {
+    type: "object",
+    properties: {
+      reply: { type: "string", description: "The concierge's answer, markdown with links. Relay verbatim." },
+      agent: { type: "string" },
+      session: { type: "string" },
+      usage: {
+        type: "object",
+        properties: {
+          plan: { type: "string" }, planLabel: { type: "string" },
+          used: { type: "integer" }, limit: { type: "integer" }, remaining: { type: "integer" },
+        },
+      },
+    },
+    required: ["reply"],
+  };
+  const err = (desc) => ({
+    type: "object",
+    properties: { error: { type: "string", description: desc } },
+    required: ["error"],
+  });
+  return {
+    openapi: "3.0.3",
+    info: {
+      title: "Viseca Shopper API",
+      version: "1.0.0",
+      description: "Swiss personal shopping concierge. Send the user's shopping request in `message`; the live agent browses Swiss shops and answers in markdown (can take minutes). Bearer auth with a Viseca Shopper API key (Account → API keys).",
+    },
+    servers: [{ url: base }],
+    components: {
+      securitySchemes: { bearerAuth: { type: "http", scheme: "bearer" } },
+    },
+    security: [{ bearerAuth: [] }],
+    paths: {
+      "/api/v1/chat": {
+        post: {
+          operationId: "sendChatMessage",
+          summary: "Send a shopping request to the concierge",
+          description: "One conversational turn with the live shopping agent. May take minutes. 409 = previous turn still running (retry later); 429 = daily plan limit reached.",
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: { message: { type: "string", description: "The user's shopping request, verbatim." } },
+                  required: ["message"],
+                },
+              },
+            },
+          },
+          responses: {
+            "200": { description: "Concierge reply", content: { "application/json": { schema: replySchema } } },
+            "401": { description: "Missing/invalid API key", content: { "application/json": { schema: err("why auth failed") } } },
+            "409": { description: "A turn is already in flight for this account", content: { "application/json": { schema: err("why busy") } } },
+            "429": { description: "Daily message limit for the plan reached", content: { "application/json": { schema: err("limit info") } } },
+            "502": { description: "The agent turn failed", content: { "application/json": { schema: err("failure reason") } } },
+          },
+        },
+      },
+      "/api/v1/account": {
+        get: {
+          operationId: "getAccount",
+          summary: "Show plan and daily usage for the calling key",
+          responses: {
+            "200": {
+              description: "Account summary",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      email: { type: "string" },
+                      plan: { type: "string" },
+                      planLabel: { type: "string" },
+                      usage: {
+                        type: "object",
+                        properties: { used: { type: "integer" }, limit: { type: "integer" }, remaining: { type: "integer" } },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            "401": { description: "Missing/invalid API key", content: { "application/json": { schema: err("why auth failed") } } },
+          },
+        },
+      },
+    },
+  };
+}
+
+/* ---------- server ---------- */
+
 const server = http.createServer((req, res) => {
-  if (req.method === "GET" && req.url === "/api/health") {
+  handle(req, res).catch((e) => {
+    console.error(`[http] ${req.method} ${req.url} -> ${e.message}`);
+    if (!res.headersSent) sendJson(res, 500, { error: "Internal bridge error." });
+    else try { res.end(); } catch { /* client already gone */ }
+  });
+});
+
+async function handle(req, res) {
+  const pathname = new URL(req.url, "http://x").pathname;
+
+  /* ----- public discovery endpoints ----- */
+
+  if (req.method === "GET" && pathname === "/api/health") {
     return sendJson(res, 200, {
       ok: true,
       agent: AGENT,
       session: SESSION,
       bridge: "openclaw-cli",
-      busy: Boolean(inFlight),
+      busy: activeTurns >= MAX_CONCURRENT,
+      activeTurns,
+      maxConcurrent: MAX_CONCURRENT,
+      auth: true,
+      registrationOpen: accounts.REGISTRATION_OPEN,
+      plans: accounts.PLANS,
       policy: {
         authority_fingerprint: AUTH ? AUTH.fingerprint : null,
         policy_dir: POLICY_DIR,
@@ -230,7 +516,123 @@ const server = http.createServer((req, res) => {
     });
   }
 
-  if (req.method === "GET" && req.url === "/api/policy/pubkey") {
+  if (req.method === "GET" && pathname === "/.well-known/ai-plugin.json") {
+    return sendJson(res, 200, aiPluginManifest(baseUrl(req)));
+  }
+
+  if (req.method === "GET" && pathname === "/openapi.json") {
+    return sendJson(res, 200, openApiSpec(baseUrl(req)));
+  }
+
+  /* ----- auth ----- */
+
+  if (req.method === "POST" && pathname === "/api/auth/register") {
+    const body = await readJsonBody(req, 16).catch(() => null);
+    if (body === null) return sendJson(res, 413, { error: "Payload too large." });
+    let user;
+    try {
+      user = accounts.createUser({ email: body.email, password: body.password, name: body.name });
+    } catch (e) {
+      const status = e.status || 500;
+      return sendJson(res, status, { error: e.message });
+    }
+    const token = accounts.createSession(user.id);
+    res.setHeader("Set-Cookie", accounts.sessionCookieHeader(token, isSecure(req)));
+    console.log(`[auth] registered ${user.email}`);
+    return sendJson(res, 201, { ok: true, user: accounts.publicUser(user) });
+  }
+
+  if (req.method === "POST" && pathname === "/api/auth/login") {
+    const body = await readJsonBody(req, 16).catch(() => null);
+    if (body === null) return sendJson(res, 413, { error: "Payload too large." });
+    const user = accounts.verifyLogin(body.email, body.password);
+    if (!user) return sendJson(res, 401, { error: "Wrong email or password." });
+    const token = accounts.createSession(user.id);
+    res.setHeader("Set-Cookie", accounts.sessionCookieHeader(token, isSecure(req)));
+    console.log(`[auth] login ${user.email}`);
+    return sendJson(res, 200, { ok: true, user: accounts.publicUser(user) });
+  }
+
+  if (req.method === "POST" && pathname === "/api/auth/logout") {
+    const cookies = accounts.parseCookies(req.headers.cookie);
+    accounts.destroySession(cookies[accounts.SESSION_COOKIE]);
+    res.setHeader("Set-Cookie", accounts.clearedSessionCookieHeader(isSecure(req)));
+    return sendJson(res, 200, { ok: true });
+  }
+
+  if (req.method === "GET" && pathname === "/api/auth/me") {
+    const auth = authenticate(req);
+    if (!auth) return sendJson(res, 401, { error: "Not signed in." });
+    return sendJson(res, 200, { ok: true, user: accounts.publicUser(auth.user), via: auth.via });
+  }
+
+  /* ----- account management (session or key auth) ----- */
+
+  if (pathname.startsWith("/api/account") || pathname.startsWith("/api/v1/")) {
+    const auth = authenticate(req);
+    if (!auth) return sendJson(res, 401, { error: "Sign in or send a Bearer API key (Account → API keys)." });
+
+    if (req.method === "GET" && (pathname === "/api/v1/account" || pathname === "/api/account")) {
+      const u = accounts.publicUser(auth.user);
+      return sendJson(res, 200, { ok: true, email: u.email, name: u.name, plan: u.plan, planLabel: u.planLabel, usage: u.usage });
+    }
+
+    if (req.method === "POST" && pathname === "/api/account/plan") {
+      const body = await readJsonBody(req, 4).catch(() => null);
+      if (body === null) return sendJson(res, 413, { error: "Payload too large." });
+      try {
+        accounts.setPlan(auth.user.id, body.plan);
+      } catch (e) {
+        return sendJson(res, e.status || 500, { error: e.message });
+      }
+      console.log(`[account] ${auth.user.email} switched plan -> ${body.plan}${auth.via === "session" ? "" : " (demo: billing not wired)"}`);
+      return sendJson(res, 200, { ok: true, user: accounts.publicUser(auth.user) });
+    }
+
+    if (pathname === "/api/account/keys" && req.method === "GET") {
+      return sendJson(res, 200, { ok: true, keys: accounts.publicUser(auth.user).apiKeys });
+    }
+
+    if (pathname === "/api/account/keys" && req.method === "POST") {
+      const body = await readJsonBody(req, 4).catch(() => null);
+      if (body === null) return sendJson(res, 413, { error: "Payload too large." });
+      const { key, record } = accounts.createApiKey(auth.user.id, body.name);
+      console.log(`[account] API key created for ${auth.user.email} (${record.name})`);
+      // the only time the full key is ever returned
+      return sendJson(res, 201, { ok: true, key, record: { id: record.id, name: record.name, created: record.created, masked: `vsk_${record.id}_…` } });
+    }
+
+    if (pathname === "/api/account/keys/revoke" && req.method === "POST") {
+      const body = await readJsonBody(req, 4).catch(() => null);
+      if (body === null) return sendJson(res, 413, { error: "Payload too large." });
+      const ok = accounts.revokeApiKey(auth.user.id, String(body.id || ""));
+      return sendJson(res, ok ? 200 : 404, ok ? { ok: true } : { error: "No such key." });
+    }
+  }
+
+  /* ----- chat ----- */
+
+  if (req.method === "POST" && (pathname === "/api/chat" || pathname === "/api/v1/chat")) {
+    const auth = authenticate(req);
+    if (!auth) return sendJson(res, 401, { error: "Sign in or send a Bearer API key (Account → API keys)." });
+
+    let body;
+    try {
+      body = await readJsonBody(req, 32);
+    } catch {
+      return sendJson(res, 413, { error: "Message too large (32 KB limit)." });
+    }
+    if (body === null) return sendJson(res, 400, { error: "Invalid JSON body." });
+    const { message } = body;
+    if (!message || typeof message !== "string" || !message.trim()) {
+      return sendJson(res, 400, { error: "Field 'message' is required." });
+    }
+    return runChatTurn(req, res, auth.user, message.trim(), pathname === "/api/chat" ? "sse" : "json");
+  }
+
+  /* ----- policy gate (signing authority — signed-in users only) ----- */
+
+  if (req.method === "GET" && pathname === "/api/policy/pubkey") {
     return sendJson(res, 200, {
       ok: true,
       fingerprint: AUTH ? AUTH.fingerprint : null,
@@ -240,101 +642,27 @@ const server = http.createServer((req, res) => {
     });
   }
 
-  if (req.method === "POST" && req.url === "/api/policy/sign") {
-    let body = "";
-    let oversize = false;
-    req.on("data", (chunk) => {
-      body += chunk;
-      if (body.length > 64 * 1024) { oversize = true; req.destroy(); }
-    });
-    req.on("end", () => {
-      if (oversize) return sendJson(res, 413, { error: "Policy too large (64 KB limit)." });
-      let policy;
-      try { ({ policy } = JSON.parse(body)); } catch { return sendJson(res, 400, { error: "Invalid JSON body." }); }
-      if (!policy || typeof policy !== "object" || Array.isArray(policy)) {
-        return sendJson(res, 400, { error: "Field 'policy' must be an object." });
-      }
-      signPolicy(policy, res);
-    });
-    return;
-  }
-
-  if (req.method === "POST" && req.url === "/api/chat") {
-    if (inFlight) {
-      return sendJson(res, 409, {
-        error: "The agent is still answering the previous message — one turn at a time.",
-      });
+  if (req.method === "POST" && pathname === "/api/policy/sign") {
+    const auth = authenticate(req);
+    if (!auth || auth.via !== "session") {
+      return sendJson(res, 401, { error: "Policies can only be signed by a signed-in customer in the web UI." });
     }
-    let body = "";
-    let oversize = false;
-    req.on("data", (chunk) => {
-      body += chunk;
-      if (body.length > 32 * 1024) { oversize = true; req.destroy(); }
-    });
-    req.on("end", () => {
-      if (oversize) return sendJson(res, 413, { error: "Message too large (32 KB limit)." });
-      let message;
-      try {
-        ({ message } = JSON.parse(body));
-      } catch {
-        return sendJson(res, 400, { error: "Invalid JSON body." });
-      }
-      if (!message || typeof message !== "string" || !message.trim()) {
-        return sendJson(res, 400, { error: "Field 'message' is required." });
-      }
-
-      const started = Date.now();
-      console.log(`[chat] turn start  (${message.trim().length} chars) from ${req.socket.remoteAddress}`);
-
-      // Live event stream (SSE): start -> progress… -> done|error. Progress is
-      // best-effort (session store polling); the final frame is authoritative.
-      res.writeHead(200, {
-        "Content-Type": "text/event-stream; charset=utf-8",
-        "Cache-Control": "no-store",
-        "X-Accel-Buffering": "no",
-      });
-      const send = (obj) => {
-        try {
-          if (!res.writableEnded) res.write(`data: ${JSON.stringify(obj)}\n\n`);
-        } catch { /* client gone — the turn still completes server-side */ }
-      };
-      send({ type: "start", agent: AGENT, session: SESSION });
-
-      const poll = setInterval(() => {
-        sessionSnapshot().then((snap) => {
-          if (!snap) return;
-          send({
-            type: "progress",
-            status: snap.status,
-            totalTokens: snap.totalTokens,
-            updatedAt: snap.updatedAt,
-            model: snap.model,
-            elapsedMs: Date.now() - started,
-          });
-        });
-      }, 4000);
-
-      inFlight = agentTurn(message.trim());
-      inFlight
-        .then((reply) => {
-          console.log(`[chat] turn done    in ${((Date.now() - started) / 1000).toFixed(1)}s (${reply.length} chars back)`);
-          send({ type: "done", reply, agent: AGENT, session: SESSION });
-        })
-        .catch((err) => {
-          console.log(`[chat] turn FAILED  after ${((Date.now() - started) / 1000).toFixed(1)}s: ${err.message}`);
-          send({ type: "error", error: err.message });
-        })
-        .finally(() => {
-          clearInterval(poll);
-          res.end();
-          inFlight = null;
-        });
-    });
-    return;
+    let body;
+    try {
+      body = await readJsonBody(req, 64);
+    } catch {
+      return sendJson(res, 413, { error: "Policy too large (64 KB limit)." });
+    }
+    if (body === null) return sendJson(res, 400, { error: "Invalid JSON body." });
+    const { policy } = body;
+    if (!policy || typeof policy !== "object" || Array.isArray(policy)) {
+      return sendJson(res, 400, { error: "Field 'policy' must be an object." });
+    }
+    return signPolicy(policy, res);
   }
 
   serveStatic(req, res);
-});
+}
 
 let AUTH = null;
 try {
@@ -345,8 +673,12 @@ try {
   process.exit(1);
 }
 
+accounts.load();
+accounts.pruneSessions();
+
 server.listen(PORT, HOST, () => {
   const url = `http://${HOST}:${PORT}`;
   console.log(`[viseca-shopper-ui] serving ${PUBLIC_DIR}`);
-  console.log(`[viseca-shopper-ui] ${url}  →  agent '${AGENT}' (session key: ${SESSION})`);
+  console.log(`[viseca-shopper-ui] ${url}  →  agent '${AGENT}' (base session key: ${SESSION})`);
+  console.log(`[viseca-shopper-ui] multi-user on · plans: ${Object.keys(accounts.PLANS).join("/")} · registration ${accounts.REGISTRATION_OPEN ? "open" : "closed"} · agent slots: ${MAX_CONCURRENT}`);
 });

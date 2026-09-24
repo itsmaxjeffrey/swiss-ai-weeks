@@ -5,7 +5,8 @@
   "description": "Chat UI for the viseca-shopper OpenClaw agent — Swiss editorial concierge",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node --test test/smoke.test.js"
   },
   "engines": {
     "node": ">=18"
