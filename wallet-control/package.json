@@ -1,0 +1,13 @@
+{
+  "name": "leash-wallet-control",
+  "version": "1.0.0",
+  "description": "Agent on a Leash — customer-managed wallet control layer that approves, declines, or escalates AI-agent purchases.",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "replay": "node cli.js",
+    "test": "node test/engine.test.js && node test/injection-model.test.js"
+  },
+  "engines": { "node": ">=20" },
+  "license": "MIT"
+}

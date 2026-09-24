@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LEASH — Wallet Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..700&family=Spline+Sans+Mono:wght@300..700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="brand">
+    <span class="leash-mark">LEASH</span>
+    <span class="brand-sub">Wallet control for AI shopping agents</span>
+  </div>
+  <div class="masthead-right">
+    <span id="mode-chip" class="chip mode">…</span>
+    <span id="mandate-chip" class="chip">no mandate</span>
+  </div>
+</header>
+
+<main>
+  <!-- ===================== 1. WALLET POLICY ===================== -->
+  <section class="panel" id="panel-policy">
+    <div class="panel-head">
+      <h2><span class="num">1</span> Your wallet policy</h2>
+      <p class="panel-sub">Describe in your own words what the agent may buy. We translate it into executable permissions — you confirm before anything is active.</p>
+    </div>
+
+    <div id="mandate-banner" class="mandate-banner hidden">
+      <div>
+        <strong>Active policy</strong> <span id="mandate-status"></span>
+        <div id="mandate-rules" class="mandate-rules"></div>
+      </div>
+      <div class="mandate-actions">
+        <button id="btn-tighten" class="btn ghost">Tighten…</button>
+        <button id="btn-revoke" class="btn danger">Revoke</button>
+      </div>
+    </div>
+
+    <label class="lbl" for="instruction">Instruction</label>
+    <div class="scenario-chips" id="scenario-chips"></div>
+    <textarea id="instruction" rows="4" placeholder="e.g. Buy one ordinary grocery item for CHF 20 or less from a shop I use regularly. Ask me when uncertain."></textarea>
+
+    <div class="row">
+      <button id="btn-compile" class="btn primary">Translate to permissions</button>
+      <span class="hint">deterministic parser — no model involved</span>
+    </div>
+
+    <div id="draft" class="draft hidden">
+      <h3>What we understood</h3>
+      <div id="understood" class="understood"></div>
+      <div id="warnings"></div>
+      <div id="open-questions"></div>
+      <details class="json-view">
+        <summary>Executable rules (JSON)</summary>
+        <pre id="rules-json"></pre>
+      </details>
+      <div class="row">
+        <button id="btn-confirm" class="btn primary">Confirm &amp; activate</button>
+        <button id="btn-edit" class="btn ghost">Adjust…</button>
+      </div>
+      <p class="hint">Nothing is active until you confirm. Adding a rule later can only tighten the policy — never loosen it.</p>
+    </div>
+
+    <div id="tighten-box" class="tighten hidden">
+      <h3>Tighten the active policy</h3>
+      <p class="hint">Existing rules stay. You can add rules, or make uncertain purchases auto-decline.</p>
+      <div class="tighten-grid">
+        <select id="tighten-field">
+          <option value="authorization.billing_amount_chf">Per-order cap ≤ CHF</option>
+          <option value="merchant.merchant_category">Merchant must be category</option>
+          <option value="basket.categories">Basket only category</option>
+          <option value="basket.return_window_days_min">Return window ≥ days</option>
+          <option value="merchant.familiar_to_customer">Only familiar merchants</option>
+        </select>
+        <input id="tighten-value" placeholder="value">
+        <button id="btn-add-rule" class="btn">Add rule</button>
+        <button id="btn-auto-decline" class="btn">Uncertain → decline</button>
+      </div>
+      <div id="tighten-msg" class="hint"></div>
+    </div>
+  </section>
+
+  <!-- ===================== 2. LIVE DECISIONS ===================== -->
+  <section class="panel" id="panel-run">
+    <div class="panel-head">
+      <h2><span class="num">2</span> Agent purchases</h2>
+      <p class="panel-sub">Start a scenario: the shopping agent proposes purchases; the wallet evaluates each independently.</p>
+    </div>
+    <div class="row">
+      <select id="scenario-select"></select>
+      <button id="btn-run" class="btn primary">Start run</button>
+      <button id="btn-reset" class="btn ghost subtle">Reset session</button>
+    </div>
+    <div id="run-progress" class="run-progress hidden">
+      <div class="meter"><div id="meter-fill"></div></div>
+      <div id="run-counts" class="run-counts mono"></div>
+    </div>
+    <div id="feed"></div>
+  </section>
+
+  <!-- ===================== 3. APPROVALS ===================== -->
+  <section class="panel" id="panel-approve">
+    <div class="panel-head">
+      <h2><span class="num">3</span> Waiting for you</h2>
+      <p class="panel-sub">Paused purchases keep until you answer — a pause is not an approval.</p>
+    </div>
+    <div id="approvals"><p class="hint">Nothing waiting.</p></div>
+  </section>
+</main>
+
+<footer>
+  <span class="mono">LEASH wallet-control · deterministic engine, zero models in the decision path · merchant text is untrusted data</span>
+</footer>
+
+<script src="/app.js"></script>
+</body>
+</html>

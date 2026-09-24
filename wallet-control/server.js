@@ -1,0 +1,217 @@
+// LEASH wallet-control — zero-dependency HTTP server.
+// Serves the customer UI and a small app API; hosts the platform client and worker.
+// Mode: live platform (LEASH_BASE_URL + TEAM_API_KEY) or offline simulator.
+import http from 'node:http';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { Store } from './lib/store.js';
+import { HistoryProfiles } from './lib/history.js';
+import { makeClient } from './lib/api.js';
+import { Worker } from './lib/worker.js';
+import { compilePolicy } from './lib/policy-compiler.js';
+import { buildTrustIndex } from './lib/signals.js';
+import { readJsonIfExists, loadCsv } from './lib/util.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = __dirname;
+const PORT = Number(process.env.PORT || 8790);
+const PACK_DIR = process.env.PACK_DIR || path.join(ROOT, 'data/pack');
+
+// ---- Bootstrap singletons ----------------------------------------------------
+const store = new Store(path.join(ROOT, 'data/state.json'));
+const profiles = HistoryProfiles.load(path.join(PACK_DIR, 'authorization_history.csv'));
+const trustRaw = readJsonIfExists(path.join(ROOT, 'data/leash_trust.json'));
+const trust = buildTrustIndex(trustRaw);
+const client = makeClient(store);
+const worker = new Worker({ client, store, profiles, trust });
+const pack = {
+  scenarios: loadCsv(path.join(PACK_DIR, 'scenario_catalogue.csv')),
+};
+
+const mode = client.mode === 'live' ? 'LIVE PLATFORM' : 'OFFLINE SIMULATOR';
+console.log(`[leash] mode: ${mode}`);
+console.log(`[leash] history profiles: ${profiles.purchaseCount.size} customers, trust dataset: ${trust ? Object.keys(trust.malicious_domains).length + ' malicious domains / ' + (trust.legit_companies?.length || 0) + ' legit companies' : 'not loaded'}`);
+
+// ---- Helpers -------------------------------------------------------------------
+function json(res, status, body) {
+  const data = JSON.stringify(body);
+  res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+  res.end(data);
+}
+
+async function readBody(req) {
+  let raw = '';
+  for await (const chunk of req) raw += chunk;
+  if (!raw) return {};
+  return JSON.parse(raw);
+}
+
+const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.json': 'application/json' };
+
+function staticFile(res, urlPath) {
+  let p = urlPath === '/' ? '/index.html' : urlPath;
+  const filePath = path.normalize(path.join(ROOT, 'web', p));
+  if (!filePath.startsWith(path.join(ROOT, 'web'))) { res.writeHead(403); return res.end(); }
+  fs.readFile(filePath, (err, data) => {
+    if (err) { res.writeHead(404, { 'Content-Type': 'text/plain' }); return res.end('not found'); }
+    res.writeHead(200, { 'Content-Type': MIME[path.extname(filePath)] || 'application/octet-stream' });
+    res.end(data);
+  });
+}
+
+// ---- UI state snapshot -----------------------------------------------------------
+let activeMandateId = process.env.LEASH_MANDATE_ID || null;
+let activeRunId = null;
+
+// Restore the active-mandate pointer after a restart (process-local otherwise).
+if (!activeMandateId) {
+  const candidates = [...store.mandates.values()].filter(m => m.status === 'active' && m.mandate_id);
+  if (candidates.length) {
+    activeMandateId = candidates[candidates.length - 1].mandate_id;
+    console.log(`[leash] restored active mandate ${activeMandateId} from persisted state`);
+  }
+}
+
+function snapshot() {
+  const mandate = activeMandateId ? (store.getMandate(activeMandateId) || client.getMandate?.(activeMandateId)) : null;
+  const run = activeRunId ? store.getRun(activeRunId) : null;
+  const pending = [];
+  if (run) {
+    for (const [authId, s] of run.stepUps) {
+      const d = run.decisions.get(authId);
+      if (d && !d.finalDecision) {
+        pending.push({
+          authorization_id: authId,
+          merchant: d.merchant, amount: d.amount, currency: d.currency,
+          message: d.customer_message, evidence: d.evidence, uncertainties: d.uncertainties,
+          manipulation: d.flags?.manipulation || [],
+          items: d.items, deadline: s.deadline, opened_at: s.openedAt,
+        });
+      }
+    }
+  }
+  return {
+    mode,
+    scenarios: pack.scenarios.map(s => ({ scenario_id: s.scenario_id, name: s.scenario_name, instruction: s.cardholder_instruction, event_count: Number(s.event_count) })),
+    mandate: mandate || null,
+    activeMandateId,
+    activeRunId,
+    run: run ? {
+      run_id: run.run_id, scenario_id: run.scenario_id, status: run.status,
+      total: run.totalEvents, decided: run.decisions.size,
+      approved: [...run.decisions.values()].filter(d => d.finalDecision === 'approved').length,
+      declined: [...run.decisions.values()].filter(d => d.finalDecision === 'declined').length,
+      pending: pending.length,
+      spend_window: run.mandateSnapshot?.hard_rules?.find(r => r.scope === 'period') ? {
+        cap: run.mandateSnapshot.hard_rules.find(r => r.scope === 'period')?.value,
+        days: run.mandateSnapshot.hard_rules.find(r => r.scope === 'period')?.period_days,
+        used: Math.round(run.spend.filter(() => true).reduce((s, x) => s + x.amount, 0) * 100) / 100,
+      } : null,
+    } : null,
+    feed: worker.feed.slice(0, 60),
+    pending_step_ups: pending,
+  };
+}
+
+// ---- HTTP server --------------------------------------------------------------------
+const server = http.createServer(async (req, res) => {
+  const url = new URL(req.url, 'http://localhost');
+  const p = url.pathname;
+  try {
+    // ---- App API ----
+    if (p === '/api/state' && req.method === 'GET') {
+      return json(res, 200, snapshot());
+    }
+
+    if (p === '/api/policy/compile' && req.method === 'POST') {
+      const body = await readBody(req);
+      const draft = compilePolicy(body.instruction || '');
+      return json(res, 200, draft);
+    }
+
+    if (p === '/api/mandates' && req.method === 'POST') {
+      const body = await readBody(req); // {instruction, hard_rules, uncertainty_policy, guidance, open_questions}
+      const created = await client.createMandate({
+        instruction: body.instruction,
+        hard_rules: body.hard_rules,
+        uncertainty_policy: body.uncertainty_policy,
+        guidance: body.guidance || [],
+        open_questions: body.open_questions || [],
+      });
+      // keep a local mirror for the UI
+      store.putMandate({ ...created, status: 'draft' });
+      activeMandateId = created.mandate_id || null;
+      return json(res, 200, created);
+    }
+
+    let m = p.match(/^\/api\/mandates\/([^/]+)\/confirm$/);
+    if (m && req.method === 'POST') {
+      const out = await client.confirmMandate(m[1], { confirmed: true });
+      activeMandateId = out.mandate_id;
+      const local = store.getMandate(m[1]);
+      if (local) { local.mandate_id = out.mandate_id; local.status = 'active'; store.putMandate(local); }
+      return json(res, 200, out);
+    }
+
+    m = p.match(/^\/api\/mandates\/([^/]+)$/);
+    if (m && req.method === 'GET') {
+      return json(res, 200, await client.getMandate(m[1]));
+    }
+    if (m && req.method === 'PATCH') {
+      const body = await readBody(req);
+      return json(res, 200, await client.patchMandate(m[1], body));
+    }
+    if (m && req.method === 'DELETE') {
+      const out = await client.revokeMandate(m[1]);
+      worker.pushFeed({ kind: 'mandate', text: 'Wallet policy revoked — the agent can no longer spend.' });
+      return json(res, 200, out);
+    }
+
+    if (p === '/api/runs' && req.method === 'POST') {
+      const body = await readBody(req); // {scenario_id}
+      if (!activeMandateId) return json(res, 409, { error: 'no active mandate — confirm a policy first' });
+      const started = await client.startRun({ scenario_id: body.scenario_id, mandate_id: activeMandateId });
+      activeRunId = started.run_id;
+      const authority = body.customer_hint || null;
+      store.createRun({
+        run_id: started.run_id,
+        scenario_id: body.scenario_id,
+        mandate_id: activeMandateId,
+        mandateSnapshot: store.getMandate(activeMandateId) || { hard_rules: [], uncertainty_policy: 'ask' },
+        totalEvents: started.event_counters?.total ?? 0,
+        customerIds: authority ? [authority] : [],
+      });
+      await worker.startRun(started.run_id);
+      return json(res, 200, started);
+    }
+
+    m = p.match(/^\/api\/stepups\/([^/]+)\/resolve$/);
+    if (m && req.method === 'POST') {
+      const body = await readBody(req); // {decision: approve|decline, message}
+      if (!activeRunId) return json(res, 409, { error: 'no active run' });
+      const out = await worker.resolveStepUp(activeRunId, m[1], body.decision, body.message);
+      return json(res, 200, out);
+    }
+
+    if (p === '/api/reset' && req.method === 'POST') {
+      if (client.reset) await client.reset();
+      activeRunId = null;
+      worker.feed.length = 0;
+      return json(res, 200, { reset: true });
+    }
+
+    if (p.startsWith('/api/')) return json(res, 404, { error: 'unknown api path' });
+
+    // ---- Static ----
+    return staticFile(res, p);
+  } catch (err) {
+    console.error('[server]', err);
+    return json(res, err.status || 500, { error: err.message });
+  }
+});
+
+server.listen(PORT, '127.0.0.1', () => {
+  console.log(`[leash] wallet control UI → http://127.0.0.1:${PORT}`);
+});

@@ -1,0 +1,4 @@
+# derived from merchant-trust-data canonical artifact; loader falls back to it
+lib/injection-model.json
+# runtime state
+node_modules/
