@@ -45,7 +45,8 @@ Requires the `openclaw` CLI on `PATH`, logged into a Gateway that has the
 | `PLANS_JSON`          | built-in         | Override plan caps, e.g. `{"free":{"daily":2}}` |
 | `ACCOUNTS_DATA_DIR`   | `./data`         | Where accounts/sessions JSON lives        |
 | `DEMO_MODE`           | `true`           | `false` disables the seeded demo account  |
-| `DEMO_EMAIL` / `DEMO_PASSWORD` / `DEMO_PLAN` | `demo@pixerful.com` / `demo-viseca-2026` / `plus` | Demo credentials + plan |
+| `DEMO_EMAIL` / `DEMO_PLAN` | `demo@pixerful.com` / `plus` | Demo account identity + plan |
+| `DEMO_PASSWORD`       | *(random, logged once)* | Private demo password — **rotated onto the account on every boot when set** |
 
 Because the agent id and session key are configurable, this bridge fronts
 **any** OpenClaw agent:
@@ -90,14 +91,21 @@ Plans are self-serve in the UI (Account → Subscription). Billing is **not
 wired** — switching is instant and free until a payment provider exists.
 Limits reset at midnight UTC; over-limit requests get HTTP 429 with plan info.
 
-### Demo account
+### Demo account (private)
 
-For pitches and quick testing the bridge seeds a demo account on boot
-(disable with `DEMO_MODE=false`): **`demo@pixerful.com` / `demo-viseca-2026`,
-Plus plan** — override with `DEMO_EMAIL` / `DEMO_PASSWORD` / `DEMO_PLAN`.
-The login screen carries a one-click **“Try the demo account” button
-(`POST /api/auth/demo`). On first seed an API key is minted and logged once
-to the server log — grab it there for the ChatGPT/skill demos.
+For pitches and testing the bridge seeds one demo account on boot
+(`DEMO_EMAIL`, default `demo@pixerful.com`, plan `DEMO_PLAN`, default `plus`).
+Credentials are deliberately **not** in this repo — distribution is controlled
+via `DEMO_PASSWORD`:
+
+- set `DEMO_PASSWORD` and it is **rotated onto the account on every boot** —
+  change the env, restart, and previously shared passwords stop working;
+- leave it unset and first seed generates a random password, logged once to
+  the server log;
+- `DEMO_MODE=false` skips the account entirely.
+
+There is no public demo-login endpoint — sign-in goes through the normal
+login form. The account carries a `demo` badge in the UI.
 
 ## Add it to ChatGPT (plugin / GPT Action)
 

@@ -54,6 +54,7 @@ function startServer() {
       POLICY_PUB_OUT: path.join(tmpDir, "agent-ws", "policy-authority.public.pem"),
       POLICY_DIR: path.join(tmpDir, "agent-ws", "policies"),
       PLANS_JSON: JSON.stringify({ free: { daily: 2 } }),
+      DEMO_PASSWORD: "test-demo-pass-123",
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -279,21 +280,20 @@ test("logout kills the session", async () => {
   assert.equal(me.status, 401);
 });
 
-test("health advertises the demo account", async () => {
+test("health does not leak the demo account", async () => {
   const j = await (await fetch(`${BASE}/api/health`)).json();
-  assert.ok(j.demo, "health exposes demo info");
-  assert.equal(j.demo.email, "demo@pixerful.com");
-  assert.equal(j.demo.plan, "plus");
+  assert.ok(!("demo" in j), "health must not advertise the demo account");
 });
 
-test("one-click demo login works and flags the account", async () => {
+test("the public demo-login endpoint is gone", async () => {
   const r = await post("/api/auth/demo", {});
+  assert.equal(r.status, 404);
+});
+
+test("demo account signs in through the normal login form", async () => {
+  const r = await post("/api/auth/login", { email: "demo@pixerful.com", password: "test-demo-pass-123" });
   assert.equal(r.status, 200);
   const j = await r.json();
   assert.equal(j.user.isDemo, true);
   assert.equal(j.user.plan, "plus");
-  const me = await fetch(`${BASE}/api/auth/me`, { headers: { Cookie: cookieOf(r) } });
-  assert.equal(me.status, 200);
-  const meBody = await me.json();
-  assert.equal(meBody.user.isDemo, true);
 });

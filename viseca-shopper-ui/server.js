@@ -574,7 +574,6 @@ async function handle(req, res) {
       maxConcurrent: MAX_CONCURRENT,
       auth: true,
       registrationOpen: accounts.REGISTRATION_OPEN,
-      demo: accounts.DEMO_ENABLED ? { email: accounts.DEMO_EMAIL, plan: accounts.DEMO_PLAN } : null,
       plans: accounts.PLANS,
       policy: {
         authority_fingerprint: AUTH ? AUTH.fingerprint : null,
@@ -617,15 +616,6 @@ async function handle(req, res) {
     const token = accounts.createSession(user.id);
     res.setHeader("Set-Cookie", accounts.sessionCookieHeader(token, isSecure(req)));
     console.log(`[auth] login ${user.email}`);
-    return sendJson(res, 200, { ok: true, user: accounts.publicUser(user) });
-  }
-
-  if (req.method === "POST" && pathname === "/api/auth/demo") {
-    const user = accounts.demoLogin();
-    if (!user) return sendJson(res, 404, { error: "Demo mode is disabled on this server." });
-    const token = accounts.createSession(user.id);
-    res.setHeader("Set-Cookie", accounts.sessionCookieHeader(token, isSecure(req)));
-    console.log(`[auth] demo login ${user.email}`);
     return sendJson(res, 200, { ok: true, user: accounts.publicUser(user) });
   }
 
@@ -757,5 +747,5 @@ server.listen(PORT, HOST, () => {
   const url = `http://${HOST}:${PORT}`;
   console.log(`[viseca-shopper-ui] serving ${PUBLIC_DIR}`);
   console.log(`[viseca-shopper-ui] ${url}  →  agent '${AGENT}' (base session key: ${SESSION})`);
-  console.log(`[viseca-shopper-ui] multi-user on · plans: ${Object.keys(accounts.PLANS).join("/")} · registration ${accounts.REGISTRATION_OPEN ? "open" : "closed"} · agent slots: ${MAX_CONCURRENT}${accounts.DEMO_ENABLED ? ` · demo: ${accounts.DEMO_EMAIL}` : ""}`);
+  console.log(`[viseca-shopper-ui] multi-user on · plans: ${Object.keys(accounts.PLANS).join("/")} · registration ${accounts.REGISTRATION_OPEN ? "open" : "closed"} · agent slots: ${MAX_CONCURRENT}`);
 });

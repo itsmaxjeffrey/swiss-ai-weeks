@@ -57,11 +57,15 @@ const PLAN_IDS = Object.keys(PLANS);
 
 const REGISTRATION_OPEN = process.env.REGISTRATION_OPEN !== "false";
 
-/* ---------- demo account (pitch/testing) ---------- */
+/* ---------- demo account (pitch/testing) ----------
+ * Credentials are deliberately NOT in the repo. Set DEMO_PASSWORD to control
+ * them — it is rotated onto the account on every boot when set (change env →
+ * restart → previously distributed passwords stop working). If unset on first
+ * seed, a random password is generated and logged once to the server log. */
 
 const DEMO_ENABLED = process.env.DEMO_MODE !== "false";
 const DEMO_EMAIL = (process.env.DEMO_EMAIL || "demo@pixerful.com").toLowerCase();
-const DEMO_PASSWORD = process.env.DEMO_PASSWORD || "demo-viseca-2026";
+const DEMO_PASSWORD = (process.env.DEMO_PASSWORD || "").trim();
 const DEMO_PLAN = process.env.DEMO_PLAN || "plus";
 
 /* ---------- helpers ---------- */
@@ -304,32 +308,43 @@ function usageInfo(user) {
   return { plan: user.plan, planLabel: plan.label, used, limit: plan.daily, remaining: Math.max(0, plan.daily - used) };
 }
 
-/** Seed (once) and return the demo account. Returns null when demo mode is
- *  disabled. On first creation also mints an API key and logs the full value
- *  once — grab it from the server log for the ChatGPT/skill demos. */
+/** Seed (once) and keep the demo account in shape. Returns null when demo
+ *  mode is disabled. Password: DEMO_PASSWORD env wins and is force-rotated on
+ *  every boot; otherwise a random one is generated on first seed and logged
+ *  once. The seeded API key's full value is logged once too. */
 function ensureDemoAccount() {
   if (!DEMO_ENABLED) return null;
   if (!PLANS[DEMO_PLAN]) throw new Error(`DEMO_PLAN '${DEMO_PLAN}' is not a known plan.`);
   let user = findUserByEmail(DEMO_EMAIL);
   const created = !user;
+  let generatedPassword = null;
+  let rotated = false;
   if (created) {
-    user = createUser({ email: DEMO_EMAIL, password: DEMO_PASSWORD, name: "Demo Shopper" });
+    const pw = DEMO_PASSWORD || crypto.randomBytes(12).toString("base64url");
+    if (!DEMO_PASSWORD) generatedPassword = pw;
+    user = createUser({ email: DEMO_EMAIL, password: pw, name: "Demo Shopper" });
+  } else if (DEMO_PASSWORD) {
+    if (DEMO_PASSWORD.length >= PASSWORD_MIN) {
+      const { salt, hash } = hashPassword(DEMO_PASSWORD);
+      user.salt = salt;
+      user.hash = hash;
+      rotated = true;
+    } else {
+      console.warn(`[accounts] DEMO_PASSWORD ignored — must be at least ${PASSWORD_MIN} characters.`);
+    }
   }
   user.demo = true;
   user.plan = DEMO_PLAN;
   let seeded = null;
   if (created) {
     seeded = createApiKey(user.id, "demo seed");
-    console.log(`[accounts] demo account ready: ${DEMO_EMAIL} · plan ${DEMO_PLAN} · seeded API key: ${seeded.key}`);
+    console.log(`[accounts] demo account ready: ${DEMO_EMAIL} · plan ${DEMO_PLAN}${seeded ? ` · seeded API key: ${seeded.key}` : ""}`);
+    if (generatedPassword) console.log(`[accounts] demo password (shown once — share privately): ${generatedPassword}`);
+  } else if (rotated) {
+    console.log(`[accounts] demo password rotated to the DEMO_PASSWORD env value.`);
   }
   saveSoon();
   return { created, user, apiKey: seeded ? seeded.key : null };
-}
-
-/** Login for POST /api/auth/demo — null when demo mode is off. */
-function demoLogin() {
-  if (!DEMO_ENABLED) return null;
-  return verifyLogin(DEMO_EMAIL, DEMO_PASSWORD);
 }
 
 /** Safe projection of a user for the client. */
@@ -352,9 +367,8 @@ function publicUser(user) {
 module.exports = {
   ApiError,
   PLANS, PLAN_IDS, REGISTRATION_OPEN,
-  DEMO_ENABLED, DEMO_EMAIL, DEMO_PLAN,
   SESSION_COOKIE,
-  load, pruneSessions, ensureDemoAccount, demoLogin,
+  load, pruneSessions, ensureDemoAccount,
   createUser, verifyLogin,
   createSession, destroySession, userBySessionToken,
   parseCookies, sessionCookieHeader, clearedSessionCookieHeader,
