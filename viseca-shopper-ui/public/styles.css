@@ -32,6 +32,9 @@ body {
   font-family: var(--grotesk);
   display: grid;
   grid-template-columns: var(--rail-w) 1fr;
+  /* bound the row: an auto-sized grid row grows with content, so .stage
+     (and the feed inside it) never got a height to scroll against */
+  grid-template-rows: minmax(0, 1fr);
 }
 
 /* paper grain */
