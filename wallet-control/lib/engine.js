@@ -21,6 +21,7 @@ import {
 } from './signals.js';
 import { requestedItemSpec } from './policy-compiler.js';
 import { scanInjectionModel, getInjectionModel } from './injection-model.js';
+import { scoreBehavior } from './behavior-model.js';
 
 const INTEGRITY_SIGNAL_CODES = new Set(['DEVICE_NOVELTY', 'VELOCITY_BURST', 'UNUSUAL_HOUR']);
 
@@ -353,6 +354,23 @@ export function evaluate(event, state, profiles, trust) {
     integrityMonitoring ? flags.integrity.push(d) : addUnc(d.code, d.detail);
   }
 
+  // -- 6b. Trained user-behavior model (advisory only) ---------------------------
+  // Trained on this customer's own authorization history (challenge pack,
+  // see merchant-trust-data/models/behavior/). Like the injection detector it
+  // can NEVER approve, decline, or loosen: the score is always evidence, and a
+  // strong anomaly becomes an uncertainty routed by the customer's own
+  // uncertainty policy (ask → step_up). Inert when no artifact is deployed or
+  // the customer has no learned profile.
+  const beh = scoreBehavior(a, customerId);
+  if (beh) {
+    const pct = Math.round(beh.score * 100);
+    const drivers = beh.factors.map(f => f.label).join(', ');
+    ev('Behavior model', `${beh.band} — ${pct}% off-pattern${drivers ? `: ${drivers}` : ''}`);
+    if (beh.band === 'escalate') {
+      addUnc('BEHAVIOR_ANOMALY', `this purchase is strongly off-pattern for you (${pct}% deviation${drivers ? `: ${drivers}` : ''}) — outside anything in your spending history, so it needs your confirmation`);
+    }
+  }
+
   // -- 7. Lookalike merchant --------------------------------------------------------
   const histFam = profiles.merchantFamiliar(customerId, a.merchant?.merchant_id);
   if (!histFam.familiar) {
@@ -439,7 +457,7 @@ export function evaluate(event, state, profiles, trust) {
     flags,
     signature,
     evaluation_ms: Math.round(ms * 100) / 100,
-    engine_version: 'leash-engine 1.0.0',
+    engine_version: 'leash-engine 1.1.0',
   };
 }
 

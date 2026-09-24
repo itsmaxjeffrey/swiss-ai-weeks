@@ -1,0 +1,281 @@
+[
+ {
+  "case": "AU0001",
+  "customer_id": "CU0001",
+  "inputs": {
+   "billing_amount_chf": "20.00",
+   "currency": "CHF",
+   "merchant_id": "ME0001",
+   "merchant_category": "groceries",
+   "merchant_country": "CH",
+   "channel": "ecommerce",
+   "customer_device_id": "DVC-13A598",
+   "timestamp": "2026-08-09T10:04:00Z",
+   "recent_attempt_count_10m": "0",
+   "ts_hour_utc": 10
+  },
+  "features": [
+   -0.910311087869,
+   0.188857412653,
+   3.871201010908,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   5.438079308923
+  ],
+  "expected_score": 0.2887216588909895
+ },
+ {
+  "case": "AU0006",
+  "customer_id": "CU0001",
+  "inputs": {
+   "billing_amount_chf": "65.00",
+   "currency": "CHF",
+   "merchant_id": "ME0001",
+   "merchant_category": "groceries",
+   "merchant_country": "CH",
+   "channel": "ecommerce",
+   "customer_device_id": "DVC-13A598",
+   "timestamp": "2026-08-13T17:26:00Z",
+   "recent_attempt_count_10m": "1",
+   "ts_hour_utc": 17
+  },
+  "features": [
+   0.776181707276,
+   0.613786591124,
+   3.871201010908,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   1.0,
+   5.438079308923
+  ],
+  "expected_score": 0.5948456254269877
+ },
+ {
+  "case": "AU0013",
+  "customer_id": "CU0006",
+  "inputs": {
+   "billing_amount_chf": "155.00",
+   "currency": "CHF",
+   "merchant_id": "ME0028",
+   "merchant_category": "sporting_goods",
+   "merchant_country": "CH",
+   "channel": "ecommerce",
+   "customer_device_id": "DVC-89CB09",
+   "timestamp": "2026-08-11T14:40:00Z",
+   "recent_attempt_count_10m": "0",
+   "ts_hour_utc": 14
+  },
+  "features": [
+   1.27979183714,
+   0.853994490358,
+   3.555348061489,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   5.361292165709
+  ],
+  "expected_score": 0.3728531599019389
+ },
+ {
+  "case": "AU0021",
+  "customer_id": "CU0006",
+  "inputs": {
+   "billing_amount_chf": "215.00",
+   "currency": "CHF",
+   "merchant_id": "ME0028",
+   "merchant_category": "sporting_goods",
+   "merchant_country": "CH",
+   "channel": "ecommerce",
+   "customer_device_id": "DVC-89CB09",
+   "timestamp": "2026-08-17T11:00:00Z",
+   "recent_attempt_count_10m": "0",
+   "ts_hour_utc": 11
+  },
+  "features": [
+   1.65042462527,
+   1.184573002755,
+   3.555348061489,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   5.361292165709
+  ],
+  "expected_score": 0.41467081373624587
+ },
+ {
+  "case": "AU0029",
+  "customer_id": "CU0012",
+  "inputs": {
+   "billing_amount_chf": "245.28",
+   "currency": "GBP",
+   "merchant_id": "ME0060",
+   "merchant_category": "clothing",
+   "merchant_country": "GB",
+   "channel": "ecommerce",
+   "customer_device_id": "DVC-4C0E9B",
+   "timestamp": "2026-08-18T02:21:00Z",
+   "recent_attempt_count_10m": "2",
+   "ts_hour_utc": 2
+  },
+  "features": [
+   2.0858351596,
+   1.514541525162,
+   0.0,
+   1.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   1.0,
+   0.0,
+   2.0,
+   5.505331535932
+  ],
+  "expected_score": 0.4864543053101765
+ },
+ {
+  "case": "AU0037",
+  "customer_id": "CU0019",
+  "inputs": {
+   "billing_amount_chf": "520.00",
+   "currency": "CHF",
+   "merchant_id": "ME0022",
+   "merchant_category": "electronics",
+   "merchant_country": "CH",
+   "channel": "ecommerce",
+   "customer_device_id": "DVC-785971",
+   "timestamp": "2026-08-12T14:05:00Z",
+   "recent_attempt_count_10m": "0",
+   "ts_hour_utc": 14
+  },
+  "features": [
+   3.036465809543,
+   2.937853107345,
+   2.197224577336,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   5.308267697401
+  ],
+  "expected_score": 0.6326646045399268
+ },
+ {
+  "case": "AU0045",
+  "customer_id": "CU0019",
+  "inputs": {
+   "billing_amount_chf": "399.90",
+   "currency": "CHF",
+   "merchant_id": "ME0022",
+   "merchant_category": "electronics",
+   "merchant_country": "CH",
+   "channel": "ecommerce",
+   "customer_device_id": "DVC-785971",
+   "timestamp": "2026-08-20T17:05:00Z",
+   "recent_attempt_count_10m": "0",
+   "ts_hour_utc": 17
+  },
+  "features": [
+   2.718117755075,
+   2.259322033898,
+   2.197224577336,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   5.308267697401
+  ],
+  "expected_score": 0.5482152795689962
+ },
+ {
+  "case": "PARITY_TINY",
+  "customer_id": "CU0001",
+  "inputs": {
+   "billing_amount_chf": "2.00",
+   "currency": "CHF",
+   "merchant_id": "ME0001",
+   "merchant_category": "groceries",
+   "merchant_country": "CH",
+   "channel": "ecommerce",
+   "customer_device_id": "DVC-13A598",
+   "timestamp": "2026-08-10T10:00:00Z",
+   "recent_attempt_count_10m": "0",
+   "ts_hour_utc": 10
+  },
+  "features": [
+   -3.776148890234,
+   0.018885741265,
+   3.871201010908,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   5.438079308923
+  ],
+  "expected_score": 0.2592375746963085
+ },
+ {
+  "case": "PARITY_HUGE",
+  "customer_id": "CU0001",
+  "inputs": {
+   "billing_amount_chf": "5000.00",
+   "currency": "USD",
+   "merchant_id": "ME9999",
+   "merchant_category": "electronics",
+   "merchant_country": "US",
+   "channel": "app",
+   "customer_device_id": "DVC-NEW",
+   "timestamp": "2026-08-10T03:00:00Z",
+   "recent_attempt_count_10m": "4",
+   "ts_hour_utc": 3
+  },
+  "features": [
+   7.149855433023,
+   10.0,
+   0.0,
+   1.0,
+   1.0,
+   1.0,
+   1.0,
+   1.0,
+   1.0,
+   0.0,
+   3.0,
+   5.438079308923
+  ],
+  "expected_score": 0.9999105358946702
+ }
+]

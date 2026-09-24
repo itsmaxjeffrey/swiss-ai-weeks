@@ -14,7 +14,7 @@ Agent ──proposed purchase──▶ [2] Decision engine ──approve/decline
 
 ## Design principles
 
-1. **No model in the decision path.** The engine is deterministic rules over extracted facts: identical input → identical output, sub-millisecond evaluation (budget is 8 s), and nothing for a prompt injection to hijack. Merchant text is *data*, never instructions.
+1. **No model decides.** The core is deterministic rules over extracted facts: identical input → identical output, sub-millisecond evaluation (budget is 8 s), and nothing for a prompt injection to hijack. Merchant text is *data*, never instructions. The only statistical components are two advisory detectors (the prompt-injection text scorer and the user-behavior deviation model), which can NEVER approve, decline, or loosen anything — they add evidence and can only route a strong signal to the human, same as the regex scan.
 2. **The customer confirms before anything is active.** The compiler proposes permissions in plain language; activation, tightening, and revocation are explicit customer actions.
 3. **Tightening only.** Mandate updates can add rules or switch uncertainty to `decline` — never loosen (platform PATCH rules; engine ANDs all rules).
 4. **Missing evidence is uncertainty, never permission.** Unknown facts, unknown rule fields, and unstated seller terms route to the customer's uncertainty policy (default: ask).
@@ -28,12 +28,13 @@ Agent ──proposed purchase──▶ [2] Decision engine ──approve/decline
 | `lib/engine.js` | The decision pipeline: manipulation scan → fact extraction → hard-rule evaluation → behavioural signals → aggregation → explanation. |
 | `lib/signals.js` | Untrusted-text mining: injection-pattern scan, return-window / size / product-attribute extraction, lookalike-merchant fuzzy matching (Jaro-Winkler), LEASH trust-dataset lookup. |
 | `lib/history.js` | Per-customer profiles from `authorization_history.csv`: merchant familiarity, known devices, hour-of-day purchase envelope. |
+| `lib/behavior-model.js` | Trained user-behavior deviation scorer (advisory): 12 chronology-safe features vs the customer's learned profile, calibrated normal/suspect/escalate bands. Evidence on every decision; a strong anomaly becomes an uncertainty for the customer's own policy. Trained by `merchant-trust-data/models/behavior/`; inert without the artifact or for unknown customers. |
 | `lib/store.js` | Run ledger: decisions (idempotent per live `authorization_id`), rolling-spend windows on simulated timestamps, pending step-ups, duplicate/signature index. |
 | `lib/worker.js` | Long-poll worker (25 s long-poll, 8 s decision deadline, ≥1.5 s submit margin), repeated-delivery reconciliation, `/resolve` for human answers. |
 | `sim/local-api.js` | Offline implementation of the challenge API (mandates, runs, long-poll, decision, resolve, reset) backed by the data pack — full end-to-end demo with **no team key**. |
 | `web/` | Customer UI (Swiss editorial): policy review & confirm, tighten/revoke, live decision feed with evidence, step-up inbox with 120 s countdown. |
 | `cli.js` | Offline replay: `node cli.js [SCENxxxx] [--resolve=approve|decline|auto]` prints the full decision table. |
-| `test/engine.test.js` | 25 invariant tests (compiler + engine). Run: `npm test`. |
+| `test/` | 41 invariant/parity tests (engine+compiler 25, injection model 5, behavior model 11). Run: `npm test`. |
 
 ## Decision pipeline (per purchase)
 
@@ -56,7 +57,7 @@ Agent ──proposed purchase──▶ [2] Decision engine ──approve/decline
 | `session.integrity_monitoring` | Unfamiliar device, purchase bursts (`recent_attempt_count_10m ≥ 2`), never-observed purchase hours → force pause while active; recover automatically when signals clear. |
 | *(unknown field)* | → uncertain. The engine never silently passes a rule it cannot evaluate. |
 
-4. **Behavioural signals** — near-identical duplicate of an already-approved order (same signature ≤ 4 h) → *possible duplicate* → ask; same-merchant similar-amount order ≤ 15 min after an approval → *split order* → ask; retry of a declined purchase (`related_authorization_status=declined` or identical declined signature) → **decline**; lookalike merchant name vs shops the customer actually uses (e.g. "PixelHarbour" vs "PixelHarbor", 98 % match) → impersonation evidence; LEASH threat-intel / registry corroboration when the dataset is loaded.
+4. **Behavioural signals** — near-identical duplicate of an already-approved order (same signature ≤ 4 h) → *possible duplicate* → ask; same-merchant similar-amount order ≤ 15 min after an approval → *split order* → ask; retry of a declined purchase (`related_authorization_status=declined` or identical declined signature) → **decline**; lookalike merchant name vs shops the customer actually uses (e.g. "PixelHarbour" vs "PixelHarbor", 98 % match) → impersonation evidence; LEASH threat-intel / registry corroboration when the dataset is loaded; trained user-behavior model scores every attempt against the customer's own spending history — evidence always, and an escalate-band anomaly becomes an uncertainty (asked under the customer's uncertainty policy, never auto-declined).
 5. **Aggregate** — any hard fail → `decline` (all reasons, plain language). Else manipulation or integrity breach → `step_up` regardless of uncertainty policy. Else any uncertainty → customer's policy (`ask` → `step_up`). Else `approve` with evidence.
 
 Every decision carries `reason_codes`, a plain-language `customer_message`, and an `evidence` grid (amount vs cap, rolling spend, merchant familiarity counts, return-window basis, device, velocity, injection snippet).
@@ -84,10 +85,11 @@ node cli.js SCEN0002 --resolve=approve
 
 ## Latency & failure behaviour
 
-Engine evaluation: **1–9 ms** cold, **<1 ms** warm (8 s budget). No network calls, no models in the decision path. If the decision submit fails, the worker retries immediately; if the platform re-delivers a purchase, the saved decision is re-confirmed (idempotent). Simulator unavailable / model file missing → engine still decides from rules + history alone.
+Engine evaluation: **1–9 ms** cold, **<1 ms** warm (8 s budget). No network calls; both advisory detectors are local, eagerly loaded, and never decide. If the decision submit fails, the worker retries immediately; if the platform re-delivers a purchase, the saved decision is re-confirmed (idempotent). Simulator unavailable / model file missing → engine still decides from rules + history alone.
 
 ## Limitations (honest list)
 
 - The NL compiler covers the policy vocabulary of the brief (limits, periods, categories, items with attributes, merchants, returns, add-ons, integrity, uncertainty phrasing). Anything else becomes an explicit open question shown before confirmation — never a silent guess.
 - Lookalike detection uses name similarity against *the customer's own* history (precise for this problem); the threat-domain containment check only fires on exact/substring domain matches to stay low-false-positive.
 - Rolling windows use simulated purchase time and count only final approvals, per the platform contract; the platform's own spend context is cross-checked conservatively (max of both).
+- The behavior model learns from historical authorization outcomes, which are **not fraud labels and not an answer key** (the pack says so). It is calibrated friction-first (≈3 % of known-good history would escalate; on the 45 replay attempts it changes zero decisions — evidence only, 16 suspect rows named in plain language) and can only add evidence/uncertainty. Its learned weights are honest but not guarantees: device-novelty carries a negative *partial* weight (collinearity with other novelty flags) while the univariate decline rates point the intuitive way — documented in `merchant-trust-data/models/behavior/EVAL.md`.

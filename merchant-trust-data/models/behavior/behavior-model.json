@@ -1,0 +1,2195 @@
+{
+ "schema": "openclaw.behavior-model/1",
+ "version": "behavior-model-v1",
+ "trained_at": "2026-09-24T13:47:46+00:00",
+ "semantics": "advisory-only: may add evidence/uncertainty and escalate to the customer; never approves, declines, or loosens",
+ "label_caveat": "trained on historical authorization outcomes, which are not fraud labels and not an answer key for attempts",
+ "features": [
+  "log_amount_z",
+  "amount_p95_ratio",
+  "merchant_log_count",
+  "merchant_unfamiliar",
+  "category_unfamiliar",
+  "country_unfamiliar",
+  "channel_unfamiliar",
+  "currency_unfamiliar",
+  "device_unfamiliar",
+  "hour_unobserved",
+  "velocity_10m",
+  "customer_log_total"
+ ],
+ "feature_labels": {
+  "log_amount_z": "amount far outside your usual range",
+  "amount_p95_ratio": "larger than 95% of your past purchases",
+  "merchant_log_count": "little history at this shop",
+  "merchant_unfamiliar": "shop you have never bought from",
+  "category_unfamiliar": "product category you never buy",
+  "country_unfamiliar": "seller country you never bought from",
+  "channel_unfamiliar": "purchase channel you never use",
+  "currency_unfamiliar": "currency you never spend",
+  "device_unfamiliar": "device never seen in your history",
+  "hour_unobserved": "hour of day you never buy at",
+  "velocity_10m": "burst of attempts within 10 minutes",
+  "customer_log_total": "little overall history"
+ },
+ "weights": {
+  "log_amount_z": 0.023549791484937375,
+  "amount_p95_ratio": 0.25781473471503474,
+  "merchant_log_count": 0.023366371983689113,
+  "merchant_unfamiliar": -0.055475449441357086,
+  "category_unfamiliar": 0.06183960006937799,
+  "country_unfamiliar": 0.2614325013508662,
+  "channel_unfamiliar": 0.007714584821043635,
+  "currency_unfamiliar": 0.3699438371344754,
+  "device_unfamiliar": -0.2256445672585066,
+  "hour_unobserved": 0.2546639953936757,
+  "velocity_10m": 0.4533014879894301,
+  "customer_log_total": -0.0627230464052813
+ },
+ "intercept": -0.48154648357932334,
+ "standardization": {
+  "mean": [
+   0.0026438985990605724,
+   0.4038697585744685,
+   1.6301486883469338,
+   0.1371303395399781,
+   0.058488499452354875,
+   0.033734939759036145,
+   0.0203723986856517,
+   0.030010952902519168,
+   0.01796276013143483,
+   0.10580503833515882,
+   0.10733844468784227,
+   4.381146572151401
+  ],
+  "std": [
+   1.0825490430746052,
+   0.5096031958744106,
+   0.9847675263133664,
+   0.3439848972231481,
+   0.2346648565170745,
+   0.18054609826438453,
+   0.14127053499382675,
+   0.17061739538627765,
+   0.13281603585370244,
+   0.30758792596276835,
+   0.43840899300598407,
+   0.972141826679303
+  ]
+ },
+ "thresholds": {
+  "escalate": 0.7811393028225108,
+  "suspect": 0.42962661655238094
+ },
+ "profiles": {
+  "CU0009": {
+   "log_mean": 3.6021701228809384,
+   "log_std": 0.6556983336269365,
+   "amount_p95": 89.9,
+   "merchants": {
+    "ME0052": 10,
+    "ME0055": 30,
+    "ME0006": 6,
+    "ME0013": 8,
+    "ME0002": 35,
+    "ME0016": 8,
+    "ME0015": 21,
+    "ME0008": 7,
+    "ME0053": 6,
+    "ME0056": 10,
+    "ME0017": 6,
+    "ME0007": 6,
+    "ME0001": 4,
+    "ME0020": 6,
+    "ME0004": 7,
+    "ME0019": 8,
+    "ME0021": 1,
+    "ME0011": 6,
+    "ME0003": 5,
+    "ME0026": 1,
+    "ME0025": 5,
+    "ME0054": 2,
+    "ME0012": 6,
+    "ME0058": 1
+   },
+   "categories": [
+    "books",
+    "clothing",
+    "dining",
+    "food_delivery",
+    "groceries",
+    "household",
+    "software",
+    "subscriptions",
+    "sustainable_goods",
+    "transport"
+   ],
+   "countries": [
+    "CH",
+    "GB"
+   ],
+   "channels": [
+    "ecommerce",
+    "in_store",
+    "mobile_wallet",
+    "recurring"
+   ],
+   "currencies": [
+    "CHF",
+    "GBP"
+   ],
+   "devices": [
+    "",
+    "DVC-38BD39",
+    "DVC-608523",
+    "DVC-ACF762"
+   ],
+   "hours": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23
+   ],
+   "total_approved": 205,
+   "n_amount_samples": 205
+  },
+  "CU0003": {
+   "log_mean": 3.9059199323235827,
+   "log_std": 0.7935826121606138,
+   "amount_p95": 151.19,
+   "merchants": {
+    "ME0052": 21,
+    "ME0038": 6,
+    "ME0006": 10,
+    "ME0030": 23,
+    "ME0013": 13,
+    "ME0048": 8,
+    "ME0008": 5,
+    "ME0004": 16,
+    "ME0020": 5,
+    "ME0051": 11,
+    "ME0009": 5,
+    "ME0027": 6,
+    "ME0010": 15,
+    "ME0012": 5,
+    "ME0019": 1,
+    "ME0007": 1,
+    "ME0058": 2,
+    "ME0002": 3,
+    "ME0017": 7,
+    "ME0028": 9,
+    "ME0011": 4,
+    "ME0049": 5,
+    "ME0061": 4,
+    "ME0029": 2,
+    "ME0039": 4,
+    "ME0003": 5,
+    "ME0026": 2,
+    "ME0025": 1,
+    "ME0001": 5
+   },
+   "categories": [
+    "books",
+    "clothing",
+    "dining",
+    "entertainment",
+    "fuel",
+    "groceries",
+    "health",
+    "software",
+    "sporting_goods",
+    "subscriptions",
+    "transport"
+   ],
+   "countries": [
+    "AT",
+    "CH",
+    "IT",
+    "NL",
+    "US"
+   ],
+   "channels": [
+    "ecommerce",
+    "in_store",
+    "mobile_wallet",
+    "recurring"
+   ],
+   "currencies": [
+    "CHF",
+    "EUR",
+    "USD"
+   ],
+   "devices": [
+    "",
+    "DVC-1B7230",
+    "DVC-EE8926"
+   ],
+   "hours": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22
+   ],
+   "total_approved": 204,
+   "n_amount_samples": 204
+  },
+  "CU0002": {
+   "log_mean": 4.402548112696187,
+   "log_std": 1.0217827263105113,
+   "amount_p95": 425.0,
+   "merchants": {
+    "ME0041": 32,
+    "ME0014": 30,
+    "ME0002": 2,
+    "ME0045": 21,
+    "ME0052": 15,
+    "ME0040": 7,
+    "ME0018": 11,
+    "ME0051": 14,
+    "ME0019": 6,
+    "ME0005": 6,
+    "ME0006": 7,
+    "ME0011": 4,
+    "ME0025": 4,
+    "ME0017": 21,
+    "ME0022": 7,
+    "ME0003": 4,
+    "ME0007": 9,
+    "ME0008": 8,
+    "ME0001": 3,
+    "ME0026": 6,
+    "ME0023": 3,
+    "ME0020": 6,
+    "ME0012": 5,
+    "ME0044": 3,
+    "ME0004": 1
+   },
+   "categories": [
+    "books",
+    "clothing",
+    "dining",
+    "electronics",
+    "groceries",
+    "hotel",
+    "software",
+    "subscriptions",
+    "transport",
+    "travel"
+   ],
+   "countries": [
+    "CH",
+    "DE",
+    "GB",
+    "NL"
+   ],
+   "channels": [
+    "ecommerce",
+    "in_store",
+    "mobile_wallet",
+    "recurring"
+   ],
+   "currencies": [
+    "CHF",
+    "EUR",
+    "GBP"
+   ],
+   "devices": [
+    "",
+    "DVC-818DB9",
+    "DVC-A2C5F0",
+    "DVC-D801ED"
+   ],
+   "hours": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22
+   ],
+   "total_approved": 235,
+   "n_amount_samples": 235
+  },
+  "CU0007": {
+   "log_mean": 3.9492057562415996,
+   "log_std": 0.7330077138717458,
+   "amount_p95": 154.21,
+   "merchants": {
+    "ME0056": 30,
+    "ME0053": 11,
+    "ME0033": 3,
+    "ME0018": 10,
+    "ME0031": 27,
+    "ME0054": 7,
+    "ME0055": 14,
+    "ME0019": 3,
+    "ME0017": 16,
+    "ME0007": 4,
+    "ME0051": 11,
+    "ME0001": 4,
+    "ME0003": 13,
+    "ME0058": 5,
+    "ME0032": 4,
+    "ME0006": 8,
+    "ME0038": 4,
+    "ME0026": 5,
+    "ME0020": 10,
+    "ME0025": 3,
+    "ME0002": 2,
+    "ME0011": 5,
+    "ME0013": 5,
+    "ME0008": 4,
+    "ME0012": 5,
+    "ME0039": 3,
+    "ME0004": 1,
+    "ME0027": 2
+   },
+   "categories": [
+    "books",
+    "clothing",
+    "dining",
+    "groceries",
+    "health",
+    "home_improvement",
+    "household",
+    "software",
+    "subscriptions",
+    "sustainable_goods",
+    "transport"
+   ],
+   "countries": [
+    "CH",
+    "FR",
+    "GB",
+    "IT",
+    "NL"
+   ],
+   "channels": [
+    "ecommerce",
+    "in_store",
+    "mobile_wallet",
+    "recurring"
+   ],
+   "currencies": [
+    "CHF",
+    "EUR",
+    "GBP"
+   ],
+   "devices": [
+    "",
+    "DVC-658CD6",
+    "DVC-BB74B3"
+   ],
+   "hours": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22
+   ],
+   "total_approved": 219,
+   "n_amount_samples": 219
+  },
+  "CU0014": {
+   "log_mean": 3.895086287248064,
+   "log_std": 0.7691463137496509,
+   "amount_p95": 198.31,
+   "merchants": {
+    "ME0006": 11,
+    "ME0012": 8,
+    "ME0019": 3,
+    "ME0013": 6,
+    "ME0048": 21,
+    "ME0018": 20,
+    "ME0041": 7,
+    "ME0049": 16,
+    "ME0002": 23,
+    "ME0008": 12,
+    "ME0051": 11,
+    "ME0017": 16,
+    "ME0003": 3,
+    "ME0005": 3,
+    "ME0026": 7,
+    "ME0027": 1,
+    "ME0015": 8,
+    "ME0058": 9,
+    "ME0011": 8,
+    "ME0016": 7,
+    "ME0039": 6,
+    "ME0020": 8,
+    "ME0038": 2,
+    "ME0007": 8,
+    "ME0040": 7,
+    "ME0025": 3,
+    "ME0004": 1,
+    "ME0001": 4,
+    "ME0014": 6
+   },
+   "categories": [
+    "books",
+    "clothing",
+    "dining",
+    "entertainment",
+    "food_delivery",
+    "groceries",
+    "health",
+    "hotel",
+    "software",
+    "subscriptions",
+    "transport"
+   ],
+   "countries": [
+    "CH",
+    "DE",
+    "GB",
+    "IT",
+    "NL"
+   ],
+   "channels": [
+    "ecommerce",
+    "in_store",
+    "mobile_wallet",
+    "recurring"
+   ],
+   "currencies": [
+    "CHF",
+    "EUR",
+    "GBP"
+   ],
+   "devices": [
+    "",
+    "DVC-AD40D6",
+    "DVC-CD6321",
+    "DVC-D87FBE"
+   ],
+   "hours": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23
+   ],
+   "total_approved": 245,
+   "n_amount_samples": 245
+  },
+  "CU0017": {
+   "log_mean": 3.683672115145546,
+   "log_std": 0.6837912532155828,
+   "amount_p95": 115.0,
+   "merchants": {
+    "ME0006": 6,
+    "ME0025": 5,
+    "ME0003": 34,
+    "ME0053": 3,
+    "ME0018": 11,
+    "ME0031": 9,
+    "ME0011": 10,
+    "ME0038": 5,
+    "ME0017": 10,
+    "ME0051": 10,
+    "ME0039": 7,
+    "ME0055": 7,
+    "ME0056": 22,
+    "ME0058": 6,
+    "ME0012": 5,
+    "ME0054": 2,
+    "ME0026": 4,
+    "ME0013": 6,
+    "ME0007": 4,
+    "ME0004": 4,
+    "ME0002": 4,
+    "ME0032": 2,
+    "ME0008": 7,
+    "ME0033": 3,
+    "ME0020": 5,
+    "ME0019": 6,
+    "ME0001": 3
+   },
+   "categories": [
+    "books",
+    "clothing",
+    "dining",
+    "groceries",
+    "health",
+    "home_improvement",
+    "household",
+    "software",
+    "subscriptions",
+    "sustainable_goods",
+    "transport"
+   ],
+   "countries": [
+    "CH",
+    "FR",
+    "GB",
+    "NL"
+   ],
+   "channels": [
+    "ecommerce",
+    "in_store",
+    "mobile_wallet",
+    "recurring"
+   ],
+   "currencies": [
+    "CHF",
+    "EUR",
+    "GBP"
+   ],
+   "devices": [
+    "",
+    "DVC-19A7A0",
+    "DVC-88CF6B",
+    "DVC-FE3FD1"
+   ],
+   "hours": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22
+   ],
+   "total_approved": 200,
+   "n_amount_samples": 200
+  },
+  "CU0018": {
+   "log_mean": 3.671448773633672,
+   "log_std": 0.6497234982018749,
+   "amount_p95": 107.0,
+   "merchants": {
+    "ME0013": 5,
+    "ME0018": 10,
+    "ME0025": 4,
+    "ME0001": 50,
+    "ME0051": 11,
+    "ME0056": 6,
+    "ME0039": 6,
+    "ME0038": 6,
+    "ME0011": 9,
+    "ME0008": 6,
+    "ME0026": 6,
+    "ME0003": 7,
+    "ME0019": 6,
+    "ME0007": 23,
+    "ME0006": 6,
+    "ME0014": 5,
+    "ME0017": 17,
+    "ME0020": 6,
+    "ME0016": 9,
+    "ME0055": 21,
+    "ME0012": 3,
+    "ME0015": 11,
+    "ME0058": 5,
+    "ME0002": 5,
+    "ME0004": 4,
+    "ME0005": 4
+   },
+   "categories": [
+    "books",
+    "clothing",
+    "dining",
+    "food_delivery",
+    "groceries",
+    "health",
+    "household",
+    "software",
+    "subscriptions",
+    "transport"
+   ],
+   "countries": [
+    "CH",
+    "DE",
+    "GB",
+    "NL"
+   ],
+   "channels": [
+    "ecommerce",
+    "in_store",
+    "mobile_wallet",
+    "recurring"
+   ],
+   "currencies": [
+    "CHF",
+    "EUR",
+    "GBP"
+   ],
+   "devices": [
+    "",
+    "DVC-26AD91",
+    "DVC-BEEB4E",
+    "DVC-F44B96"
+   ],
+   "hours": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22
+   ],
+   "total_approved": 251,
+   "n_amount_samples": 251
+  },
+  "CU0010": {
+   "log_mean": 4.137117244340255,
+   "log_std": 0.9222511407837929,
+   "amount_p95": 300.05,
+   "merchants": {
+    "ME0008": 3,
+    "ME0022": 9,
+    "ME0051": 36,
+    "ME0018": 12,
+    "ME0011": 2,
+    "ME0007": 6,
+    "ME0024": 8,
+    "ME0041": 4,
+    "ME0040": 5,
+    "ME0012": 3,
+    "ME0017": 26,
+    "ME0052": 13,
+    "ME0023": 7,
+    "ME0013": 11,
+    "ME0001": 5,
+    "ME0004": 7,
+    "ME0005": 5,
+    "ME0006": 7,
+    "ME0058": 2,
+    "ME0002": 2,
+    "ME0025": 2,
+    "ME0044": 8,
+    "ME0021": 3,
+    "ME0045": 8,
+    "ME0020": 4,
+    "ME0019": 4,
+    "ME0003": 1,
+    "ME0060": 3,
+    "ME0026": 1
+   },
+   "categories": [
+    "books",
+    "clothing",
+    "dining",
+    "electronics",
+    "groceries",
+    "hotel",
+    "software",
+    "subscriptions",
+    "transport",
+    "travel"
+   ],
+   "countries": [
+    "CH",
+    "DE",
+    "GB",
+    "NL",
+    "US"
+   ],
+   "channels": [
+    "ecommerce",
+    "in_store",
+    "mobile_wallet",
+    "recurring"
+   ],
+   "currencies": [
+    "CHF",
+    "EUR",
+    "GBP",
+    "USD"
+   ],
+   "devices": [
+    "",
+    "DVC-1507B1",
+    "DVC-36C918",
+    "DVC-ADD093"
+   ],
+   "hours": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22
+   ],
+   "total_approved": 207,
+   "n_amount_samples": 207
+  },
+  "CU0005": {
+   "log_mean": 3.1607395162801675,
+   "log_std": 0.8857791522190295,
+   "amount_p95": 97.0,
+   "merchants": {
+    "ME0017": 37,
+    "ME0018": 21,
+    "ME0020": 20,
+    "ME0052": 11,
+    "ME0001": 6,
+    "ME0008": 6,
+    "ME0021": 1,
+    "ME0007": 7,
+    "ME0003": 8,
+    "ME0039": 6,
+    "ME0012": 6,
+    "ME0049": 5,
+    "ME0023": 5,
+    "ME0019": 4,
+    "ME0011": 9,
+    "ME0025": 2,
+    "ME0058": 2,
+    "ME0006": 8,
+    "ME0013": 4,
+    "ME0038": 3,
+    "ME0002": 3,
+    "ME0048": 4,
+    "ME0004": 1,
+    "ME0022": 1,
+    "ME0060": 4,
+    "ME0005": 0,
+    "ME0026": 2
+   },
+   "categories": [
+    "books",
+    "clothing",
+    "dining",
+    "electronics",
+    "entertainment",
+    "groceries",
+    "health",
+    "software",
+    "subscriptions",
+    "transport"
+   ],
+   "countries": [
+    "CH",
+    "GB"
+   ],
+   "channels": [
+    "ecommerce",
+    "in_store",
+    "mobile_wallet",
+    "recurring"
+   ],
+   "currencies": [
+    "CHF",
+    "GBP"
+   ],
+   "devices": [
+    "",
+    "DVC-1B892C",
+    "DVC-96235D",
+    "DVC-A1B7A7"
+   ],
+   "hours": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22
+   ],
+   "total_approved": 186,
+   "n_amount_samples": 186
+  },
+  "CU0016": {
+   "log_mean": 3.7206506988743104,
+   "log_std": 0.6512619425290694,
+   "amount_p95": 109.0,
+   "merchants": {
+    "ME0019": 7,
+    "ME0036": 16,
+    "ME0056": 10,
+    "ME0011": 6,
+    "ME0003": 25,
+    "ME0038": 13,
+    "ME0001": 2,
+    "ME0025": 7,
+    "ME0051": 0,
+    "ME0012": 7,
+    "ME0039": 17,
+    "ME0007": 4,
+    "ME0013": 6,
+    "ME0037": 32,
+    "ME0055": 5,
+    "ME0008": 7,
+    "ME0017": 13,
+    "ME0058": 7,
+    "ME0004": 5,
+    "ME0018": 0,
+    "ME0026": 3,
+    "ME0027": 0,
+    "ME0006": 5,
+    "ME0014": 0,
+    "ME0002": 6,
+    "ME0020": 4
+   },
+   "categories": [
+    "books",
+    "clothing",
+    "dining",
+    "groceries",
+    "health",
+    "household",
+    "pet_care",
+    "subscriptions",
+    "transport"
+   ],
+   "countries": [
+    "CH"
+   ],
+   "channels": [
+    "ecommerce",
+    "in_store",
+    "mobile_wallet",
+    "recurring"
+   ],
+   "currencies": [
+    "CHF"
+   ],
+   "devices": [
+    "",
+    "DVC-12D379",
+    "DVC-2182BB",
+    "DVC-EB32F3"
+   ],
+   "hours": [
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22
+   ],
+   "total_approved": 207,
+   "n_amount_samples": 207
+  },
+  "CU0008": {
+   "log_mean": 3.6829799935663377,
+   "log_std": 0.5643361042405564,
+   "amount_p95": 104.5,
+   "merchants": {
+    "ME0015": 7,
+    "ME0001": 36,
+    "ME0055": 10,
+    "ME0038": 24,
+    "ME0035": 9,
+    "ME0003": 5,
+    "ME0019": 8,
+    "ME0058": 4,
+    "ME0052": 11,
+    "ME0002": 5,
+    "ME0017": 10,
+    "ME0034": 27,
+    "ME0026": 5,
+    "ME0016": 3,
+    "ME0005": 3,
+    "ME0007": 6,
+    "ME0020": 11,
+    "ME0025": 1,
+    "ME0004": 7,
+    "ME0018": 5,
+    "ME0056": 7,
+    "ME0039": 10,
+    "ME0021": 1,
+    "ME0006": 3,
+    "ME0008": 5
+   },
+   "categories": [
+    "books",
+    "clothing",
+    "food_delivery",
+    "groceries",
+    "health",
+    "household",
+    "kids_family",
+    "software",
+    "subscriptions",
+    "transport"
+   ],
+   "countries": [
+    "CH",
+    "DE",
+    "GB"
+   ],
+   "channels": [
+    "ecommerce",
+    "in_store",
+    "mobile_wallet",
+    "recurring"
+   ],
+   "currencies": [
+    "CHF",
+    "EUR",
+    "GBP"
+   ],
+   "devices": [
+    "",
+    "DVC-01D8B3",
+    "DVC-727ED8",
+    "DVC-9BC43A",
+    "DVC-E1AF6C"
+   ],
+   "hours": [
+    2,
+    3,
+    4,
+    5,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22
+   ],
+   "total_approved": 223,
+   "n_amount_samples": 223
+  },
+  "CU0001": {
+   "log_mean": 3.6626256615764468,
+   "log_std": 0.6790021917673259,
+   "amount_p95": 105.9,
+   "merchants": {
+    "ME0056": 14,
+    "ME0055": 9,
+    "ME0008": 2,
+    "ME0032": 2,
+    "ME0026": 3,
+    "ME0035": 9,
+    "ME0006": 4,
+    "ME0001": 47,
+    "ME0015": 4,
+    "ME0018": 12,
+    "ME0051": 21,
+    "ME0017": 7,
+    "ME0039": 2,
+    "ME0003": 7,
+    "ME0020": 1,
+    "ME0012": 2,
+    "ME0007": 19,
+    "ME0019": 6,
+    "ME0034": 11,
+    "ME0016": 13,
+    "ME0002": 3,
+    "ME0031": 3,
+    "ME0004": 8,
+    "ME0038": 8,
+    "ME0058": 4,
+    "ME0013": 1,
+    "ME0005": 1,
+    "ME0014": 1,
+    "ME0025": 3,
+    "ME0011": 1,
+    "ME0060": 1
+   },
+   "categories": [
+    "books",
+    "clothing",
+    "dining",
+    "food_delivery",
+    "groceries",
+    "health",
+    "home_improvement",
+    "household",
+    "kids_family",
+    "software",
+    "subscriptions",
+    "transport"
+   ],
+   "countries": [
+    "CH",
+    "DE",
+    "GB",
+    "NL"
+   ],
+   "channels": [
+    "ecommerce",
+    "in_store",
+    "mobile_wallet",
+    "recurring"
+   ],
+   "currencies": [
+    "CHF",
+    "EUR",
+    "GBP"
+   ],
+   "devices": [
+    "",
+    "DVC-13A598",
+    "DVC-163DA3",
+    "DVC-2EB3A8"
+   ],
+   "hours": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22
+   ],
+   "total_approved": 229,
+   "n_amount_samples": 229
+  },
+  "CU0013": {
+   "log_mean": 3.592533557854762,
+   "log_std": 0.577270667181913,
+   "amount_p95": 102.9,
+   "merchants": {
+    "ME0053": 13,
+    "ME0026": 4,
+    "ME0055": 7,
+    "ME0013": 2,
+    "ME0056": 13,
+    "ME0006": 8,
+    "ME0003": 26,
+    "ME0018": 0,
+    "ME0020": 5,
+    "ME0052": 11,
+    "ME0039": 5,
+    "ME0054": 13,
+    "ME0004": 6,
+    "ME0001": 4,
+    "ME0038": 6,
+    "ME0012": 6,
+    "ME0031": 7,
+    "ME0032": 12,
+    "ME0011": 1,
+    "ME0058": 4,
+    "ME0019": 6,
+    "ME0008": 5,
+    "ME0007": 6,
+    "ME0002": 3,
+    "ME0021": 0,
+    "ME0005": 0,
+    "ME0025": 4,
+    "ME0017": 0
+   },
+   "categories": [
+    "books",
+    "clothing",
+    "dining",
+    "groceries",
+    "health",
+    "home_improvement",
+    "household",
+    "software",
+    "sustainable_goods",
+    "transport"
+   ],
+   "countries": [
+    "CH"
+   ],
+   "channels": [
+    "ecommerce",
+    "in_store",
+    "mobile_wallet",
+    "recurring"
+   ],
+   "currencies": [
+    "CHF"
+   ],
+   "devices": [
+    "",
+    "DVC-7444EA",
+    "DVC-7BA557",
+    "DVC-FAFAEA"
+   ],
+   "hours": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20
+   ],
+   "total_approved": 177,
+   "n_amount_samples": 177
+  },
+  "CU0020": {
+   "log_mean": 3.662312439079458,
+   "log_std": 0.7067325229144074,
+   "amount_p95": 113.0,
+   "merchants": {
+    "ME0026": 5,
+    "ME0002": 6,
+    "ME0017": 19,
+    "ME0004": 29,
+    "ME0025": 10,
+    "ME0018": 11,
+    "ME0006": 5,
+    "ME0007": 20,
+    "ME0015": 33,
+    "ME0013": 8,
+    "ME0011": 8,
+    "ME0016": 12,
+    "ME0027": 5,
+    "ME0019": 6,
+    "ME0020": 5,
+    "ME0001": 3,
+    "ME0012": 7,
+    "ME0058": 5,
+    "ME0055": 6,
+    "ME0003": 2,
+    "ME0038": 1,
+    "ME0039": 4,
+    "ME0021": 1,
+    "ME0008": 5,
+    "ME0060": 1,
+    "ME0056": 4,
+    "ME0049": 1
+   },
+   "categories": [
+    "books",
+    "clothing",
+    "dining",
+    "entertainment",
+    "food_delivery",
+    "groceries",
+    "health",
+    "household",
+    "subscriptions",
+    "transport"
+   ],
+   "countries": [
+    "CH",
+    "GB",
+    "IT"
+   ],
+   "channels": [
+    "ecommerce",
+    "in_store",
+    "mobile_wallet",
+    "recurring"
+   ],
+   "currencies": [
+    "CHF",
+    "EUR",
+    "GBP"
+   ],
+   "devices": [
+    "",
+    "DVC-8AC2F1",
+    "DVC-B42533",
+    "DVC-C947CE"
+   ],
+   "hours": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23
+   ],
+   "total_approved": 222,
+   "n_amount_samples": 222
+  },
+  "CU0004": {
+   "log_mean": 3.4819570192215847,
+   "log_std": 0.6229154498729673,
+   "amount_p95": 81.9,
+   "merchants": {
+    "ME0001": 7,
+    "ME0017": 26,
+    "ME0051": 0,
+    "ME0003": 13,
+    "ME0008": 28,
+    "ME0016": 40,
+    "ME0038": 28,
+    "ME0002": 11,
+    "ME0058": 2,
+    "ME0013": 9,
+    "ME0011": 6,
+    "ME0055": 12,
+    "ME0012": 13,
+    "ME0006": 4,
+    "ME0036": 2,
+    "ME0015": 12,
+    "ME0007": 7,
+    "ME0039": 4,
+    "ME0056": 7,
+    "ME0020": 5,
+    "ME0004": 10,
+    "ME0019": 4,
+    "ME0037": 3,
+    "ME0026": 3,
+    "ME0060": 0,
+    "ME0025": 4
+   },
+   "categories": [
+    "books",
+    "clothing",
+    "dining",
+    "food_delivery",
+    "groceries",
+    "health",
+    "household",
+    "pet_care",
+    "subscriptions",
+    "transport"
+   ],
+   "countries": [
+    "CH"
+   ],
+   "channels": [
+    "ecommerce",
+    "in_store",
+    "mobile_wallet",
+    "recurring"
+   ],
+   "currencies": [
+    "CHF"
+   ],
+   "devices": [
+    "",
+    "DVC-12F5D5",
+    "DVC-44825E",
+    "DVC-921526"
+   ],
+   "hours": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23
+   ],
+   "total_approved": 260,
+   "n_amount_samples": 260
+  },
+  "CU0011": {
+   "log_mean": 3.6706154403132856,
+   "log_std": 0.660509989891988,
+   "amount_p95": 102.98,
+   "merchants": {
+    "ME0007": 23,
+    "ME0025": 4,
+    "ME0052": 11,
+    "ME0002": 29,
+    "ME0009": 15,
+    "ME0011": 29,
+    "ME0051": 0,
+    "ME0039": 2,
+    "ME0001": 11,
+    "ME0006": 3,
+    "ME0004": 7,
+    "ME0020": 6,
+    "ME0038": 8,
+    "ME0058": 5,
+    "ME0003": 9,
+    "ME0056": 8,
+    "ME0008": 2,
+    "ME0019": 9,
+    "ME0012": 5,
+    "ME0026": 2,
+    "ME0028": 1,
+    "ME0013": 6,
+    "ME0029": 1,
+    "ME0055": 7,
+    "ME0014": 0
+   },
+   "categories": [
+    "books",
+    "clothing",
+    "dining",
+    "fuel",
+    "groceries",
+    "health",
+    "household",
+    "software",
+    "sporting_goods",
+    "transport"
+   ],
+   "countries": [
+    "CH"
+   ],
+   "channels": [
+    "ecommerce",
+    "in_store",
+    "mobile_wallet",
+    "recurring"
+   ],
+   "currencies": [
+    "CHF"
+   ],
+   "devices": [
+    "",
+    "DVC-25F956",
+    "DVC-CE710F"
+   ],
+   "hours": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22
+   ],
+   "total_approved": 203,
+   "n_amount_samples": 203
+  },
+  "CU0015": {
+   "log_mean": 4.192443209060666,
+   "log_std": 0.8593575013088381,
+   "amount_p95": 247.0,
+   "merchants": {
+    "ME0002": 3,
+    "ME0047": 29,
+    "ME0046": 18,
+    "ME0013": 11,
+    "ME0008": 4,
+    "ME0011": 7,
+    "ME0018": 11,
+    "ME0003": 3,
+    "ME0022": 6,
+    "ME0025": 4,
+    "ME0038": 3,
+    "ME0004": 21,
+    "ME0039": 4,
+    "ME0017": 14,
+    "ME0019": 7,
+    "ME0012": 8,
+    "ME0007": 4,
+    "ME0023": 2,
+    "ME0006": 5,
+    "ME0058": 3,
+    "ME0020": 3,
+    "ME0026": 3,
+    "ME0001": 3
+   },
+   "categories": [
+    "books",
+    "clothing",
+    "dining",
+    "electronics",
+    "groceries",
+    "health",
+    "photography",
+    "subscriptions",
+    "transport"
+   ],
+   "countries": [
+    "CH",
+    "FR",
+    "GB"
+   ],
+   "channels": [
+    "ecommerce",
+    "in_store",
+    "mobile_wallet",
+    "recurring"
+   ],
+   "currencies": [
+    "CHF",
+    "EUR",
+    "GBP"
+   ],
+   "devices": [
+    "",
+    "DVC-0232C9",
+    "DVC-5BBAAF"
+   ],
+   "hours": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22
+   ],
+   "total_approved": 176,
+   "n_amount_samples": 176
+  },
+  "CU0006": {
+   "log_mean": 3.926175250886106,
+   "log_std": 0.8780183806098959,
+   "amount_p95": 181.5,
+   "merchants": {
+    "ME0011": 6,
+    "ME0009": 16,
+    "ME0001": 7,
+    "ME0002": 18,
+    "ME0028": 34,
+    "ME0017": 37,
+    "ME0018": 10,
+    "ME0012": 6,
+    "ME0007": 4,
+    "ME0039": 4,
+    "ME0030": 14,
+    "ME0008": 8,
+    "ME0058": 5,
+    "ME0006": 8,
+    "ME0038": 3,
+    "ME0020": 4,
+    "ME0019": 4,
+    "ME0025": 4,
+    "ME0048": 4,
+    "ME0005": 1,
+    "ME0004": 5,
+    "ME0049": 4,
+    "ME0013": 3,
+    "ME0026": 1,
+    "ME0003": 2
+   },
+   "categories": [
+    "books",
+    "clothing",
+    "dining",
+    "entertainment",
+    "fuel",
+    "groceries",
+    "health",
+    "sporting_goods",
+    "subscriptions",
+    "transport"
+   ],
+   "countries": [
+    "AT",
+    "CH",
+    "DE",
+    "GB"
+   ],
+   "channels": [
+    "ecommerce",
+    "in_store",
+    "mobile_wallet",
+    "recurring"
+   ],
+   "currencies": [
+    "CHF",
+    "EUR",
+    "GBP"
+   ],
+   "devices": [
+    "",
+    "DVC-2B348A",
+    "DVC-725FCF",
+    "DVC-89CB09"
+   ],
+   "hours": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21
+   ],
+   "total_approved": 212,
+   "n_amount_samples": 212
+  },
+  "CU0019": {
+   "log_mean": 3.756380299252948,
+   "log_std": 0.8231180257803549,
+   "amount_p95": 177.0,
+   "merchants": {
+    "ME0056": 7,
+    "ME0021": 6,
+    "ME0011": 3,
+    "ME0051": 11,
+    "ME0001": 10,
+    "ME0052": 11,
+    "ME0060": 3,
+    "ME0058": 3,
+    "ME0017": 13,
+    "ME0020": 6,
+    "ME0019": 15,
+    "ME0022": 8,
+    "ME0002": 9,
+    "ME0004": 4,
+    "ME0003": 13,
+    "ME0038": 2,
+    "ME0018": 6,
+    "ME0024": 21,
+    "ME0013": 6,
+    "ME0012": 5,
+    "ME0008": 14,
+    "ME0026": 3,
+    "ME0007": 6,
+    "ME0006": 6,
+    "ME0025": 3,
+    "ME0039": 2,
+    "ME0055": 3,
+    "ME0023": 2,
+    "ME0027": 0
+   },
+   "categories": [
+    "books",
+    "clothing",
+    "dining",
+    "electronics",
+    "groceries",
+    "health",
+    "household",
+    "software",
+    "subscriptions",
+    "transport"
+   ],
+   "countries": [
+    "CH",
+    "GB",
+    "NL",
+    "US"
+   ],
+   "channels": [
+    "ecommerce",
+    "in_store",
+    "mobile_wallet",
+    "recurring"
+   ],
+   "currencies": [
+    "CHF",
+    "EUR",
+    "GBP",
+    "USD"
+   ],
+   "devices": [
+    "",
+    "DVC-160D1F",
+    "DVC-785971",
+    "DVC-9B2940"
+   ],
+   "hours": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21
+   ],
+   "total_approved": 201,
+   "n_amount_samples": 201
+  },
+  "CU0012": {
+   "log_mean": 4.009615552684128,
+   "log_std": 0.7176279201495386,
+   "amount_p95": 161.95,
+   "merchants": {
+    "ME0038": 7,
+    "ME0011": 14,
+    "ME0004": 22,
+    "ME0017": 24,
+    "ME0019": 7,
+    "ME0027": 30,
+    "ME0012": 13,
+    "ME0013": 12,
+    "ME0025": 27,
+    "ME0020": 6,
+    "ME0009": 4,
+    "ME0002": 1,
+    "ME0049": 8,
+    "ME0001": 4,
+    "ME0006": 7,
+    "ME0008": 11,
+    "ME0010": 9,
+    "ME0007": 7,
+    "ME0016": 12,
+    "ME0039": 6,
+    "ME0018": 1,
+    "ME0003": 2,
+    "ME0015": 8,
+    "ME0048": 2,
+    "ME0005": 1
+   },
+   "categories": [
+    "books",
+    "clothing",
+    "dining",
+    "entertainment",
+    "food_delivery",
+    "fuel",
+    "groceries",
+    "health",
+    "subscriptions",
+    "transport"
+   ],
+   "countries": [
+    "CH",
+    "DE",
+    "GB",
+    "IT"
+   ],
+   "channels": [
+    "ecommerce",
+    "in_store",
+    "mobile_wallet",
+    "recurring"
+   ],
+   "currencies": [
+    "CHF",
+    "EUR",
+    "GBP"
+   ],
+   "devices": [
+    "",
+    "DVC-31AF44",
+    "DVC-B73E47",
+    "DVC-E54CDC"
+   ],
+   "hours": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23
+   ],
+   "total_approved": 245,
+   "n_amount_samples": 245
+  }
+ },
+ "calibration": {
+  "approved_rows": 4307,
+  "declined_rows": 258,
+  "escalate_quantile": 0.97,
+  "approved_escalation_rate": 0.03018342233573253,
+  "declined_escalation_rate": 0.4263565891472868,
+  "auc_insample": 0.7733179086506012,
+  "auc_leave_customer_out": 0.7422224142058268,
+  "attempt_bands": {
+   "normal": 29,
+   "suspect": 16,
+   "escalate": 0
+  },
+  "attempt_scores": [
+   {
+    "authorization_id": "AU0001",
+    "score": 0.2887,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0002",
+    "score": 0.3187,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0003",
+    "score": 0.4091,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0004",
+    "score": 0.4164,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0005",
+    "score": 0.3489,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0006",
+    "score": 0.5948,
+    "band": "suspect"
+   },
+   {
+    "authorization_id": "AU0007",
+    "score": 0.3394,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0008",
+    "score": 0.3436,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0009",
+    "score": 0.2938,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0010",
+    "score": 0.4311,
+    "band": "suspect"
+   },
+   {
+    "authorization_id": "AU0011",
+    "score": 0.3704,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0012",
+    "score": 0.3798,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0013",
+    "score": 0.3729,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0014",
+    "score": 0.366,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0015",
+    "score": 0.3749,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0016",
+    "score": 0.3867,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0017",
+    "score": 0.3902,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0018",
+    "score": 0.3999,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0019",
+    "score": 0.3818,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0020",
+    "score": 0.3489,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0021",
+    "score": 0.4147,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0022",
+    "score": 0.4007,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0023",
+    "score": 0.3329,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0024",
+    "score": 0.3747,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0025",
+    "score": 0.41,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0026",
+    "score": 0.1048,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0027",
+    "score": 0.1029,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0028",
+    "score": 0.2518,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0029",
+    "score": 0.4865,
+    "band": "suspect"
+   },
+   {
+    "authorization_id": "AU0030",
+    "score": 0.7288,
+    "band": "suspect"
+   },
+   {
+    "authorization_id": "AU0031",
+    "score": 0.3361,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0032",
+    "score": 0.4564,
+    "band": "suspect"
+   },
+   {
+    "authorization_id": "AU0033",
+    "score": 0.3153,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0034",
+    "score": 0.4727,
+    "band": "suspect"
+   },
+   {
+    "authorization_id": "AU0035",
+    "score": 0.467,
+    "band": "suspect"
+   },
+   {
+    "authorization_id": "AU0036",
+    "score": 0.467,
+    "band": "suspect"
+   },
+   {
+    "authorization_id": "AU0037",
+    "score": 0.6327,
+    "band": "suspect"
+   },
+   {
+    "authorization_id": "AU0038",
+    "score": 0.5474,
+    "band": "suspect"
+   },
+   {
+    "authorization_id": "AU0039",
+    "score": 0.4513,
+    "band": "suspect"
+   },
+   {
+    "authorization_id": "AU0040",
+    "score": 0.4744,
+    "band": "suspect"
+   },
+   {
+    "authorization_id": "AU0041",
+    "score": 0.5905,
+    "band": "suspect"
+   },
+   {
+    "authorization_id": "AU0042",
+    "score": 0.5118,
+    "band": "suspect"
+   },
+   {
+    "authorization_id": "AU0043",
+    "score": 0.3986,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0044",
+    "score": 0.476,
+    "band": "suspect"
+   },
+   {
+    "authorization_id": "AU0045",
+    "score": 0.5482,
+    "band": "suspect"
+   }
+  ]
+ },
+ "provenance": {
+  "pack_files": {
+   "accounts.csv": "267fd41fb1c558956c9f32af6d5f9b6855039d3027f28372b9295b461e543769",
+   "authorization_history.csv": "eb562bdc579204f25870b2ab4013d15a59f90733da0ad0d80b89949f29046168",
+   "cards.csv": "50acf666bce48bb1cc7c321496dafbe684c7dd6605ab13cccb8f6624e2889809",
+   "customers.csv": "abd11d15d5bc463a162e7ed4483704640c482de251e31b1788205ac3d6f71e00",
+   "fx_rates.csv": "dcda0e834fa13671c5ae6b75df2843a44757829da08ddfc5395d6911fd4cde5b",
+   "items.csv": "4702115a8afbb65b05372202eb561377877131fd118a202b408f18c5c3d149f4",
+   "merchants.csv": "486215f7382138ec41969338a8016ecb6cc428ec62d10d4969fd91c56c5f64de",
+   "purchase_attempt_items.csv": "31c73949765bb1f3f76d4e125790064962ec8b1f4dd6bc16cb3f405ee3a11cb9",
+   "purchase_attempts.csv": "3335e12e2b8be6e289a838e3db74e3e88f3262c166ae62ead5930840e228c1b0",
+   "scenario_authorities.csv": "e16b9ca3399b382e69c76c0ec3df3906f259e5e40590262741e0cc3672c2e3ea",
+   "scenario_catalogue.csv": "82834634111cc1183ede31c48d4890a68fcdcd8efc61eee361a34fbd6c4bc3a4"
+  },
+  "python": "3.14.4",
+  "numpy": "2.5.2",
+  "seed": 20260924,
+  "trainer": "merchant-trust-data/models/behavior/train_behavior.py"
+ }
+}

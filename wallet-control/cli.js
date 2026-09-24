@@ -112,6 +112,10 @@ function runScenario(id) {
     if (ev.decision !== 'approve') {
       console.log(`      ${ev.customer_message.replace(/\n/g, ' ').slice(0, 220)}`);
     }
+    const beh = (ev.evidence || []).find(e => e.label === 'Behavior model');
+    if (beh && !/normal/.test(beh.value)) {
+      console.log(`      behavior model: ${beh.value}`);
+    }
   }
   const counts = rows.reduce((m, r) => { const f = r.final || r.ev.decision; m[f] = (m[f] || 0) + 1; return m; }, {});
   console.log(`  summary: ${rows.length} purchases → ` + Object.entries(counts).map(([k, v]) => `${v} ${k}`).join(', '));
