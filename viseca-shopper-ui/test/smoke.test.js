@@ -297,3 +297,89 @@ test("demo account signs in through the normal login form", async () => {
   assert.equal(j.user.isDemo, true);
   assert.equal(j.user.plan, "plus");
 });
+
+/* ---------- chat history + signed-policy purchases (own user) ---------- */
+
+let cookieB;
+const isoZurich = (d) => {
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}+02:00`;
+};
+
+let historyBaseline = -1;
+
+ test("history requires auth", async () => {
+  const r = await fetch(`${BASE}/api/history`);
+  assert.equal(r.status, 401);
+});
+
+ test("a turn lands in the stored history (user + agent pair)", async () => {
+  const reg = await post("/api/auth/register", { email: "bob@example.com", password: "correct horse battery", name: "Bob" });
+  assert.equal(reg.status, 201);
+  cookieB = cookieOf(reg);
+
+  const before = await (await fetch(`${BASE}/api/history`, { headers: { Cookie: cookieB } })).json();
+  historyBaseline = before.messages.length;
+
+  const chat = await post("/api/chat", { message: "hello bob" }, { Cookie: cookieB });
+  assert.equal(chat.status, 200);
+  await sseFrames(chat);
+
+  const h = await (await fetch(`${BASE}/api/history`, { headers: { Cookie: cookieB } })).json();
+  assert.equal(h.messages.length, historyBaseline + 2);
+  assert.equal(h.messages[h.messages.length - 2].role, "user");
+  assert.equal(h.messages[h.messages.length - 2].text, "hello bob");
+  assert.equal(h.messages[h.messages.length - 1].role, "agent");
+});
+
+ test("signing a valid policy maps it to the account and lists it in purchases", async () => {
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  const dateTag = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
+  const plusDays = (n) => new Date(now.getTime() + n * 86400000);
+  const policy = {
+    policy_id: `pol_${dateTag}-histt01`,
+    created_at: isoZurich(now),
+    request: "Two bags of espresso beans",
+    items: [{ product: "Espresso beans 1kg", quantity: 2, max_unit_price: { amount: 25, currency: "CHF" } }],
+    budget: { max_total: 50, currency: "CHF" },
+    timing: { order_by: isoZurich(plusDays(3)), deliver_by: isoZurich(plusDays(10)) },
+    delivery: { address: "Musterstrasse 1, 8000 Zürich", instructions: "" },
+    payment: { method: "Viseca card", max_single_charge: { amount: 50, currency: "CHF" } },
+    merchant: { allowed_domains: [], blocked_domains: [], require_impressum: true },
+    stop_rules: ["stop and ask if nothing within budget"],
+  };
+  const sign = await post("/api/policy/sign", { policy }, { Cookie: cookieB });
+  assert.equal(sign.status, 200);
+  const sj = await sign.json();
+  assert.equal(sj.ok, true);
+
+  const list = await (await fetch(`${BASE}/api/policies`, { headers: { Cookie: cookieB } })).json();
+  assert.equal(list.ok, true);
+  const mine = list.policies.find((p) => p.policy_id === policy.policy_id);
+  assert.ok(mine, "signed policy listed for its owner");
+  assert.equal(mine.receipt, null, "no receipt filed yet");
+
+  // another account must not see Bob's policy (Ada re-login: earlier tests
+  // logged her out, so the old cookie is intentionally dead)
+  const adaLogin = await post("/api/auth/login", { email: "ada@example.com", password: "correct horse battery" });
+  assert.equal(adaLogin.status, 200);
+  const adaCookie = cookieOf(adaLogin);
+  const ada = await (await fetch(`${BASE}/api/policies`, { headers: { Cookie: adaCookie } })).json();
+  assert.ok(!ada.policies.some((p) => p.policy_id === policy.policy_id), "policies are per-account");
+
+  // filing a receipt shows up
+  const receiptPath = path.join(tmpDir, "agent-ws", "policies", `${policy.policy_id}.receipt.json`);
+  fs.writeFileSync(receiptPath, JSON.stringify({ filed_at: isoZurich(new Date()), total: 48.5, shop: "beans.ch" }));
+  const again = await (await fetch(`${BASE}/api/policies`, { headers: { Cookie: cookieB } })).json();
+  const withReceipt = again.policies.find((p) => p.policy_id === policy.policy_id);
+  assert.equal(withReceipt.receipt.total, 48.5);
+  assert.equal(withReceipt.receipt.shop, "beans.ch");
+});
+
+ test("DELETE /api/history clears the stored conversation", async () => {
+  const del = await fetch(`${BASE}/api/history`, { method: "DELETE", headers: { Cookie: cookieB } });
+  assert.equal(del.status, 200);
+  const h = await (await fetch(`${BASE}/api/history`, { headers: { Cookie: cookieB } })).json();
+  assert.equal(h.messages.length, 0);
+});

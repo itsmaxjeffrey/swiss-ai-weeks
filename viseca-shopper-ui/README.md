@@ -173,3 +173,18 @@ Every purchase runs under a fixed, signed, time-bound **order policy**:
 Bridge config (env): `POLICY_AGENT_WS`, `POLICY_SCRIPT`, `POLICY_DIR`,
 `POLICY_KEYS_DIR`, `POLICY_PUB_OUT`. `GET /api/policy/pubkey` exposes the
 verification key; `POST /api/policy/sign {policy}` is the only signing path.
+
+## Conversation history & Purchases view
+
+- Every completed turn (user message, agent reply, error text) is stored per
+  account under `data/history/<userId>.json` — capped at the last 100 entries.
+  Reloading the page (or signing in from another browser) restores the chat;
+  policy cards from stored history render **read-only** so a past policy can
+  never be re-approved. `GET /api/history` / `DELETE /api/history` power this
+  and the **clear** button in the stage header (the agent's own session memory
+  is untouched by a clear).
+- On a successful sign the bridge records `policy_id → account` in
+  `data/policy-owners.json`; `GET /api/policies` then lists the account's own
+  signed policies with receipt status (the agent files
+  `policies/<policy_id>.receipt.json` after checkout). Shown under
+  **Account → Purchases**. Policies are strictly per-account.

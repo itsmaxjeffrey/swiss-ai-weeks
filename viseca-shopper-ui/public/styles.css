@@ -816,3 +816,41 @@ body::after {
 @media (max-width: 640px) {
   .plans { grid-template-columns: 1fr; }
 }
+
+/* ---------- stage-head right cluster (turn counter + clear) ---------- */
+
+.stage-head-right { display: inline-flex; align-items: center; gap: 10px; }
+
+.clear-btn {
+  border: 1px dashed var(--hairline);
+  background: transparent;
+  color: var(--ink-soft);
+  padding: 2px 8px;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.clear-btn:hover { color: var(--red-deep); border-color: var(--red-deep); }
+.clear-btn:disabled { opacity: 0.4; cursor: default; }
+
+/* ---------- purchases (signed order policies) ---------- */
+
+.purchase-row {
+  border: 1px dashed var(--hairline);
+  padding: 8px 10px;
+  margin-bottom: 6px;
+}
+.purchase-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.purchase-head .mono-label { font-family: var(--mono); font-size: 11px; }
+.purchase-state { font-family: var(--mono); font-size: 10px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.06em; }
+.purchase-state--done { color: #1c7c33; }
+.purchase-req { font-size: 13.5px; margin-bottom: 4px; overflow-wrap: anywhere; }
+.purchase-meta { font-family: var(--mono); font-size: 10.5px; color: var(--ink-soft); }

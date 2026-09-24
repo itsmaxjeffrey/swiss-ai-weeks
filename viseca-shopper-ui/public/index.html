@@ -98,7 +98,10 @@
 <main class="stage">
   <div class="stage-head">
     <span class="mono-label stage-head-label"><span class="red">+</span> Konversation / Conversation</span>
-    <span class="mono-label" id="turnCounter">no messages yet</span>
+    <span class="stage-head-right">
+      <span class="mono-label" id="turnCounter">no messages yet</span>
+      <button class="clear-btn mono-label" id="btnClearChat" type="button" title="Clear the chat view (stored conversation)">clear</button>
+    </span>
   </div>
 
   <div class="feed" id="feed" aria-live="polite">
@@ -169,6 +172,10 @@
       <h4 class="mono-label section-head">Usage today</h4>
       <div class="usage-bar"><div class="usage-fill" id="usageFill"></div></div>
       <p class="form-note" id="usageText"></p>
+
+      <h4 class="mono-label section-head">Purchases</h4>
+      <p class="form-note">Signed order policies — frozen budgets and deadlines the agent must obey. Receipts appear once the agent files them.</p>
+      <div id="policyList"></div>
 
       <h4 class="mono-label section-head">API keys</h4>
       <p class="form-note">Bearer keys for ChatGPT, Claude, OpenClaw — anything that speaks HTTP. A key inherits your plan and limits.</p>

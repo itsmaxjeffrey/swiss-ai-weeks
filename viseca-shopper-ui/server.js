@@ -10,6 +10,9 @@
  *      sessions, subscription plans with daily message caps  (accounts.js)
  *   4. external surfaces: bearer API keys, POST /api/v1/chat (plain JSON for
  *      ChatGPT Actions & skills), /.well-known/ai-plugin.json + /openapi.json
+ *   5. persistence: per-user chat history (GET/DELETE /api/history) survives
+ *      reloads; signed order policies are mapped to accounts and listed via
+ *      GET /api/policies with receipt status
  *
  * Config (env):
  *   PORT                  default 8794
@@ -52,6 +55,12 @@ const POLICY_DIR = process.env.POLICY_DIR || path.join(AGENT_WS, "policies");
 const POLICY_PUB_OUT = process.env.POLICY_PUB_OUT || path.join(AGENT_WS, "keys", "policy-authority.public.pem");
 const POLICY_KEYS_DIR = process.env.POLICY_KEYS_DIR || path.join(__dirname, "keys");
 const POLICY_PRIV_KEY = path.join(POLICY_KEYS_DIR, "policy-authority.private.pem");
+
+/* per-user chat history (survives reloads) + policy→account ownership map */
+const DATA_DIR = process.env.ACCOUNTS_DATA_DIR || path.join(__dirname, "data");
+const HISTORY_DIR = path.join(DATA_DIR, "history");
+const POLICY_OWNERS_FILE = path.join(DATA_DIR, "policy-owners.json");
+const HISTORY_CAP = 100;
 
 function ensurePolicyKeys() {
   fs.mkdirSync(POLICY_KEYS_DIR, { recursive: true });
@@ -274,7 +283,7 @@ function friendlyTurnError(err) {
 /** Validate + sign via scripts/policy.js, then file the signed envelope as
  *  policies/<policy_id>.signed.json in the agent workspace. The script itself
  *  REFUSES incomplete policies (exit 4) — that is the no-missing-data rule. */
-function signPolicy(policy, res) {
+function signPolicy(policy, res, user) {
   const tmpIn = path.join(os.tmpdir(), `policy-in-${process.pid}-${Date.now()}.json`);
   const tmpOut = `${tmpIn}.signed`;
   fs.writeFileSync(tmpIn, JSON.stringify(policy, null, 2));
@@ -289,6 +298,7 @@ function signPolicy(policy, res) {
       const finalPath = path.join(POLICY_DIR, `${env.policy.policy_id}.signed.json`);
       fs.copyFileSync(tmpOut, finalPath);
       payload.signed_path = finalPath;
+      recordPolicyOwner(env.policy.policy_id, user);
       console.log(`[policy] SIGNED ${env.policy.policy_id} (fingerprint ${payload.signed_by}) -> ${finalPath}`);
       return sendJson(res, 200, payload);
     }
@@ -343,6 +353,51 @@ function serveStatic(req, res) {
   });
 }
 
+/* ---------- chat history (per user, survives reloads) ---------- */
+
+const historyPath = (userId) => path.join(HISTORY_DIR, `${userId}.json`);
+
+function loadHistory(userId) {
+  try {
+    const j = JSON.parse(fs.readFileSync(historyPath(userId), "utf8"));
+    return Array.isArray(j.messages) ? j.messages : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Synchronous small-file writes keep user/agent pairs ordered. */
+function appendHistory(userId, role, text) {
+  try {
+    fs.mkdirSync(HISTORY_DIR, { recursive: true });
+    const messages = loadHistory(userId);
+    messages.push({ role, text, ts: new Date().toISOString() });
+    fs.writeFileSync(
+      historyPath(userId),
+      JSON.stringify({ updated: new Date().toISOString(), messages: messages.slice(-HISTORY_CAP) })
+    );
+  } catch (e) {
+    console.log(`[history] append failed: ${e.message}`);
+  }
+}
+
+/* ---------- policy → account ownership (for GET /api/policies) ---------- */
+
+function loadPolicyOwners() {
+  try { return JSON.parse(fs.readFileSync(POLICY_OWNERS_FILE, "utf8")); } catch { return {}; }
+}
+
+function recordPolicyOwner(policyId, user) {
+  try {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+    const owners = loadPolicyOwners();
+    owners[policyId] = { userId: user.id, email: user.email, recordedAt: new Date().toISOString() };
+    fs.writeFileSync(POLICY_OWNERS_FILE, JSON.stringify(owners, null, 2));
+  } catch (e) {
+    console.log(`[policy] owner mapping failed: ${e.message}`);
+  }
+}
+
 /* ---------- chat: shared turn runner (SSE for the UI, JSON for /api/v1) ---------- */
 
 const userSessionKey = (user) => `${SESSION}-u${user.sid}`;
@@ -369,6 +424,7 @@ async function runChatTurn(req, res, user, message, mode) {
   const started = Date.now();
   const sessionKey = userSessionKey(user);
   console.log(`[chat] turn start  (${message.length} chars) user=${user.email} session=${sessionKey} mode=${mode}`);
+  appendHistory(user.id, "user", message);
 
   const turn = (async () => {
     activeTurns += 1;
@@ -410,11 +466,14 @@ async function runChatTurn(req, res, user, message, mode) {
     turn
       .then((reply) => {
         console.log(`[chat] turn done    in ${((Date.now() - started) / 1000).toFixed(1)}s (${reply.length} chars back) user=${user.email}`);
+        appendHistory(user.id, "agent", reply);
         send({ type: "done", reply, agent: AGENT, session: sessionKey });
       })
       .catch((err) => {
         console.log(`[chat] turn FAILED  after ${((Date.now() - started) / 1000).toFixed(1)}s: ${err.message} user=${user.email}`);
-        send({ type: "error", error: friendlyTurnError(err) });
+        const friendly = friendlyTurnError(err);
+        appendHistory(user.id, "error", friendly);
+        send({ type: "error", error: friendly });
       })
       .finally(() => {
         clearInterval(poll);
@@ -428,10 +487,13 @@ async function runChatTurn(req, res, user, message, mode) {
   try {
     const reply = await turn;
     console.log(`[chat] turn done    in ${((Date.now() - started) / 1000).toFixed(1)}s (${reply.length} chars back) user=${user.email}`);
+    appendHistory(user.id, "agent", reply);
     sendJson(res, 200, { reply, agent: AGENT, session: sessionKey, usage });
   } catch (err) {
     console.log(`[chat] turn FAILED  after ${((Date.now() - started) / 1000).toFixed(1)}s: ${err.message} user=${user.email}`);
-    sendJson(res, 502, { error: friendlyTurnError(err) });
+    const friendly = friendlyTurnError(err);
+    appendHistory(user.id, "error", friendly);
+    sendJson(res, 502, { error: friendly });
   } finally {
     userInFlight.delete(user.id);
   }
@@ -704,6 +766,60 @@ async function handle(req, res) {
     return runChatTurn(req, res, auth.user, message.trim(), pathname === "/api/chat" ? "sse" : "json");
   }
 
+  /* ----- chat history (reload-safe conversation view) ----- */
+
+  if (pathname === "/api/history") {
+    const auth = authenticate(req);
+    if (!auth) return sendJson(res, 401, { error: "Sign in." });
+    if (req.method === "GET") {
+      return sendJson(res, 200, { ok: true, messages: loadHistory(auth.user.id) });
+    }
+    if (req.method === "DELETE") {
+      fs.rmSync(historyPath(auth.user.id), { force: true });
+      console.log(`[history] cleared for ${auth.user.email}`);
+      return sendJson(res, 200, { ok: true });
+    }
+  }
+
+  /* ----- signed policies for this account ----- */
+
+  if (req.method === "GET" && pathname === "/api/policies") {
+    const auth = authenticate(req);
+    if (!auth) return sendJson(res, 401, { error: "Sign in." });
+    const owners = loadPolicyOwners();
+    const policies = [];
+    for (const [pid, owner] of Object.entries(owners)) {
+      if (owner.userId !== auth.user.id) continue;
+      try {
+        const env = JSON.parse(fs.readFileSync(path.join(POLICY_DIR, `${pid}.signed.json`), "utf8"));
+        const p = env.policy || {};
+        let receipt = null;
+        try {
+          const raw = JSON.parse(fs.readFileSync(path.join(POLICY_DIR, `${pid}.receipt.json`), "utf8"));
+          receipt = {
+            filed_at: raw.filed_at || raw.recorded_at || raw.created_at || null,
+            total: raw.total ?? raw.amount ?? null,
+            shop: raw.shop || raw.merchant || null,
+          };
+        } catch { /* receipt not filed yet */ }
+        policies.push({
+          policy_id: p.policy_id || pid,
+          request: p.request || "",
+          budget: p.budget || null,
+          timing: p.timing || null,
+          items: p.items || [],
+          signed_at: env.signed_at || owner.recordedAt,
+          signed_by: env.signed_by || null,
+          receipt,
+        });
+      } catch {
+        policies.push({ policy_id: pid, request: "(policy file missing)", items: [], budget: null, timing: null, signed_at: owner.recordedAt, signed_by: null, receipt: null, missing: true });
+      }
+    }
+    policies.sort((a, b) => String(b.signed_at).localeCompare(String(a.signed_at)));
+    return sendJson(res, 200, { ok: true, policies });
+  }
+
   /* ----- policy gate (signing authority — signed-in users only) ----- */
 
   if (req.method === "GET" && pathname === "/api/policy/pubkey") {
@@ -732,7 +848,7 @@ async function handle(req, res) {
     if (!policy || typeof policy !== "object" || Array.isArray(policy)) {
       return sendJson(res, 400, { error: "Field 'policy' must be an object." });
     }
-    return signPolicy(policy, res);
+    return signPolicy(policy, res, auth.user);
   }
 
   serveStatic(req, res);

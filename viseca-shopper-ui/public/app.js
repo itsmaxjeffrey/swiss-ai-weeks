@@ -40,6 +40,8 @@
   const btnShowAuth = document.getElementById("btnShowAuth");
   const btnAccount = document.getElementById("btnAccount");
   const btnLogout = document.getElementById("btnLogout");
+  const btnClearChat = document.getElementById("btnClearChat");
+  const policyList = document.getElementById("policyList");
 
   let turns = 0;
   let busy = false;
@@ -158,7 +160,8 @@
     return new Date().toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" });
   }
 
-  function addMessage(role, text) {
+  function addMessage(role, text, opts) {
+    const fromHistory = !!(opts && opts.history);
     const empty = feed.querySelector(".welcome");
     if (empty) empty.remove();
 
@@ -184,7 +187,7 @@
         if (!slot) return;
         let policy = null;
         try { policy = JSON.parse(raw); } catch { /* card shows invalid state */ }
-        slot.replaceWith(buildPolicyCard(policy));
+        slot.replaceWith(buildPolicyCard(policy, { readOnly: fromHistory }));
       });
     }
     feed.scrollTop = feed.scrollHeight;
@@ -213,7 +216,8 @@
     });
   }
 
-  function buildPolicyCard(policy) {
+  function buildPolicyCard(policy, opts) {
+    const readOnly = !!(opts && opts.readOnly);
     const card = document.createElement("div");
     card.className = "policy-card";
 
@@ -263,6 +267,15 @@
     const state = card.querySelector("[data-state]");
     const result = card.querySelector(".policy-result");
     const actions = card.querySelector(".policy-actions");
+
+    if (readOnly) {
+      // Restored from stored history — past policies must not be re-approvable
+      // here; the agent re-proposes (new policy_id) when a purchase is wanted.
+      actions.hidden = true;
+      state.textContent = "past policy";
+      return card;
+    }
+
     const setBusy = (approveDisabled) => {
       card.querySelectorAll(".policy-btn").forEach((b) => {
         b.disabled = b.classList.contains("policy-btn--approve") ? approveDisabled : true;
@@ -345,6 +358,68 @@
   function setStatus(state, label) {
     statusDot.className = `dot ${state}`;
     statusText.textContent = label;
+  }
+
+  /* ---------- stored conversation + purchases ---------- */
+
+  const WELCOME_HTML =
+    '<div class="welcome">' +
+    '<p class="welcome-kicker mono-label">01 — Willkommen</p>' +
+    '<p class="welcome-lede">Ask me to <em>find things</em>, <em>compare prices</em>, <em>plan purchases</em> or <em>hunt deals</em> across Swiss shops. I shop, you decide.</p>' +
+    '</div>';
+
+  function resetFeed() {
+    feed.innerHTML = WELCOME_HTML;
+    turns = 0;
+    turnCounter.textContent = "no messages yet";
+  }
+
+  /** Restore the stored conversation so a reload does not blank the chat. */
+  async function loadHistory() {
+    try {
+      const r = await fetch("/api/history", { headers: authHeaders() });
+      if (!r.ok) return;
+      const j = await r.json();
+      const msgs = Array.isArray(j.messages) ? j.messages : [];
+      if (msgs.length) {
+        resetFeed();
+        msgs.forEach((m) => addMessage(m.role || "system", m.text, { history: true }));
+        turns = msgs.filter((m) => m.role === "user").length;
+        turnCounter.textContent = `${turns} message${turns === 1 ? "" : "s"}`;
+      }
+    } catch { /* offline — live chat still works */ }
+  }
+
+  async function loadPurchases() {
+    if (!policyList) return;
+    try {
+      const r = await fetch("/api/policies", { headers: authHeaders() });
+      const j = await r.json();
+      const list = Array.isArray(j.policies) ? j.policies : [];
+      if (!list.length) {
+        policyList.innerHTML = '<p class="form-note">No signed order policies yet. Approve a policy card in chat to freeze a purchase.</p>';
+        return;
+      }
+      policyList.innerHTML = "";
+      list.forEach((p) => {
+        const row = document.createElement("div");
+        row.className = "purchase-row";
+        const budget = p.budget ? `max ${esc(String(p.budget.max_total))} ${esc(p.budget.currency || "")}` : "—";
+        const deliverBy = p.timing && p.timing.deliver_by ? fmtZurich(p.timing.deliver_by) : "—";
+        const items = (p.items || []).map((it) => esc(String((it && it.product) || "?"))).join(", ");
+        const receipt = p.receipt
+          ? `receipt ✓${p.receipt.total != null ? ` · ${esc(String(p.receipt.total))}` : ""}`
+          : "awaiting receipt";
+        row.innerHTML = `
+          <div class="purchase-head"><span class="mono-label">${esc(p.policy_id)}</span>
+            <span class="purchase-state${p.receipt ? " purchase-state--done" : ""}">${receipt}</span></div>
+          <div class="purchase-req">${esc(String(p.request || "").slice(0, 160))}</div>
+          <div class="purchase-meta mono-label">${items || "—"} · budget ${budget} · deliver by ${deliverBy} · signed ${fmtZurich(p.signed_at)}</div>`;
+        policyList.appendChild(row);
+      });
+    } catch {
+      policyList.innerHTML = '<p class="form-note">Could not load purchases.</p>';
+    }
   }
 
   /* ---------- API ---------- */
@@ -499,13 +574,13 @@
     setLocked(false);
     if (!authOverlay.hidden && !accountView.hidden) renderAccountView(user);
   }
-
   function renderSignedOut() {
     currentUser = null;
     authed = false;
     accountSignedOut.hidden = false;
     accountSignedIn.hidden = true;
     setLocked(true);
+    resetFeed();
   }
 
   async function refreshMe() {
@@ -603,6 +678,7 @@
 
     document.getElementById("urlOpenapi").textContent = `${location.origin}/openapi.json`;
     document.getElementById("urlPlugin").textContent = `${location.origin}/.well-known/ai-plugin.json`;
+    loadPurchases();
   }
 
   loginForm.addEventListener("submit", async (e) => {
@@ -614,7 +690,7 @@
       body: JSON.stringify({ email: loginForm.email.value, password: loginForm.password.value }),
     });
     const j = await r.json().catch(() => ({}));
-    if (r.ok) { if (j.session) setToken(j.session); loginForm.reset(); closeAuth(); refreshMe(); }
+    if (r.ok) { if (j.session) setToken(j.session); loginForm.reset(); closeAuth(); refreshMe().then(loadHistory); }
     else { loginError.textContent = j.error || `Sign-in failed (HTTP ${r.status}).`; loginError.hidden = false; }
   });
 
@@ -658,7 +734,13 @@
     await fetch("/api/auth/logout", { method: "POST", headers: authHeaders() }).catch(() => {});
     closeAuth();
     renderSignedOut();
-    addMessage("system", "Signed out.");
+  });
+
+  btnClearChat.addEventListener("click", async () => {
+    if (busy || !authed) return;
+    await fetch("/api/history", { method: "DELETE", headers: authHeaders() }).catch(() => {});
+    resetFeed();
+    addMessage("system", "Chat view cleared — the agent's memory of this conversation stays.");
   });
 
   btnShowAuth.addEventListener("click", () => openAuth(authed ? "account" : "login"));
@@ -673,7 +755,11 @@
 
   (async () => {
     const me = await refreshMe();
-    if (!me) openAuth("login"); // registration-first: gate the concierge
+    if (me) {
+      loadHistory(); // restore the stored conversation across reloads
+    } else {
+      openAuth("login"); // registration-first: gate the concierge
+    }
     health();
     input.focus();
   })();
