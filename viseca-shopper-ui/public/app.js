@@ -197,6 +197,10 @@
 
   function addMessage(role, text, opts) {
     const fromHistory = !!(opts && opts.history);
+    const tsDate = opts && opts.ts ? new Date(opts.ts) : null;
+    const timeLabel = tsDate && !isNaN(tsDate)
+      ? tsDate.toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" })
+      : nowLabel();
     const empty = feed.querySelector(".welcome");
     if (empty) empty.remove();
 
@@ -213,7 +217,7 @@
       : esc(text).replace(/\n/g, "<br>");
 
     el.innerHTML = `
-      <div class="msg-meta"><span class="red">${marks[role] || "·"}</span> ${names[role] || role} — ${nowLabel()}</div>
+      <div class="msg-meta"><span class="red">${marks[role] || "·"}</span> ${names[role] || role} — ${timeLabel}</div>
       <div class="msg-body">${bodyHtml}</div>`;
     feed.appendChild(el);
     if (policyBlocks) {
@@ -426,7 +430,7 @@
       const msgs = Array.isArray(j.messages) ? j.messages : [];
       if (msgs.length) {
         resetFeed();
-        msgs.forEach((m) => addMessage(m.role || "system", m.text, { history: true }));
+        msgs.forEach((m) => addMessage(m.role || "system", m.text, { history: true, ts: m.ts }));
         turns = msgs.filter((m) => m.role === "user").length;
         turnCounter.textContent = `${turns} message${turns === 1 ? "" : "s"}`;
       }
