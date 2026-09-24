@@ -1,0 +1,28 @@
+{
+  "formula": "risk = clip(100 * (b0 + sum(c_i * x_i)), 0, 100)",
+  "intercept": 0.39998168181667004,
+  "coefficients_risk_points": {
+    "company_age_days": 0.0,
+    "company_age_days_missing": 80.0,
+    "domain_age_days": -0.0,
+    "domain_age_days_missing": -0.0,
+    "domain_typo_score": 0.0,
+    "domain_typo_score_missing": -0.0,
+    "brand_name_similarity": -0.0,
+    "brand_name_similarity_missing": -0.0,
+    "registry_found": -40.0,
+    "website_reachable": 0.0,
+    "https_enabled": 0.0,
+    "tls_valid": 0.0,
+    "dns_a_exists": -0.0,
+    "dns_mx_exists": 0.0,
+    "dns_txt_exists": 0.0,
+    "domain_privacy_proxy": 0.0,
+    "urlhaus_hit": 0.0,
+    "possible_brand_impersonation": 0.0
+  },
+  "median_impute": {},
+  "encoding": "booleans 1/0, 0.5=unknown; numeric missing -> median + _missing=1",
+  "test_auc": 1.0,
+  "ridge_alpha": 0.01
+}
