@@ -148,8 +148,32 @@ function findKey(node, key) {
   return undefined;
 }
 
+/** Recursively collect diagnostic fields (stopReason, errorMessage, …) from a
+ *  CLI result payload so failures can be explained instead of swallowed. */
+function findDiagnostics(node, acc = {}) {
+  if (!node || typeof node !== "object") return acc;
+  for (const [k, v] of Object.entries(node)) {
+    if (typeof v === "string") {
+      if (k === "stopReason" && !acc.stopReason) acc.stopReason = v;
+      else if (k === "errorMessage" && !acc.errorMessage) acc.errorMessage = v;
+      else if (k === "livenessState" && !acc.livenessState) acc.livenessState = v;
+    } else if (v && typeof v === "object") {
+      findDiagnostics(v, acc);
+    }
+  }
+  return acc;
+}
+
+/** Structured agent-turn failure so the runner can decide on retries. */
+function turnError(kind, message, detail) {
+  const err = new Error(message);
+  err.kind = kind; // "timeout" | "no-json" | "no-reply" | "launch"
+  err.detail = detail || "";
+  return err;
+}
+
 /** Run one agent turn through the Gateway CLI and resolve the reply text. */
-function agentTurn(message, sessionKey) {
+function agentTurn(message, sessionKey, timeoutMs = TIMEOUT_MS) {
   return new Promise((resolve, reject) => {
     const child = spawn(BIN, [
       "agent",
@@ -163,15 +187,15 @@ function agentTurn(message, sessionKey) {
     let stderr = "";
     const timer = setTimeout(() => {
       child.kill("SIGKILL");
-      reject(new Error(`Agent turn timed out after ${TIMEOUT_MS / 1000}s.`));
-    }, TIMEOUT_MS);
+      reject(turnError("timeout", `Agent turn timed out after ${Math.round(timeoutMs / 1000)}s.`));
+    }, timeoutMs);
 
     child.stdout.on("data", (d) => { stdout += d; });
     child.stderr.on("data", (d) => { stderr += d; });
 
     child.on("error", (err) => {
       clearTimeout(timer);
-      reject(new Error(`Failed to launch ${BIN}: ${err.message}`));
+      reject(turnError("launch", `Failed to launch ${BIN}: ${err.message}`));
     });
 
     child.on("close", (code) => {
@@ -179,7 +203,8 @@ function agentTurn(message, sessionKey) {
       const start = stdout.indexOf("{");
       const end = stdout.lastIndexOf("}");
       if (start === -1 || end === -1 || end <= start) {
-        return reject(new Error(
+        return reject(turnError(
+          "no-json",
           `Agent returned no JSON (exit ${code}). ${stderr.slice(-400).trim()}`
         ));
       }
@@ -187,17 +212,58 @@ function agentTurn(message, sessionKey) {
       try {
         parsed = JSON.parse(stdout.slice(start, end + 1));
       } catch (e) {
-        return reject(new Error(`Unparseable agent JSON: ${e.message}`));
+        return reject(turnError("no-json", `Unparseable agent JSON: ${e.message}`));
       }
       const reply =
         findKey(parsed, "finalAssistantVisibleText") ||
         findKey(parsed, "finalAssistantRawText");
       if (!reply) {
-        return reject(new Error("Agent JSON contained no reply text."));
+        // The run finished (or aborted) without visible text — usually a
+        // provider timeout aborting the run mid-task. Surface WHY.
+        const diag = findDiagnostics(parsed);
+        const bits = [
+          diag.stopReason && `stop=${diag.stopReason}`,
+          diag.errorMessage,
+        ].filter(Boolean).join(" · ");
+        return reject(turnError("no-reply", "Agent JSON contained no reply text.", bits));
       }
       resolve(reply);
     });
   });
+}
+
+// Retry budget stays under the UI client's 630s abort timer.
+const OVERALL_BUDGET_MS = Math.min(TIMEOUT_MS, 590000);
+const CONTINUE_NUDGE =
+  "\n\n(System note: your previous attempt at this request was cut off before you produced a reply. Continue from where you left off and give your final answer now — do not restart the research from scratch.)";
+
+/** One agent turn with a single budget-aware retry when the run died without
+ *  a reply. The session keeps the partial work, so a continuation nudge lets
+ *  the agent finish cheaply instead of redoing the whole task. */
+async function turnWithRetry(message, sessionKey) {
+  const deadline = Date.now() + OVERALL_BUDGET_MS;
+  try {
+    return await agentTurn(message, sessionKey, OVERALL_BUDGET_MS);
+  } catch (err) {
+    const left = deadline - Date.now();
+    if (err.kind === "no-reply" && left > 90000) {
+      console.log(`[chat] retry after no-reply (${err.detail || "no detail"}); ${Math.round(left / 1000)}s left`);
+      return await agentTurn(message + CONTINUE_NUDGE, sessionKey, left);
+    }
+    throw err;
+  }
+}
+
+/** Map structured turn failures to a message a shopper can act on. */
+function friendlyTurnError(err) {
+  if (err && err.kind === "timeout") {
+    return "This task ran longer than the bridge allows without finishing. The shopper may still complete it in the background — try a smaller ask, or ask a follow-up in a minute.";
+  }
+  if (err && err.kind === "no-reply") {
+    const why = err.detail ? ` (reason: ${err.detail})` : "";
+    return `The shopper's run was cut off before it produced a reply${why}. Your conversation history is kept — send the request again and it will pick up where it left off.`;
+  }
+  return `The shopper could not complete the request: ${(err && err.message) || "unknown error"}`;
 }
 
 /** Validate + sign via scripts/policy.js, then file the signed envelope as
@@ -302,7 +368,7 @@ async function runChatTurn(req, res, user, message, mode) {
   const turn = (async () => {
     activeTurns += 1;
     try {
-      return await agentTurn(message, sessionKey);
+      return await turnWithRetry(message, sessionKey);
     } finally {
       activeTurns -= 1;
     }
@@ -343,7 +409,7 @@ async function runChatTurn(req, res, user, message, mode) {
       })
       .catch((err) => {
         console.log(`[chat] turn FAILED  after ${((Date.now() - started) / 1000).toFixed(1)}s: ${err.message} user=${user.email}`);
-        send({ type: "error", error: err.message });
+        send({ type: "error", error: friendlyTurnError(err) });
       })
       .finally(() => {
         clearInterval(poll);
@@ -360,7 +426,7 @@ async function runChatTurn(req, res, user, message, mode) {
     sendJson(res, 200, { reply, agent: AGENT, session: sessionKey, usage });
   } catch (err) {
     console.log(`[chat] turn FAILED  after ${((Date.now() - started) / 1000).toFixed(1)}s: ${err.message} user=${user.email}`);
-    sendJson(res, 502, { error: err.message });
+    sendJson(res, 502, { error: friendlyTurnError(err) });
   } finally {
     userInFlight.delete(user.id);
   }
@@ -508,6 +574,7 @@ async function handle(req, res) {
       maxConcurrent: MAX_CONCURRENT,
       auth: true,
       registrationOpen: accounts.REGISTRATION_OPEN,
+      demo: accounts.DEMO_ENABLED ? { email: accounts.DEMO_EMAIL, plan: accounts.DEMO_PLAN } : null,
       plans: accounts.PLANS,
       policy: {
         authority_fingerprint: AUTH ? AUTH.fingerprint : null,
@@ -550,6 +617,15 @@ async function handle(req, res) {
     const token = accounts.createSession(user.id);
     res.setHeader("Set-Cookie", accounts.sessionCookieHeader(token, isSecure(req)));
     console.log(`[auth] login ${user.email}`);
+    return sendJson(res, 200, { ok: true, user: accounts.publicUser(user) });
+  }
+
+  if (req.method === "POST" && pathname === "/api/auth/demo") {
+    const user = accounts.demoLogin();
+    if (!user) return sendJson(res, 404, { error: "Demo mode is disabled on this server." });
+    const token = accounts.createSession(user.id);
+    res.setHeader("Set-Cookie", accounts.sessionCookieHeader(token, isSecure(req)));
+    console.log(`[auth] demo login ${user.email}`);
     return sendJson(res, 200, { ok: true, user: accounts.publicUser(user) });
   }
 
@@ -675,10 +751,11 @@ try {
 
 accounts.load();
 accounts.pruneSessions();
+accounts.ensureDemoAccount();
 
 server.listen(PORT, HOST, () => {
   const url = `http://${HOST}:${PORT}`;
   console.log(`[viseca-shopper-ui] serving ${PUBLIC_DIR}`);
   console.log(`[viseca-shopper-ui] ${url}  →  agent '${AGENT}' (base session key: ${SESSION})`);
-  console.log(`[viseca-shopper-ui] multi-user on · plans: ${Object.keys(accounts.PLANS).join("/")} · registration ${accounts.REGISTRATION_OPEN ? "open" : "closed"} · agent slots: ${MAX_CONCURRENT}`);
+  console.log(`[viseca-shopper-ui] multi-user on · plans: ${Object.keys(accounts.PLANS).join("/")} · registration ${accounts.REGISTRATION_OPEN ? "open" : "closed"} · agent slots: ${MAX_CONCURRENT}${accounts.DEMO_ENABLED ? ` · demo: ${accounts.DEMO_EMAIL}` : ""}`);
 });

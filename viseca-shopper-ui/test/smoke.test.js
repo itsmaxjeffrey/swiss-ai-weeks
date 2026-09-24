@@ -278,3 +278,22 @@ test("logout kills the session", async () => {
   const me = await fetch(`${BASE}/api/auth/me`, { headers: { Cookie: cookie } });
   assert.equal(me.status, 401);
 });
+
+test("health advertises the demo account", async () => {
+  const j = await (await fetch(`${BASE}/api/health`)).json();
+  assert.ok(j.demo, "health exposes demo info");
+  assert.equal(j.demo.email, "demo@pixerful.com");
+  assert.equal(j.demo.plan, "plus");
+});
+
+test("one-click demo login works and flags the account", async () => {
+  const r = await post("/api/auth/demo", {});
+  assert.equal(r.status, 200);
+  const j = await r.json();
+  assert.equal(j.user.isDemo, true);
+  assert.equal(j.user.plan, "plus");
+  const me = await fetch(`${BASE}/api/auth/me`, { headers: { Cookie: cookieOf(r) } });
+  assert.equal(me.status, 200);
+  const meBody = await me.json();
+  assert.equal(meBody.user.isDemo, true);
+});

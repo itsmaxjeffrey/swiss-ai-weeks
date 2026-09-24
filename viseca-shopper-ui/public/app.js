@@ -40,6 +40,7 @@
   const btnShowAuth = document.getElementById("btnShowAuth");
   const btnAccount = document.getElementById("btnAccount");
   const btnLogout = document.getElementById("btnLogout");
+  const btnDemo = document.getElementById("btnDemo");
 
   let turns = 0;
   let busy = false;
@@ -480,8 +481,8 @@
     authed = true;
     accountSignedOut.hidden = true;
     accountSignedIn.hidden = false;
-    acctName.textContent = user.name;
-    acctPlan.textContent = user.planLabel;
+    acctName.textContent = user.name + (user.isDemo ? " (demo)" : "");
+    acctPlan.textContent = user.planLabel + (user.isDemo ? " · demo" : "");
     acctUsage.textContent = `${user.usage.used}/${user.usage.limit} msgs`;
     setLocked(false);
     if (!authOverlay.hidden && !accountView.hidden) renderAccountView(user);
@@ -603,6 +604,25 @@
     const j = await r.json().catch(() => ({}));
     if (r.ok) { loginForm.reset(); closeAuth(); refreshMe(); }
     else { loginError.textContent = j.error || `Sign-in failed (HTTP ${r.status}).`; loginError.hidden = false; }
+  });
+
+  btnDemo.addEventListener("click", async () => {
+    btnDemo.disabled = true;
+    loginError.hidden = true;
+    try {
+      const r = await fetch("/api/auth/demo", { method: "POST" });
+      const j = await r.json().catch(() => ({}));
+      if (r.ok) {
+        closeAuth();
+        refreshMe();
+        addMessage("system", "You're in the demo account (Plus plan) — have a look around. For your own chats and API keys, register an account any time.");
+      } else {
+        loginError.textContent = j.error || `Demo login failed (HTTP ${r.status}).`;
+        loginError.hidden = false;
+      }
+    } finally {
+      btnDemo.disabled = false;
+    }
   });
 
   registerForm.addEventListener("submit", async (e) => {
