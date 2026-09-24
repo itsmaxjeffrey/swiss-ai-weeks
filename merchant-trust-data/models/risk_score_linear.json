@@ -1,0 +1,52 @@
+{
+  "intercept": -0.7260670281244913,
+  "coefficients": {
+    "company_age_days": 6e-05,
+    "company_age_days_missing": 8.977189,
+    "domain_age_days": 0.001998,
+    "domain_age_days_missing": -1.923624,
+    "domain_typo_score": 0.881271,
+    "domain_typo_score_missing": -0.000393,
+    "brand_name_similarity": -1.281038,
+    "brand_name_similarity_missing": -0.000393,
+    "registry_found": -4.888361,
+    "website_reachable": -0.199883,
+    "https_enabled": -0.199883,
+    "tls_valid": -0.199883,
+    "dns_a_exists": 0.430354,
+    "dns_mx_exists": -0.214157,
+    "dns_txt_exists": 0.074295,
+    "domain_privacy_proxy": -0.199883,
+    "openphish_hit": -2.408975,
+    "urlhaus_hit": 2.011969,
+    "possible_brand_impersonation": 0.032618,
+    "young_registry": -0.668581,
+    "young_domain": 1.448644
+  },
+  "features_numeric": [
+    "company_age_days",
+    "domain_age_days",
+    "domain_typo_score",
+    "brand_name_similarity"
+  ],
+  "features_bool": [
+    "registry_found",
+    "website_reachable",
+    "https_enabled",
+    "tls_valid",
+    "dns_a_exists",
+    "dns_mx_exists",
+    "dns_txt_exists",
+    "domain_privacy_proxy",
+    "openphish_hit",
+    "urlhaus_hit",
+    "possible_brand_impersonation"
+  ],
+  "median_impute": {
+    "company_age_days": 2777.0,
+    "domain_age_days": 165.5,
+    "domain_typo_score": 0.6,
+    "brand_name_similarity": 0.4
+  },
+  "notes": "risk = 100 * sigmoid(b0 + sum(c*x)); bools: 1=True, 0=False, 0.5=unknown; numeric missing -> median + missing indicator."
+}
