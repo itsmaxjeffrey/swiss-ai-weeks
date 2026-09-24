@@ -169,10 +169,18 @@ const server = http.createServer((req, res) => {
         return sendJson(res, 400, { error: "Field 'message' is required." });
       }
 
+      const started = Date.now();
+      console.log(`[chat] turn start  (${message.trim().length} chars) from ${req.socket.remoteAddress}`);
       inFlight = agentTurn(message.trim());
       inFlight
-        .then((reply) => sendJson(res, 200, { reply, agent: AGENT, session: SESSION }))
-        .catch((err) => sendJson(res, 502, { error: err.message }))
+        .then((reply) => {
+          console.log(`[chat] turn done    in ${((Date.now() - started) / 1000).toFixed(1)}s (${reply.length} chars back)`);
+          sendJson(res, 200, { reply, agent: AGENT, session: SESSION });
+        })
+        .catch((err) => {
+          console.log(`[chat] turn FAILED  after ${((Date.now() - started) / 1000).toFixed(1)}s: ${err.message}`);
+          sendJson(res, 502, { error: err.message });
+        })
         .finally(() => { inFlight = null; });
     });
     return;

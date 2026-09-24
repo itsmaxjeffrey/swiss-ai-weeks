@@ -157,19 +157,35 @@
     turnCounter.textContent = `${turns} message${turns === 1 ? "" : "s"}`;
 
     try {
-      const r = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text.trim() }),
-      });
-      const j = await r.json().catch(() => ({}));
+      // Safety net: the bridge itself gives up on the agent after 5 min; if the
+      // connection dies without notice (proxy dropped it), abort so the
+      // indicator never spins forever.
+      const controller = new AbortController();
+      const abortTimer = setTimeout(() => controller.abort(), 390000);
+      let r, j;
+      try {
+        r = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text.trim() }),
+          signal: controller.signal,
+        });
+        j = await r.json().catch(() => ({}));
+      } finally {
+        clearTimeout(abortTimer);
+      }
       if (r.ok && j.reply) {
         addMessage("agent", j.reply);
       } else {
         addMessage("error", j.error || `Request failed (HTTP ${r.status}).`);
       }
     } catch (e) {
-      addMessage("error", `Could not reach the bridge: ${e.message}`);
+      addMessage(
+        "error",
+        e.name === "AbortError"
+          ? "Connection lost while the agent was working. The turn may still have completed — reload and ask a follow-up."
+          : `Could not reach the bridge: ${e.message}`
+      );
     } finally {
       setBusy(false);
       input.focus();
