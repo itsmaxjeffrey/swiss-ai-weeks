@@ -24,6 +24,32 @@
     "almost there…",
   ];
   let thinkingTimer = null;
+  let thinkingStep = 0;
+  let lastProgress = null;
+
+  function fmtElapsed(ms) {
+    const s = Math.max(0, Math.round((ms || 0) / 1000));
+    return s >= 60 ? `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, "0")}s` : `${s}s`;
+  }
+
+  function fmtTokens(n) {
+    if (typeof n !== "number" || !isFinite(n)) return "";
+    return n >= 1000 ? `${(n / 1000).toFixed(1)}k tok` : `${n} tok`;
+  }
+
+  /** Renders the live status line: friendly word + real data when available. */
+  function renderBusyLine() {
+    const base = THINKING_WORDS[thinkingStep % THINKING_WORDS.length];
+    if (!lastProgress) {
+      typingText.textContent = base;
+      return;
+    }
+    const bits = [base, fmtElapsed(lastProgress.elapsedMs)];
+    const tok = fmtTokens(lastProgress.totalTokens);
+    if (tok) bits.push(tok);
+    if (lastProgress.status && lastProgress.status !== "running") bits.push(lastProgress.status);
+    typingText.textContent = bits.join(" · ");
+  }
 
   /* ---------- tiny markdown renderer ---------- */
 
@@ -254,15 +280,17 @@
     sendBtn.disabled = on;
     typing.hidden = !on;
     if (on) {
-      let i = 0;
-      typingText.textContent = THINKING_WORDS[0];
+      thinkingStep = 0;
+      lastProgress = null;
+      renderBusyLine();
       thinkingTimer = setInterval(() => {
-        i = (i + 1) % THINKING_WORDS.length;
-        typingText.textContent = THINKING_WORDS[i];
-      }, 2200);
+        thinkingStep += 1;
+        renderBusyLine();
+      }, 1000);
     } else if (thinkingTimer) {
       clearInterval(thinkingTimer);
       thinkingTimer = null;
+      lastProgress = null;
     }
   }
 
@@ -300,27 +328,61 @@
     turnCounter.textContent = `${turns} message${turns === 1 ? "" : "s"}`;
 
     try {
-      // Safety net: the bridge itself gives up on the agent after 5 min; if the
-      // connection dies without notice (proxy dropped it), abort so the
-      // indicator never spins forever.
+      // The bridge streams live progress (SSE frames) and finishes with a
+      // final done/error frame. Abort timer is the safety net if the
+      // connection dies without notice (bridge gives up after 10 min).
       const controller = new AbortController();
-      const abortTimer = setTimeout(() => controller.abort(), 390000);
-      let r, j;
+      const abortTimer = setTimeout(() => controller.abort(), 630000);
       try {
-        r = await fetch("/api/chat", {
+        const r = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message: text.trim() }),
           signal: controller.signal,
         });
-        j = await r.json().catch(() => ({}));
+        if (!r.ok) {
+          const j = await r.json().catch(() => ({}));
+          addMessage("error", j.error || `Request failed (HTTP ${r.status}).`);
+          return;
+        }
+        if (!r.body) {
+          const j = await r.json().catch(() => ({}));
+          if (j.reply) addMessage("agent", j.reply);
+          else addMessage("error", "Empty response from the bridge.");
+          return;
+        }
+        const reader = r.body.getReader();
+        const dec = new TextDecoder();
+        let buf = "";
+        let settled = false;
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += dec.decode(value, { stream: true });
+          let i;
+          while ((i = buf.indexOf("\n\n")) !== -1) {
+            const frame = buf.slice(0, i).trim();
+            buf = buf.slice(i + 2);
+            if (!frame.startsWith("data: ")) continue;
+            let ev;
+            try { ev = JSON.parse(frame.slice(6)); } catch { continue; }
+            if (ev.type === "progress") {
+              lastProgress = ev;
+              renderBusyLine();
+            } else if (ev.type === "done") {
+              settled = true;
+              addMessage("agent", ev.reply);
+            } else if (ev.type === "error") {
+              settled = true;
+              addMessage("error", ev.error || "Agent error.");
+            }
+          }
+        }
+        if (!settled) {
+          addMessage("error", "Connection closed before the agent replied. The turn may still have completed — ask a follow-up.");
+        }
       } finally {
         clearTimeout(abortTimer);
-      }
-      if (r.ok && j.reply) {
-        addMessage("agent", j.reply);
-      } else {
-        addMessage("error", j.error || `Request failed (HTTP ${r.status}).`);
       }
     } catch (e) {
       addMessage(

@@ -17,7 +17,7 @@
  */
 
 const http = require("http");
-const { spawn, spawnSync } = require("child_process");
+const { spawn, spawnSync, execFile } = require("child_process");
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
@@ -28,7 +28,7 @@ const HOST = process.env.HOST || "127.0.0.1";
 const AGENT = process.env.OPENCLAW_AGENT || "viseca-shopper";
 const SESSION = process.env.OPENCLAW_SESSION || "webui";
 const BIN = process.env.OPENCLAW_BIN || "openclaw";
-const TIMEOUT_MS = parseInt(process.env.OPENCLAW_TIMEOUT_MS || "300000", 10);
+const TIMEOUT_MS = parseInt(process.env.OPENCLAW_TIMEOUT_MS || "600000", 10);
 const PUBLIC_DIR = path.join(__dirname, "public");
 
 /* Order Policy Gate — the bridge is the trusted signing authority.
@@ -175,6 +175,29 @@ function signPolicy(policy, res) {
   }
 }
 
+/** Snapshot of this agent's session from the local store (status, tokens). */
+function sessionSnapshot() {
+  return new Promise((resolve) => {
+    execFile(
+      BIN,
+      ["sessions", "--json", "--active", "3", "--agent", AGENT],
+      { timeout: 8000, maxBuffer: 4 * 1024 * 1024 },
+      (err, stdout) => {
+        if (err) return resolve(null);
+        try {
+          const parsed = JSON.parse(stdout);
+          const entry = (parsed.sessions || []).find(
+            (s) => s.key === `agent:${AGENT}:${SESSION}`
+          );
+          resolve(entry || null);
+        } catch {
+          resolve(null);
+        }
+      }
+    );
+  });
+}
+
 function serveStatic(req, res) {
   let urlPath = decodeURIComponent(new URL(req.url, "http://x").pathname);
   if (urlPath === "/") urlPath = "/index.html";
@@ -262,17 +285,50 @@ const server = http.createServer((req, res) => {
 
       const started = Date.now();
       console.log(`[chat] turn start  (${message.trim().length} chars) from ${req.socket.remoteAddress}`);
+
+      // Live event stream (SSE): start -> progress… -> done|error. Progress is
+      // best-effort (session store polling); the final frame is authoritative.
+      res.writeHead(200, {
+        "Content-Type": "text/event-stream; charset=utf-8",
+        "Cache-Control": "no-store",
+        "X-Accel-Buffering": "no",
+      });
+      const send = (obj) => {
+        try {
+          if (!res.writableEnded) res.write(`data: ${JSON.stringify(obj)}\n\n`);
+        } catch { /* client gone — the turn still completes server-side */ }
+      };
+      send({ type: "start", agent: AGENT, session: SESSION });
+
+      const poll = setInterval(() => {
+        sessionSnapshot().then((snap) => {
+          if (!snap) return;
+          send({
+            type: "progress",
+            status: snap.status,
+            totalTokens: snap.totalTokens,
+            updatedAt: snap.updatedAt,
+            model: snap.model,
+            elapsedMs: Date.now() - started,
+          });
+        });
+      }, 4000);
+
       inFlight = agentTurn(message.trim());
       inFlight
         .then((reply) => {
           console.log(`[chat] turn done    in ${((Date.now() - started) / 1000).toFixed(1)}s (${reply.length} chars back)`);
-          sendJson(res, 200, { reply, agent: AGENT, session: SESSION });
+          send({ type: "done", reply, agent: AGENT, session: SESSION });
         })
         .catch((err) => {
           console.log(`[chat] turn FAILED  after ${((Date.now() - started) / 1000).toFixed(1)}s: ${err.message}`);
-          sendJson(res, 502, { error: err.message });
+          send({ type: "error", error: err.message });
         })
-        .finally(() => { inFlight = null; });
+        .finally(() => {
+          clearInterval(poll);
+          res.end();
+          inFlight = null;
+        });
     });
     return;
   }
