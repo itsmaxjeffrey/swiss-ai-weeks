@@ -1,0 +1,68 @@
+{
+  "started_at": "2026-09-24T10:29:40Z",
+  "mode": "subset",
+  "plan": {
+    "mode": "subset",
+    "sources": [
+      "threatfox",
+      "feodotracker",
+      "malwarebazaar"
+    ],
+    "disabled": [],
+    "unknown_sources": [],
+    "clean": [
+      "threatfox",
+      "feodotracker",
+      "malwarebazaar"
+    ],
+    "core": [],
+    "report": false
+  },
+  "sources": [
+    {
+      "source": "threatfox",
+      "status": "cached",
+      "retrieved_at": "2026-09-24T09:47:07Z",
+      "seconds": 0.0
+    },
+    {
+      "source": "feodotracker",
+      "status": "cached",
+      "retrieved_at": "2026-09-24T09:47:07Z",
+      "seconds": 0.0
+    },
+    {
+      "source": "malwarebazaar",
+      "status": "blocked",
+      "error": "Blocked: malwarebazaar unreachable (blob 502 x2 days, API 502). Record probe; if the proxy wall persists, register a free auth key at https://auth.abuse.ch/ and export LEASH_ABUSECH_KEY, then rerun.",
+      "seconds": 0.4
+    }
+  ],
+  "core": [],
+  "clean": [
+    {
+      "clean": "threatfox",
+      "status": "ok",
+      "seconds": 0.3
+    },
+    {
+      "clean": "feodotracker",
+      "status": "ok",
+      "seconds": 0.0
+    },
+    {
+      "clean": "malwarebazaar",
+      "status": "blocked",
+      "seconds": 0.0
+    }
+  ],
+  "finished_at": "2026-09-24T10:29:41Z",
+  "total_seconds": 1.1,
+  "summary": {
+    "fresh": 0,
+    "cached": 2,
+    "blocked": 1,
+    "error": 0,
+    "disabled": 0
+  }
+}

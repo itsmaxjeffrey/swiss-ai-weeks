@@ -1,0 +1,15 @@
+{
+  "auto_update": {
+    "enabled": false,
+    "day_of_week": "mon",
+    "hour": 6,
+    "minute": 0,
+    "timezone": "Europe/Zurich",
+    "comment": "Weekly auto-update toggle. Flip 'enabled' with: make weekly-on / make weekly-off. The scheduled runner checks this file each week and stays silent while enabled=false."
+  },
+  "policy": {
+    "refresh_gleif": true,
+    "refresh_static_archives": false,
+    "comment": "refresh_gleif: re-pull the GLEIF CH slice each update (new LEIs appear weekly). refresh_static_archives: only used by --refresh-all; static research archives (TabFormer, IEEE-CIS, ULB, ...) are otherwise cached forever."
+  }
+}

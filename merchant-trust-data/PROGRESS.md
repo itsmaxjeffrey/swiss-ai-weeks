@@ -103,6 +103,60 @@
   - HackAPrompt **BLOCKED**: HF-gated (auto-approve) — needs `LEASH_HF_TOKEN`
     with accepted terms; collector is token-ready, no other work pending.
 
+## DONE
+
+### 2026-09-24 — Phase-3 enrichment: threat feeds + sanctions + domain health
+
+- **ThreatFox** (abuse.ch): recent IOC CSV collected 2026-09-24 (9,331 rows raw →
+  8,812 cleaned, 7,611 unique domains/IPs; ioc types: 5,042 domain / 3,207 ip:port /
+  563 url; 519 rows without extractable host dropped). Parser handles the
+  header-in-`#`-comment format. License: abuse.ch free w/ attribution.
+- **FeodoTracker** (abuse.ch): ipblocklist JSON variant (CSV fallback wired);
+  recent list is tiny right now (5 C2 IPs: QakBot 4 / Emotet 1). Note: the
+  full historic dumps need the abuse.ch auth key; blocklist variants are key-free.
+- **UN consolidated sanctions**: consolidated.xml streamed (2.2MB) → 1,011
+  designations parsed (736 individuals / 275 entities) with aliases + listed_on.
+- **OFAC SDN** (bonus): 19,392 designations parsed (`-0-` placeholders nulled).
+- **SECO Swiss sanctions**: no stable anonymous bulk URL on seco.admin.ch
+  (verified) → collected the original `source.xml` via the OpenSanctions
+  `ch_seco_sanctions` mirror (42MB, list date 2026-09-04) → 8,609 unique ssid
+  targets w/ name variants. Mirror license CC BY-SA 4.0; Swiss public data.
+- **EU consolidated list BLOCKED**: bulk CSV now redirects to EU Login even with
+  `?anonymous=true` (verified with cookie jar 2026-09-24); probe recorded in
+  `data/raw/sanctions_eu/probe_status.json`.
+- **MalwareBazaar BLOCKED (proxy)**: daily blob + API both 502 via the egress
+  proxy (probed today + yesterday, API retried); probe stashed in
+  `data/raw/malwarebazaar/probe_status.json`. If the proxy wall persists, a free
+  auth key from auth.abuse.ch (`LEASH_ABUSECH_KEY`) is the API fallback.
+- **AbuseIPDB scaffold**: key-ready collector (`LEASH_ABUSEIPDB_KEY`); 401
+  unauthenticated probe recorded → BLOCKED-pending-key.
+- **Domain-health enrichment**: DNS (A/MX/NS/SPF) + HTTP liveness (HEAD→GET,
+  parked-page sniff) + Wayback CDX first-seen over ALL confirmed-malicious root
+  domains (5,484 unique — the earlier "576" was the bounded DNS batch size);
+  crt.sh first-seen bounded to ≤500 domains. Resumable JSONL cache in
+  `data/raw/domain_health/`.
+- Cleaners + tests added (`tests/test_external_collectors.py`, 16 tests pass);
+  EXTERNAL_QUALITY_REPORT.md regenerated; LICENSE_NOTES.md + DATA_SOURCES.md
+  updated for every new source.
+
+### 2026-09-24 — Reproducible update pipeline + weekly auto-update toggle
+
+- `processing/update_all.py`: one command (`make update`) re-fetches every
+  source (feeds, GLEIF CH re-pull, rankings, enrichment catch-up) and rebuilds
+  all derived artifacts (parquet, clean_external exports, quality reports).
+- Freshness model: dated feed filenames → same-day cache / next-day fresh;
+  GLEIF page cache cleared per update (policy knob); static archives cached
+  forever (`--refresh-all` forces); enrichment resume-safe. Blocked/gated
+  sources recorded per run, never fail the update.
+- Per-run provenance: `reports/update_runs/update_<UTC>.json` + `latest.json`
+  (last 52 kept) with per-source status (fresh/cached/blocked/error/disabled).
+- Weekly auto-update is opt-in: `make weekly-on|off|status` flips
+  `config/update.json` `auto_update.enabled` (default **off**); the scheduled
+  runner checks that flag before running, so the repo config is the single
+  source of truth.
+- Tests: `tests/test_update_all.py` (10) — toggle roundtrip, plan building,
+  cleaner-mapping integrity, report retention. Full suite: 25 pass.
+
 ## IN PROGRESS
 
 - Nothing right now.
@@ -114,6 +168,22 @@
   huggingface.co/datasets/hackaprompt/hackaprompt-dataset with an HF account,
   create a token, `export LEASH_HF_TOKEN=***`, then rerun
   `make collect-external SRC=hackaprompt && make clean-external SRC=hackaprompt`.
+
+- **EU consolidated sanctions list**: bulk CSV sits behind EU Login
+  (verified 2026-09-24). Action needed by human: create an EU Login account and
+  either export the consolidated list manually once logged in, or provide
+  credentials/a session for the collector. Until then UN+OFAC+SECO cover the
+  sanctions angle.
+
+- **MalwareBazaar**: daily blob + API unreachable through the host egress proxy
+  (502 on both, 2026-09-24). Retry from a different network, or register a free
+  auth key at https://auth.abuse.ch/ and `export LEASH_ABUSECH_KEY=***` so the
+  API get-recent path works. Collector records probes automatically.
+
+- **AbuseIPDB**: free API key required (401 without; probe recorded
+  2026-09-24). Action: register at https://www.abuseipdb.com/account/api,
+  `export LEASH_ABUSEIPDB_KEY=***`, flip `abuseipdb.enabled=true`. Collector
+  scaffold is key-ready (per-IP cache, 1k checks/day free tier).
 
 - **Zefix API**: requires registered (free) token. Unauthenticated POST → 401
   (verified). Action needed by human: email **zefix@bj.admin.ch** (official
@@ -161,6 +231,14 @@
 | zefix | 0 — token required | — | probe 2026-09-23 (401) | 401 unauthenticated | per API terms once tokenized |
 | rdap | 167 lookups | 133 ok (130 w/ dates), 20 not_found | 2026-09-23 | 11 http_429, 3 http_403 (retryable) | 0.8 s sleep; cached per domain |
 | dns | 167 lookups | 167 | 2026-09-23 | NXDOMAIN kept as dns_error signal | 0.05 s sleep, 4 s timeout |
+| threatfox | 9,331 IOCs | 8,812 cleaned (7,611 unique hosts) | 2026-09-24 | 519 no-host rows dropped | none (free export) |
+| feodotracker | 5 C2 IPs (recent JSON list is tiny) | 5 | 2026-09-24 | — | none |
+| sanctions_un | 1,011 designations | 1,011 (736 ind / 275 ent) | 2026-09-24 | none | none |
+| sanctions_ofac | 19,392 designations | 19,392 | 2026-09-24 | none | none |
+| sanctions_seco | 42MB source.xml (list 2026-09-04) | 8,609 unique ssid | 2026-09-24 | via OpenSanctions mirror | polite (single file) |
+| sanctions_eu | 0 — EU Login wall | — | probe 2026-09-24 (307→login) | EU Login required | — |
+| malwarebazaar | 0 — proxy 502 | — | probe 2026-09-24 | egress proxy 502 (blob+API) | — |
+| abuseipdb | 0 — key required | — | probe 2026-09-24 (401) | 401 unauthenticated | free tier 1k/day once keyed |
 
 ## Dataset counts (v1, 2026-09-23)
 

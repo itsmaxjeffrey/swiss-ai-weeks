@@ -21,11 +21,69 @@ make test         # unit tests
 make collect-external            # Phase-2 external datasets (11 sources)
 make collect-external SRC=viseca # one source
 make clean-external              # clean/normalize them (chunked, RAM-safe)
+
+make update                      # refresh EVERYTHING (feeds + GLEIF + rebuild + clean + reports)
+make update-refresh              # ... and re-download cached static archives (large)
+make weekly-status               # weekly auto-update toggle (default off)
 ```
 
 Every step is resumable: raw downloads are cached with provenance sidecars
 (`data/raw/<source>/*.<ext>.meta.json`), so re-running never re-downloads
 unchanged data.
+
+## Reproducible updates & weekly auto-refresh
+
+One command re-fetches every source the dataset was built from and rebuilds
+all derived artifacts (see `processing/update_all.py`):
+
+```bash
+make update                    # full refresh: threat feeds, GLEIF CH re-pull,
+                               # rankings, enrichment catch-up, parquet rebuild,
+                               # clean_external + quality reports
+
+# subset / preview without touching the core dataset:
+.venv/bin/python -m processing.update_all --dry-run
+.venv/bin/python -m processing.update_all --sources threatfox,feodotracker
+```
+
+Freshness model:
+
+- **Dated feeds** (openphish, urlhaus, threatfox, feodotracker, sanctions,
+  malwarebazaar, tranco, majestic) use `{today}` filenames — same-day reruns
+  are cache hits; the next calendar day fetches fresh automatically.
+- **GLEIF** pages are undated, so `update` clears the page cache and re-pulls
+  the CH slice (new LEIs appear weekly). Disable via
+  `config/update.json` → `policy.refresh_gleif`.
+- **Static research archives** (TabFormer, IEEE-CIS, ULB, BIPIA, AgentDojo,
+  TensorTrust, HackAPrompt, Viseca, Google taxonomy) are request-key cached
+  forever; `--refresh-all` forces re-download.
+- **Enrichment** (RDAP/DNS, domain_health) is resume-safe per domain — only
+  unseen domains cost network.
+- **Blocked/gated sources** (Zefix, AbuseIPDB, MalwareBazaar behind the egress
+  proxy, EU sanctions, HF-gated sets without token) are recorded per run as
+  `blocked`/`disabled` and never fail the update.
+
+Each run writes `reports/update_runs/update_<UTC>.json` (+ `latest.json`)
+with per-source status and counts; the last 52 are kept.
+
+### Weekly auto-update (opt-in)
+
+```bash
+make weekly-on      # writes auto_update.enabled=true into config/update.json
+make weekly-off     # back to off — the runner stays silent
+make weekly-status  # current flag + schedule
+```
+
+With the flag on, the scheduled runner (OpenClaw automation
+`leash-weekly-data-update`, Mondays 06:00 Europe/Zurich) checks
+`config/update.json`, runs `make update`, and commits/pushes refreshed
+exports + run reports to GitHub. The flag in the repo is the single source of
+truth: turning it off stops updates without touching the scheduler. Without
+an OpenClaw host, wire the same gate to any cron:
+
+```
+0 6 * * 1  cd <repo>/merchant-trust-data && test "$(jq .auto_update.enabled config/update.json)" = true && make update
+```
 
 ## Architecture
 
