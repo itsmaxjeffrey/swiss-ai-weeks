@@ -89,6 +89,10 @@ const CATALOG = [
 
 const DOMAIN_RE = /^(?=.{1,253}$)(?!-)[a-z0-9-]{1,63}(?<!-)(\.(?!-)[a-z0-9-]{1,63}(?<!-))+$/;
 
+/** Unique category list from the catalog — the vocabulary for parental
+ *  category limits (family.js) and the site-search chips. */
+const CATEGORIES = [...new Set(CATALOG.map((e) => e.category))].sort();
+
 /* Web enrichment for the site search — off with SHOPPING_WEB_SEARCH=0 (tests,
  * air-gapped hosts). Catalog always answers regardless. */
 const WEB_SEARCH = process.env.SHOPPING_WEB_SEARCH !== "0";
@@ -208,6 +212,21 @@ function removeWhitelist(uid, rawDomain) {
 /** Is `domain` covered by the whitelist? Exact or subdomain of an entry. */
 function whitelisted(list, domain) {
   return list.some((w) => domain === w || domain.endsWith(`.${w}`));
+}
+
+/** Map merchant domains to catalog categories — how a policy gets its
+ *  categories for parental limits. Unknown domains are skipped by the caller
+ *  (family.js maps them to "Other"). Subdomains count (food.ubereats.com →
+ *  Food delivery). */
+function categoriesForDomains(domains) {
+  const cats = [];
+  for (const raw of domains || []) {
+    let d;
+    try { d = normalizeDomain(raw); } catch { continue; }
+    const hit = CATALOG.find((e) => d === e.domain || d.endsWith(`.${e.domain}`));
+    if (hit && !cats.includes(hit.category)) cats.push(hit.category);
+  }
+  return cats;
 }
 
 /* ---------- site search (catalog + best-effort web) ---------- */
@@ -437,10 +456,11 @@ function writePaymentFile(policyDir, policyId, method, extraNote) {
 
 module.exports = {
   CARD_BRANDS,
+  CATEGORIES,
   ShoppingError,
   load,
   getSpendCap, setSpendCap,
-  getWhitelist, addWhitelist, removeWhitelist, normalizeDomain,
+  getWhitelist, addWhitelist, removeWhitelist, normalizeDomain, whitelisted, categoriesForDomains,
   searchSites,
   listMethods, addMethod, deleteMethod, setDefaultMethod, pickMethod, maskedMethod,
   checkPolicyAgainstSettings,

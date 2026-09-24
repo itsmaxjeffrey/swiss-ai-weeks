@@ -40,6 +40,7 @@ const path = require("path");
 const crypto = require("crypto");
 const accounts = require("./accounts");
 const shopping = require("./shopping");
+const family = require("./family");
 
 const PORT = parseInt(process.env.PORT || "8794", 10);
 const HOST = process.env.HOST || "127.0.0.1";
@@ -122,16 +123,22 @@ function isSecure(req) {
  *  session token (browsers block cookies outright in some embedded contexts —
  *  the UI keeps its token in localStorage and sends it as a Bearer header). */
 function authenticate(req) {
+  const via = (user, v, extra) => {
+    // A child suspended by its parent loses ALL authenticated access —
+    // sessions and API keys alike. Login explains why (403).
+    if (family.isSuspended(user.id)) return null;
+    return Object.assign({ user, via: v }, extra || {});
+  };
   const cookies = accounts.parseCookies(req.headers.cookie);
   const viaCookie = accounts.userBySessionToken(cookies[accounts.SESSION_COOKIE]);
-  if (viaCookie) return { user: viaCookie, via: "session" };
+  if (viaCookie) return via(viaCookie, "session");
   const authz = req.headers.authorization || "";
   if (/^Bearer\s+/i.test(authz)) {
     const raw = authz.replace(/^Bearer\s+/i, "").trim();
     const hit = accounts.userByApiKey(raw);
-    if (hit) return { user: hit.user, via: "apikey", key: hit.key };
+    if (hit) return via(hit.user, "apikey", { key: hit.key });
     const sess = accounts.userBySessionToken(raw);
-    if (sess) return { user: sess, via: "session" };
+    if (sess) return via(sess, "session");
   }
   return null;
 }
@@ -306,6 +313,18 @@ function signPolicy(policy, res, user) {
       missing: [],
     });
   }
+  /* Parental controls next (family.js): per-order max spend, monthly budget,
+   * category limits. Same 422 + violations shape — the child sees exactly why. */
+  const pchk = family.checkParentalLimits(user.id, policy);
+  if (!pchk.ok) {
+    console.log(`[policy] sign REFUSED (parental limits) user=${user.email}: ${pchk.violations.join(" | ")}`);
+    return sendJson(res, 422, {
+      ok: false,
+      error: "The authority refused to sign — the policy exceeds the parental limits on this account.",
+      violations: pchk.violations,
+      missing: [],
+    });
+  }
   const tmpIn = path.join(os.tmpdir(), `policy-in-${process.pid}-${Date.now()}.json`);
   const tmpOut = `${tmpIn}.signed`;
   fs.writeFileSync(tmpIn, JSON.stringify(policy, null, 2));
@@ -321,9 +340,25 @@ function signPolicy(policy, res, user) {
       fs.copyFileSync(tmpOut, finalPath);
       payload.signed_path = finalPath;
       recordPolicyOwner(env.policy.policy_id, user);
-      const method = shopping.pickMethod(user.id, env.policy && env.policy.payment && env.policy.payment.method);
-      shopping.writePaymentFile(POLICY_DIR, env.policy.policy_id, method);
-      payload.payment = { card_on_file: Boolean(method), brand: method ? method.brand : null, last4: method ? method.last4 : null };
+      /* Ledger: children's signed budgets count against their monthly limits. */
+      if (user.parentId) {
+        family.recordSpend(user.id, {
+          policyId: env.policy.policy_id,
+          amountChf: env.policy.budget && env.policy.budget.max_total,
+          categories: family.categoriesForPolicy(env.policy),
+        });
+      }
+      /* A child with no card of their own pays with the family card. */
+      const payerUid = paymentPayerUid(user);
+      const payer = accounts.findUserById(payerUid) || user;
+      const method = shopping.pickMethod(payerUid, env.policy && env.policy.payment && env.policy.payment.method);
+      shopping.writePaymentFile(
+        POLICY_DIR,
+        env.policy.policy_id,
+        method,
+        payerUid !== user.id ? `No card on this child account — paid with the family card of ${payer.email}.` : undefined
+      );
+      payload.payment = { card_on_file: Boolean(method), brand: method ? method.brand : null, last4: method ? method.last4 : null, family_card: payerUid !== user.id };
       console.log(`[policy] SIGNED ${env.policy.policy_id} (fingerprint ${payload.signed_by}) -> ${finalPath}`);
       return sendJson(res, 200, payload);
     }
@@ -423,26 +458,65 @@ function recordPolicyOwner(policyId, user) {
   }
 }
 
+/** Which account's card vault pays for this user's orders? The user's own
+ *  vault — except a child with no card of their own pays with the parent's
+ *  default card ("family card"). */
+function paymentPayerUid(user) {
+  if (!user.parentId) return user.id;
+  if (shopping.listMethods(user.id).length) return user.id;
+  const parent = accounts.findUserById(user.parentId);
+  return parent && shopping.listMethods(parent.id).length ? parent.id : user.id;
+}
+
+/** publicUser plus, for children, a read-only view of the parental limits
+ *  that govern them (shown in their Account sheet and enforced at sign time). */
+function publicUserView(user) {
+  const u = accounts.publicUser(user);
+  if (user.parentId) {
+    const rec = family.limitsOf(user.id) || {};
+    const parent = accounts.findUserById(user.parentId);
+    u.family = {
+      parentId: user.parentId,
+      parentEmail: parent ? parent.email : null,
+      maxSpendChf: rec.maxSpendChf ?? null,
+      monthlyBudgetChf: rec.monthlyBudgetChf ?? null,
+      categoryLimits: rec.categoryLimits || {},
+      spend: family.spendSummary(user.id),
+    };
+  }
+  return u;
+}
+
 /** A policy signed before the customer added any card carries a payment file
  *  with card:null. When a card arrives, re-file instruments for the account's
- *  still-unpaid policies so the customer doesn't have to re-sign. */
+ *  still-unpaid policies — and for its children's, whose payer is the family
+ *  card — so nobody has to re-sign. */
 function backfillPaymentFiles(user) {
   const owners = loadPolicyOwners();
-  for (const [pid, owner] of Object.entries(owners)) {
-    if (owner.userId !== user.id) continue;
-    const signedPath = path.join(POLICY_DIR, `${pid}.signed.json`);
-    const payPath = path.join(POLICY_DIR, `${pid}.payment.json`);
-    if (!fs.existsSync(signedPath) || fs.existsSync(path.join(POLICY_DIR, `${pid}.receipt.json`))) continue;
-    try {
-      const cur = JSON.parse(fs.readFileSync(payPath, "utf8"));
-      if (cur && cur.card) continue;
-      const env = JSON.parse(fs.readFileSync(signedPath, "utf8"));
-      const method = shopping.pickMethod(user.id, env.policy && env.policy.payment && env.policy.payment.method);
-      if (method) {
-        shopping.writePaymentFile(POLICY_DIR, pid, method);
-        console.log(`[policy] payment card backfilled -> ${pid} (${method.brand} ••${method.last4})`);
-      }
-    } catch { /* signed envelope unreadable — leave it alone */ }
+  const targets = [user, ...accounts.childrenOf(user.id)];
+  for (const target of targets) {
+    const payerUid = paymentPayerUid(target);
+    for (const [pid, owner] of Object.entries(owners)) {
+      if (owner.userId !== target.id) continue;
+      const signedPath = path.join(POLICY_DIR, `${pid}.signed.json`);
+      const payPath = path.join(POLICY_DIR, `${pid}.payment.json`);
+      if (!fs.existsSync(signedPath) || fs.existsSync(path.join(POLICY_DIR, `${pid}.receipt.json`))) continue;
+      try {
+        const cur = JSON.parse(fs.readFileSync(payPath, "utf8"));
+        if (cur && cur.card) continue;
+        const env = JSON.parse(fs.readFileSync(signedPath, "utf8"));
+        const method = shopping.pickMethod(payerUid, env.policy && env.policy.payment && env.policy.payment.method);
+        if (method) {
+          shopping.writePaymentFile(
+            POLICY_DIR,
+            pid,
+            method,
+            payerUid !== target.id ? `No card on this child account — paid with the family card of ${user.email}.` : undefined
+          );
+          console.log(`[policy] payment card backfilled -> ${pid} (${method.brand} ••${method.last4}${payerUid !== target.id ? " · family card" : ""})`);
+        }
+      } catch { /* signed envelope unreadable — leave it alone */ }
+    }
   }
 }
 
@@ -707,6 +781,7 @@ async function handle(req, res) {
         policy_dir: POLICY_DIR,
       },
       shopping: { spendCap: true, whitelist: true, cardVault: true },
+      family: { parentalControls: true, maxChildren: accounts.MAX_CHILDREN },
     });
   }
 
@@ -733,7 +808,7 @@ async function handle(req, res) {
     const token = accounts.createSession(user.id);
     res.setHeader("Set-Cookie", accounts.sessionCookieHeader(token, isSecure(req)));
     console.log(`[auth] registered ${user.email}`);
-    return sendJson(res, 201, { ok: true, user: accounts.publicUser(user), session: token });
+    return sendJson(res, 201, { ok: true, user: publicUserView(user), session: token });
   }
 
   if (req.method === "POST" && pathname === "/api/auth/login") {
@@ -744,10 +819,14 @@ async function handle(req, res) {
       console.log(`[auth] FAILED login ${String(body.email || "").slice(0, 80)}`);
       return sendJson(res, 401, { error: "Wrong email or password." });
     }
+    if (family.isSuspended(user.id)) {
+      console.log(`[auth] BLOCKED login (suspended by parent) ${user.email}`);
+      return sendJson(res, 403, { error: "This account is suspended by its parent — ask your parent to unsuspend it (Account → Family)." });
+    }
     const token = accounts.createSession(user.id);
     res.setHeader("Set-Cookie", accounts.sessionCookieHeader(token, isSecure(req)));
     console.log(`[auth] login ${user.email}`);
-    return sendJson(res, 200, { ok: true, user: accounts.publicUser(user), session: token });
+    return sendJson(res, 200, { ok: true, user: publicUserView(user), session: token });
   }
 
   if (req.method === "POST" && pathname === "/api/auth/logout") {
@@ -760,7 +839,7 @@ async function handle(req, res) {
   if (req.method === "GET" && pathname === "/api/auth/me") {
     const auth = authenticate(req);
     if (!auth) return sendJson(res, 401, { error: "Not signed in." });
-    return sendJson(res, 200, { ok: true, user: accounts.publicUser(auth.user), via: auth.via });
+    return sendJson(res, 200, { ok: true, user: publicUserView(auth.user), via: auth.via });
   }
 
   /* ----- account management (session or key auth) ----- */
@@ -783,7 +862,7 @@ async function handle(req, res) {
         return sendJson(res, e.status || 500, { error: e.message });
       }
       console.log(`[account] ${auth.user.email} switched plan -> ${body.plan}${auth.via === "session" ? "" : " (demo: billing not wired)"}`);
-      return sendJson(res, 200, { ok: true, user: accounts.publicUser(auth.user) });
+      return sendJson(res, 200, { ok: true, user: publicUserView(auth.user) });
     }
 
     if (pathname === "/api/account/keys" && req.method === "GET") {
@@ -891,6 +970,81 @@ async function handle(req, res) {
       if (body === null) return sendJson(res, 413, { error: "Payload too large." });
       const ok = shopping.deleteMethod(auth.user.id, String(body.id || ""));
       return sendJson(res, ok ? 200 : 404, ok ? { ok: true, methods: shopping.listMethods(auth.user.id) } : { error: "No such card." });
+    }
+
+    /* ----- family: parental controls (parent accounts only) ----- */
+
+    if (pathname.startsWith("/api/account/family")) {
+      if (auth.user.parentId) {
+        return sendJson(res, 403, { error: "Only parent accounts manage the family." });
+      }
+
+      if (req.method === "GET" && pathname === "/api/account/family") {
+        const children = accounts.childrenOf(auth.user.id).map((c) => family.childSummary(c));
+        return sendJson(res, 200, {
+          ok: true,
+          categories: shopping.CATEGORIES,
+          maxChildren: accounts.MAX_CHILDREN,
+          children,
+        });
+      }
+
+      if (req.method === "POST" && pathname === "/api/account/family/children") {
+        const body = await readJsonBody(req, 4).catch(() => null);
+        if (body === null) return sendJson(res, 413, { error: "Payload too large." });
+        let child;
+        try {
+          child = accounts.createChildAccount(auth.user.id, { name: body.name, email: body.email, password: body.password });
+        } catch (e) {
+          return sendJson(res, e.status || 500, { error: e.message });
+        }
+        console.log(`[family] ${auth.user.email} created child account ${child.email}`);
+        return sendJson(res, 201, { ok: true, child: family.childSummary(child) });
+      }
+
+      if (req.method === "POST" && pathname === "/api/account/family/limits") {
+        const body = await readJsonBody(req, 4).catch(() => null);
+        if (body === null) return sendJson(res, 413, { error: "Payload too large." });
+        const childId = String(body.childId || "");
+        try {
+          const child = family.assertOwnChild(auth.user, childId);
+          family.setLimits(auth.user, childId, body, shopping.CATEGORIES);
+          console.log(`[family] ${auth.user.email} updated limits for ${child.email}`);
+          return sendJson(res, 200, { ok: true, child: family.childSummary(child) });
+        } catch (e) {
+          return sendJson(res, e.status || 500, { error: e.message });
+        }
+      }
+
+      if (req.method === "POST" && pathname === "/api/account/family/suspend") {
+        const body = await readJsonBody(req, 4).catch(() => null);
+        if (body === null) return sendJson(res, 413, { error: "Payload too large." });
+        const childId = String(body.childId || "");
+        try {
+          const child = family.assertOwnChild(auth.user, childId);
+          const suspended = body.suspended === true;
+          family.setSuspended(auth.user, childId, suspended);
+          console.log(`[family] ${auth.user.email} ${suspended ? "suspended" : "unsuspended"} ${child.email}`);
+          return sendJson(res, 200, { ok: true, child: family.childSummary(child) });
+        } catch (e) {
+          return sendJson(res, e.status || 500, { error: e.message });
+        }
+      }
+
+      if (req.method === "POST" && pathname === "/api/account/family/remove") {
+        const body = await readJsonBody(req, 4).catch(() => null);
+        if (body === null) return sendJson(res, 413, { error: "Payload too large." });
+        const childId = String(body.childId || "");
+        try {
+          const child = family.assertOwnChild(auth.user, childId);
+          accounts.deleteChildAccount(auth.user.id, childId);
+          family.dropChild(childId);
+          console.log(`[family] ${auth.user.email} removed child account ${child.email}`);
+          return sendJson(res, 200, { ok: true, removed: child.email });
+        } catch (e) {
+          return sendJson(res, e.status || 500, { error: e.message });
+        }
+      }
     }
   }
 
@@ -1017,6 +1171,8 @@ accounts.pruneSessions();
 accounts.ensureDemoAccount();
 accounts.ensureDummyAccount();
 shopping.load();
+family.bindLookup(accounts.findUserById);
+family.load();
 
 server.listen(PORT, HOST, () => {
   const url = `http://${HOST}:${PORT}`;

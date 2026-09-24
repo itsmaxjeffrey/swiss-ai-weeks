@@ -63,6 +63,17 @@
   const pmExp = document.getElementById("pmExp");
   const pmCvc = document.getElementById("pmCvc");
   const pmError = document.getElementById("pmError");
+  /* family / parental controls */
+  const famIntro = document.getElementById("famIntro");
+  const famBanner = document.getElementById("famBanner");
+  const familyChildView = document.getElementById("familyChildView");
+  const familyParentView = document.getElementById("familyParentView");
+  const famForm = document.getElementById("famForm");
+  const famName = document.getElementById("famName");
+  const famEmail = document.getElementById("famEmail");
+  const famPassword = document.getElementById("famPassword");
+  const famError = document.getElementById("famError");
+  const famChildren = document.getElementById("famChildren");
 
   let turns = 0;
   let busy = false;
@@ -749,6 +760,208 @@
     }
   });
 
+  /* ---------- family: parental controls ---------- */
+
+  let familyCache = null;
+
+  const numOrNull = (v) => {
+    const s = String(v ?? "").trim();
+    if (s === "") return null;
+    const n = Number(s);
+    return Number.isFinite(n) && n > 0 ? n : NaN; // NaN → client-side error
+  };
+
+  async function loadFamily() {
+    if (!currentUser || currentUser.parentId) { familyCache = null; return; }
+    try {
+      const r = await fetch("/api/account/family", { headers: authHeaders() });
+      if (!r.ok) return;
+      familyCache = await r.json();
+      renderFamily();
+    } catch { /* offline */ }
+  }
+
+  /** A child sees a read-only banner of the limits that govern them. */
+  function renderFamilySelfBanner(user) {
+    const f = user.family || {};
+    const spend = f.spend || { totalChf: 0, byCategory: {} };
+    const parts = [];
+    parts.push(f.maxSpendChf != null ? `max ${esc(String(f.maxSpendChf))} CHF per order` : "no per-order cap");
+    parts.push(f.monthlyBudgetChf != null
+      ? `${esc(String(spend.totalChf))} of ${esc(String(f.monthlyBudgetChf))} CHF used this month`
+      : "no monthly budget");
+    Object.entries(f.categoryLimits || {}).forEach(([cat, lim]) => {
+      parts.push(`${esc(cat)}: ${esc(String(spend.byCategory[cat] || 0))} / ${esc(String(lim))} CHF this month`);
+    });
+    famBanner.innerHTML = `
+      <span class="mono-label shop-label">Family account${f.parentEmail ? ` · managed by ${esc(f.parentEmail)}` : ""}</span>
+      <p class="form-note">Your parent's limits apply to every order this account signs: ${parts.join(" · ")}. Resets on the 1st.</p>`;
+  }
+
+  function famChildCard(child, categories) {
+    const card = document.createElement("div");
+    card.className = "fam-child" + (child.suspended ? " fam-child--suspended" : "");
+    const spend = child.spend || { month: "", totalChf: 0, byCategory: {}, orders: 0 };
+    const mb = child.limits.monthlyBudgetChf;
+    const budgetLine = mb != null
+      ? `<div class="fam-bar"><div class="fam-bar-fill${spend.totalChf >= mb ? " fam-bar--over" : ""}" style="width:${Math.min(100, Math.round((spend.totalChf / mb) * 100))}%"></div></div>
+         <span class="fam-spend-text mono-label">CHF ${esc(String(spend.totalChf))} of ${esc(String(mb))} signed this month · ${esc(String(spend.orders))} order${spend.orders === 1 ? "" : "s"}</span>`
+      : `<span class="fam-spend-text mono-label">CHF ${esc(String(spend.totalChf))} signed this month · no monthly budget</span>`;
+
+    const cl = child.limits.categoryLimits || {};
+    const catRows = Object.entries(cl).map(([cat, lim]) => `
+      <div class="fam-cat-row">
+        <span class="fam-cat-name">${esc(cat)}</span>
+        <input type="number" class="fam-cat-amt" min="1" step="0.01" value="${esc(String(lim))}" aria-label="${esc(cat)} limit CHF">
+        <span class="fam-cat-spent mono-label">spent ${esc(String(spend.byCategory[cat] || 0))} CHF</span>
+        <button type="button" class="acct-btn acct-btn--danger acct-btn--mini fam-cat-del" aria-label="Remove ${esc(cat)} limit">×</button>
+      </div>`).join("");
+    const otherCats = categories.filter((c) => !(c in cl));
+
+    card.innerHTML = `
+      <div class="fam-head">
+        <span class="fam-name">${esc(child.name)}</span>
+        <span class="fam-email mono-label">${esc(child.email)}</span>
+        <span class="fam-state mono-label">${child.suspended ? "● suspended" : "● active"}</span>
+      </div>
+      <div class="fam-spend">${budgetLine}</div>
+      <div class="fam-limits">
+        <label class="field"><span class="mono-label">Max spend per order · CHF</span>
+          <input type="number" class="fam-max" min="1" step="0.01" value="${child.limits.maxSpendChf == null ? "" : esc(String(child.limits.maxSpendChf))}" placeholder="no limit"></label>
+        <label class="field"><span class="mono-label">Monthly budget · CHF</span>
+          <input type="number" class="fam-monthly" min="1" step="0.01" value="${mb == null ? "" : esc(String(mb))}" placeholder="no budget"></label>
+      </div>
+      <div class="fam-cats">
+        <span class="mono-label fam-cats-label">Category limits · CHF per month</span>
+        <div class="fam-cat-list">${catRows || '<p class="form-note">No category limits — only the caps above apply.</p>'}</div>
+        <div class="fam-cat-add">
+          <select class="fam-cat-sel" aria-label="Category"${otherCats.length ? "" : " hidden"}>
+            ${otherCats.map((c) => `<option>${esc(c)}</option>`).join("")}
+          </select>
+          <input type="number" class="fam-cat-new-amt" min="1" step="0.01" placeholder="CHF / month"${otherCats.length ? "" : " hidden"}>
+          <button type="button" class="acct-btn acct-btn--mini fam-cat-addbtn"${otherCats.length ? "" : " hidden"}>Add limit</button>
+        </div>
+      </div>
+      <div class="fam-actions">
+        <button type="button" class="acct-btn acct-btn--primary fam-save">Save limits</button>
+        <button type="button" class="acct-btn fam-suspend">${child.suspended ? "Unsuspend" : "Suspend"}</button>
+        <button type="button" class="acct-btn acct-btn--danger fam-remove">Remove</button>
+        <span class="form-error fam-err" hidden></span>
+      </div>`;
+
+    const err = card.querySelector(".fam-err");
+    const showErr = (m) => { err.textContent = m; err.hidden = false; };
+
+    card.querySelectorAll(".fam-cat-del").forEach((btn) => btn.addEventListener("click", () => {
+      btn.closest(".fam-cat-row").remove();
+    }));
+
+    card.querySelector(".fam-cat-addbtn").addEventListener("click", () => {
+      const sel = card.querySelector(".fam-cat-sel");
+      const amt = card.querySelector(".fam-cat-new-amt");
+      const cat = sel.value;
+      if (!cat) return;
+      if (card.querySelector(`.fam-cat-row[data-cat="${cat.replace(/"/g, "\\\"")}"]`)) return;
+      const row = document.createElement("div");
+      row.className = "fam-cat-row";
+      row.dataset.cat = cat;
+      row.innerHTML = `
+        <span class="fam-cat-name">${esc(cat)}</span>
+        <input type="number" class="fam-cat-amt" min="1" step="0.01" value="${esc(String(amt.value || ""))}" aria-label="${esc(cat)} limit CHF">
+        <span class="fam-cat-spent mono-label">spent ${esc(String((child.spend.byCategory || {})[cat] || 0))} CHF</span>
+        <button type="button" class="acct-btn acct-btn--danger acct-btn--mini fam-cat-del" aria-label="Remove ${esc(cat)} limit">×</button>`;
+      row.querySelector(".fam-cat-del").addEventListener("click", () => row.remove());
+      card.querySelector(".fam-cat-list").appendChild(row);
+      sel.querySelector(`option[value="${cat.replace(/"/g, "\\\"")}"]`)?.remove();
+      amt.value = "";
+    });
+
+    card.querySelector(".fam-save").addEventListener("click", async () => {
+      err.hidden = true;
+      const maxSpendChf = numOrNull(card.querySelector(".fam-max").value);
+      const monthlyBudgetChf = numOrNull(card.querySelector(".fam-monthly").value);
+      if (Number.isNaN(maxSpendChf) || Number.isNaN(monthlyBudgetChf)) return showErr("Limits must be positive numbers (or empty for no limit).");
+      const categoryLimits = {};
+      let bad = false;
+      card.querySelectorAll(".fam-cat-row").forEach((row) => {
+        const v = numOrNull(row.querySelector(".fam-cat-amt").value);
+        if (Number.isNaN(v) || v == null) bad = true;
+        else categoryLimits[row.dataset.cat] = v;
+      });
+      if (bad) return showErr("Category limits must be positive CHF amounts.");
+      const btn = card.querySelector(".fam-save");
+      btn.disabled = true;
+      try {
+        const r = await fetch("/api/account/family/limits", {
+          method: "POST",
+          headers: authHeaders({ "Content-Type": "application/json" }),
+          body: JSON.stringify({ childId: child.id, maxSpendChf, monthlyBudgetChf, categoryLimits }),
+        });
+        if (!r.ok) {
+          const j = await r.json().catch(() => ({}));
+          showErr(j.error || "Could not save the limits.");
+        }
+      } catch { showErr("Could not reach the bridge."); }
+      btn.disabled = false;
+      loadFamily();
+    });
+
+    card.querySelector(".fam-suspend").addEventListener("click", async () => {
+      await fetch("/api/account/family/suspend", {
+        method: "POST",
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ childId: child.id, suspended: !child.suspended }),
+      }).catch(() => {});
+      loadFamily();
+    });
+
+    card.querySelector(".fam-remove").addEventListener("click", async () => {
+      if (!confirm(`Remove ${child.name}'s account? Their sign-ins stop working immediately and their spend history is deleted.`)) return;
+      await fetch("/api/account/family/remove", {
+        method: "POST",
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ childId: child.id }),
+      }).catch(() => {});
+      loadFamily();
+    });
+
+    return card;
+  }
+
+  function renderFamily() {
+    if (!familyCache || !familyCache.ok) return;
+    famChildren.innerHTML = "";
+    const children = familyCache.children || [];
+    if (!children.length) {
+      famChildren.innerHTML = '<p class="form-note">No child accounts yet — create the first one above.</p>';
+      return;
+    }
+    children.forEach((child) => famChildren.appendChild(famChildCard(child, familyCache.categories || [])));
+  }
+
+  famForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    famError.hidden = true;
+    const r = await fetch("/api/account/family/children", {
+      method: "POST",
+      headers: authHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ name: famName.value.trim(), email: famEmail.value.trim(), password: famPassword.value }),
+    }).catch(() => null);
+    if (r && r.ok) {
+      const j = await r.json();
+      famForm.reset();
+      addMessage("system", `Child account for ${j.child.name} created — they can sign in with the email and password you set. Limits apply once you save them below.`);
+      loadFamily();
+    } else if (r) {
+      const j = await r.json().catch(() => ({}));
+      famError.textContent = j.error || "Could not create the child account.";
+      famError.hidden = false;
+    } else {
+      famError.textContent = "Could not reach the bridge.";
+      famError.hidden = false;
+    }
+  });
+
   /* ---------- events ---------- */
 
   composer.addEventListener("submit", (e) => {
@@ -896,6 +1109,19 @@
 
     document.getElementById("urlOpenapi").textContent = `${location.origin}/openapi.json`;
     document.getElementById("urlPlugin").textContent = `${location.origin}/.well-known/ai-plugin.json`;
+
+    /* Family: parents manage children; children see their limits read-only. */
+    const isChild = Boolean(user.parentId);
+    familyParentView.hidden = isChild;
+    familyChildView.hidden = !isChild;
+    famIntro.hidden = isChild;
+    if (isChild) {
+      familyCache = null;
+      renderFamilySelfBanner(user);
+    } else {
+      loadFamily();
+    }
+
     loadPurchases();
     loadShopping();
   }

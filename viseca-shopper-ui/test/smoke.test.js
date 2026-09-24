@@ -617,3 +617,207 @@ const capPut = (c, value) =>
   const ghost = await post("/api/account/shopping/methods/delete", { id: "pm_nope" }, { Cookie: cookieC });
   assert.equal(ghost.status, 404);
 });
+
+/* ---------- family: parental controls (children, spend limits, categories) ---------- */
+
+let cookieParent;
+let cookieChild;
+let childId;
+let childEmail = "timmy@example.com";
+
+/** Policy for the family tests: amount in CHF, shops by domain. Unique ids. */
+let famSeq = 0;
+function famPolicy(amount, domains) {
+  famSeq += 1;
+  return fullPolicy(`fam${String(famSeq).padStart(2, "0")}`, {
+    budget: { max_total: amount, currency: "CHF" },
+    payment: { method: "card on file", max_single_charge: { amount, currency: "CHF" } },
+    merchant: { allowed_domains: domains, blocked_domains: [], require_impressum: false },
+  });
+}
+const famLimits = (body) => post("/api/account/family/limits", body, { Cookie: cookieParent });
+
+ test("family endpoints require auth", async () => {
+  const r = await fetch(`${BASE}/api/account/family`);
+  assert.equal(r.status, 401);
+  assert.equal((await post("/api/account/family/children", {})).status, 401);
+});
+
+ test("health advertises the parental-controls marker", async () => {
+  const j = await (await fetch(`${BASE}/api/health`)).json();
+  assert.equal(j.family.parentalControls, true);
+});
+
+ test("parent registers; family starts empty with the category vocabulary", async () => {
+  const reg = await post("/api/auth/register", { email: "erin@example.com", password: "correct horse battery", name: "Erin" });
+  assert.equal(reg.status, 201);
+  cookieParent = cookieOf(reg);
+  const j = await (await fetch(`${BASE}/api/account/family`, { headers: { Cookie: cookieParent } })).json();
+  assert.equal(j.ok, true);
+  assert.deepEqual(j.children, []);
+  assert.ok(j.categories.includes("Food delivery") && j.categories.includes("Groceries"));
+  assert.ok(j.maxChildren >= 1);
+});
+
+ test("parent creates a child account; child signs in and sees its family view", async () => {
+  const r = await post("/api/account/family/children", { name: "Timmy", email: childEmail, password: "pocket-money-1" }, { Cookie: cookieParent });
+  assert.equal(r.status, 201);
+  const j = await r.json();
+  assert.equal(j.child.name, "Timmy");
+  assert.equal(j.child.suspended, false);
+  assert.equal(j.child.limits.maxSpendChf, null);
+  childId = j.child.id;
+
+  const login = await post("/api/auth/login", { email: childEmail, password: "pocket-money-1" });
+  assert.equal(login.status, 200);
+  cookieChild = cookieOf(login);
+  const me = await (await fetch(`${BASE}/api/auth/me`, { headers: { Cookie: cookieChild } })).json();
+  assert.equal(me.user.parentId, (await (await fetch(`${BASE}/api/auth/me`, { headers: { Cookie: cookieParent } })).json()).user.id);
+  assert.equal(me.user.family.parentEmail, "erin@example.com");
+});
+
+ test("children cannot use family endpoints or create sub-children", async () => {
+  assert.equal((await fetch(`${BASE}/api/account/family`, { headers: { Cookie: cookieChild } })).status, 403);
+  const nested = await post("/api/account/family/children", { name: "Grandchild", email: "gc@example.com", password: "correct horse battery" }, { Cookie: cookieChild });
+  assert.equal(nested.status, 403);
+});
+
+ test("duplicate child email and unowned child are rejected", async () => {
+  const dup = await post("/api/account/family/children", { name: "Again", email: childEmail.toUpperCase(), password: "correct horse battery" }, { Cookie: cookieParent });
+  assert.equal(dup.status, 409);
+
+  const stranger = await post("/api/auth/register", { email: "frank@example.com", password: "correct horse battery", name: "Frank" });
+  const strangerCookie = cookieOf(stranger);
+  const poke = await famLimitsFetch(strangerCookie, { childId, maxSpendChf: 5 });
+  assert.equal(poke.status, 404, "another parent cannot touch this child");
+  const ghost = await famLimitsFetch(cookieParent, { childId: "u_does-not-exist", maxSpendChf: 5 });
+  assert.equal(ghost.status, 404);
+});
+
+async function famLimitsFetch(cookie, body) {
+  return post("/api/account/family/limits", body, { Cookie: cookie });
+}
+
+ test("limits: set, junk rejected, partial update keeps other fields", async () => {
+  let r = await famLimits({ childId, maxSpendChf: 20, monthlyBudgetChf: 30, categoryLimits: { "Food delivery": 25 } });
+  assert.equal(r.status, 200);
+  let j = await r.json();
+  assert.equal(j.child.limits.maxSpendChf, 20);
+  assert.equal(j.child.limits.monthlyBudgetChf, 30);
+  assert.deepEqual(j.child.limits.categoryLimits, { "Food delivery": 25 });
+
+  assert.equal((await famLimits({ childId, maxSpendChf: -3 })).status, 400);
+  assert.equal((await famLimits({ childId, maxSpendChf: "lots" })).status, 400);
+  assert.equal((await famLimits({ childId, categoryLimits: { "Rocket fuel": 5 } })).status, 400);
+  assert.equal((await famLimits({ childId, categoryLimits: "nope" })).status, 400);
+
+  // partial: only categoryLimits changes; per-order + monthly stay
+  r = await famLimits({ childId, categoryLimits: { "Food delivery": 25, Groceries: 100 } });
+  assert.equal(r.status, 200);
+  j = await r.json();
+  assert.equal(j.child.limits.maxSpendChf, 20, "partial update keeps per-order cap");
+  assert.equal(j.child.limits.monthlyBudgetChf, 30, "partial update keeps monthly budget");
+
+  // the child's own /me view shows the limits read-only
+  const me = await (await fetch(`${BASE}/api/auth/me`, { headers: { Cookie: cookieChild } })).json();
+  assert.equal(me.user.family.maxSpendChf, 20);
+  assert.equal(me.user.family.monthlyBudgetChf, 30);
+});
+
+ test("sign refuses a budget over the parental per-order max", async () => {
+  const r = await post("/api/policy/sign", { policy: famPolicy(24, ["ubereats.com"]) }, { Cookie: cookieChild });
+  assert.equal(r.status, 422);
+  const j = await r.json();
+  assert.match(j.violations.join(" "), /per-order/);
+});
+
+ test("sign within limits succeeds and records spend (no card anywhere yet)", async () => {
+  const policy = famPolicy(15, ["ubereats.com"]); // 15 ≤ 20/order, ≤ 30/mo, Food delivery 15 ≤ 25
+  const r = await post("/api/policy/sign", { policy }, { Cookie: cookieChild });
+  assert.equal(r.status, 200);
+  const j = await r.json();
+  assert.equal(j.payment.card_on_file, false, "neither child nor parent has a card yet");
+});
+
+ test("parent's saved card becomes the family card and backfills the child's unpaid policy", async () => {
+  const card = await post("/api/account/shopping/methods", { holder: "Erin Muster", number: "4242 4242 4242 4242", exp: "09/29", cvc: "123" }, { Cookie: cookieParent });
+  assert.equal(card.status, 201);
+
+  const list = await (await fetch(`${BASE}/api/policies`, { headers: { Cookie: cookieChild } })).json();
+  const signed = list.policies.find((p) => p.budget && p.budget.max_total === 15);
+  assert.ok(signed, "child's signed policy is listed");
+  const payFile = JSON.parse(fs.readFileSync(path.join(policyDir, `${signed.policy_id}.payment.json`), "utf8"));
+  assert.equal(payFile.card.brand, "visa", "backfilled with the family card");
+  assert.equal(payFile.card.last4, "4242");
+  assert.match(payFile.note || "", /family card/);
+
+  // the next sign pays with the family card directly
+  const r = await post("/api/policy/sign", { policy: famPolicy(12, ["migros.ch"]) }, { Cookie: cookieChild });
+  assert.equal(r.status, 200); // Groceries has no limit; monthly 15+12=27 ≤ 30
+  const j = await r.json();
+  assert.equal(j.payment.card_on_file, true);
+  assert.equal(j.payment.family_card, true, "child without a card pays with the parent's");
+  assert.equal(j.payment.last4, "4242");
+});
+
+ test("category limit trips while other categories stay unaffected", async () => {
+  const food = famPolicy(12, ["ubereats.com"]); // Food delivery: 15+12 > 25
+  let r = await post("/api/policy/sign", { policy: food }, { Cookie: cookieChild });
+  assert.equal(r.status, 422);
+  let j = await r.json();
+  assert.match(j.violations.join(" "), /Food delivery/);
+
+  const fashion = famPolicy(3, ["zalando.ch"]); // Fashion unlimited, monthly 27+3=30 ≤ 30
+  r = await post("/api/policy/sign", { policy: fashion }, { Cookie: cookieChild });
+  assert.equal(r.status, 200);
+});
+
+ test("monthly budget trips at the aggregate even across categories", async () => {
+  const r = await post("/api/policy/sign", { policy: famPolicy(5, ["migros.ch"]) }, { Cookie: cookieChild }); // 30+5 > 30
+  assert.equal(r.status, 422);
+  const j = await r.json();
+  assert.match(j.violations.join(" "), /monthly budget/);
+  assert.match(j.violations.join(" "), /Resets on the 1st/);
+});
+
+ test("family summary shows per-child spend and category breakdown", async () => {
+  const j = await (await fetch(`${BASE}/api/account/family`, { headers: { Cookie: cookieParent } })).json();
+  assert.equal(j.children.length, 1);
+  const timmy = j.children[0];
+  assert.equal(timmy.spend.totalChf, 30); // 15 + 12 + 3
+  assert.equal(timmy.spend.orders, 3);
+  assert.equal(timmy.spend.byCategory["Food delivery"], 15);
+  assert.equal(timmy.spend.byCategory["Groceries"], 12);
+  assert.equal(timmy.spend.byCategory["Fashion"], 3);
+});
+
+ test("suspend blocks login and kills existing sessions; unsuspend restores", async () => {
+  let r = await post("/api/account/family/suspend", { childId, suspended: true }, { Cookie: cookieParent });
+  assert.equal(r.status, 200);
+  assert.equal((await r.json()).child.suspended, true);
+
+  assert.equal((await fetch(`${BASE}/api/auth/me`, { headers: { Cookie: cookieChild } })).status, 401, "live session dies");
+  const login = await post("/api/auth/login", { email: childEmail, password: "pocket-money-1" });
+  assert.equal(login.status, 403);
+  assert.match((await login.json()).error, /suspended/i);
+
+  r = await post("/api/account/family/suspend", { childId, suspended: false }, { Cookie: cookieParent });
+  assert.equal(r.status, 200);
+  assert.equal((await post("/api/auth/login", { email: childEmail, password: "pocket-money-1" })).status, 200);
+});
+
+ test("remove deletes the child account and its data", async () => {
+  const tina = await post("/api/account/family/children", { name: "Tina", email: "tina@example.com", password: "pocket-money-2" }, { Cookie: cookieParent });
+  assert.equal(tina.status, 201);
+  const tinaId = (await tina.json()).child.id;
+
+  const del = await post("/api/account/family/remove", { childId: tinaId }, { Cookie: cookieParent });
+  assert.equal(del.status, 200);
+  assert.equal((await post("/api/auth/login", { email: "tina@example.com", password: "pocket-money-2" })).status, 401, "removed child cannot sign in");
+
+  const ghost = await post("/api/account/family/remove", { childId: tinaId }, { Cookie: cookieParent });
+  assert.equal(ghost.status, 404, "removing twice is a clean 404");
+
+  const j = await (await fetch(`${BASE}/api/account/family`, { headers: { Cookie: cookieParent } })).json();
+  assert.equal(j.children.length, 1);
+});

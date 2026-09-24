@@ -223,6 +223,27 @@
         </form>
       </div>
 
+      <h4 class="mono-label section-head">Family · parental controls</h4>
+      <p class="form-note" id="famIntro">Create child accounts and cap what they may spend — per order, per month, and per category. Limits are enforced when an order policy is signed.</p>
+
+      <div id="familyChildView" hidden>
+        <div class="shop-block fam-family-banner" id="famBanner"></div>
+      </div>
+
+      <div id="familyParentView" hidden>
+        <form id="famForm" class="fam-form">
+          <div class="fam-new-row">
+            <input type="text" id="famName" placeholder="Child's name" maxlength="60" autocomplete="off">
+            <input type="email" id="famEmail" placeholder="child@example.com" autocomplete="off">
+            <input type="password" id="famPassword" placeholder="Password (min 8 chars)" minlength="8" autocomplete="new-password">
+            <button class="acct-btn acct-btn--primary" type="submit">Create child account</button>
+          </div>
+          <p class="form-note">The child signs in like any member, gets the Free plan, and pays with your card when they have none.</p>
+          <p class="form-error" id="famError" hidden></p>
+        </form>
+        <div id="famChildren"></div>
+      </div>
+
       <h4 class="mono-label section-head">Purchases</h4>
       <p class="form-note">Signed order policies — frozen budgets and deadlines the agent must obey. Receipts appear once the agent files them.</p>
       <div id="policyList"></div>

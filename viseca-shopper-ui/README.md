@@ -84,6 +84,11 @@ OPENCLAW_AGENT=my-agent OPENCLAW_SESSION=dashboard PORT=8800 node server.js
 | `/api/account/shopping/methods` | POST | cookie/key    | `{ holder, number, exp, cvc }` — save a Visa/Mastercard (Luhn-checked)       |
 | `/api/account/shopping/methods/default` | POST | cookie/key | `{ id }` — set the default card                                       |
 | `/api/account/shopping/methods/delete` | POST | cookie/key | `{ id }` — remove a card                                              |
+| `/api/account/family` | GET | cookie/key | parent only — children with limits + month-to-date spend, category vocabulary |
+| `/api/account/family/children` | POST | cookie/key | `{ name, email, password }` — create a child account                 |
+| `/api/account/family/limits` | POST | cookie/key | `{ childId, maxSpendChf?, monthlyBudgetChf?, categoryLimits? }` — set limits (null clears, omitted keeps) |
+| `/api/account/family/suspend` | POST | cookie/key | `{ childId, suspended }` — suspend blocks login and kills sessions   |
+| `/api/account/family/remove` | POST | cookie/key | `{ childId }` — delete the child account, sessions, limits and spend history |
 
 ## Accounts & subscription plans
 
@@ -147,7 +152,8 @@ environment. The skill covers the long-turn timeout, the error table
 ## Tests
 
 ```bash
-npm test    # 21 end-to-end tests: auth, plans, SSE chat, keys, /api/v1, plugin manifest
+npm test    # 55 end-to-end tests: auth, plans, SSE chat, keys, /api/v1, plugin manifest,
+            # shopping controls, family/parental controls
 ```
 
 Runs against a stub OpenClaw CLI (`test/stub-openclaw.js`) and an isolated
@@ -206,6 +212,45 @@ checks out with that card. Card data never passes through the model context,
 and the agent is instructed to reference it only as "<brand> ••<last4>".
 Signing before saving a card files a `card: null` note; saving a card later
 backfills all still-unpaid policies so they don't need re-signing.
+
+## Parental controls (family accounts)
+
+A signed-in parent can create **child accounts** (Account → Family) — each gets
+a normal login (own plan usage, own chat, own agent session) plus a `parentId`
+link and parental limits that the signing authority enforces on every policy:
+
+1. **Max spend per order** — `budget.max_total` must be ≤ the child's
+   `maxSpendChf` (when set).
+2. **Monthly budget** — the sum of all budgets the child signed this calendar
+   month (UTC) plus the new policy must stay ≤ `monthlyBudgetChf`. Resets on
+   the 1st; the signed `budget.max_total` is what counts, receipts don't
+   adjust it.
+3. **Category limits** — `categoryLimits` maps catalog categories (Food
+   delivery, Groceries, Electronics, Fashion, …) to a CHF-per-month cap. A
+   policy's categories come from `policy.category` if it names a known one,
+   otherwise from `merchant.allowed_domains` via the site catalog; unknown
+   shops count as "Other".
+
+Over-limit signs are refused with HTTP 422 and a `violations` list naming the
+exact limit and the remaining headroom — the UI shows it on the approval card.
+Signed budgets land in `data/family.json` (`users` for limits, `ledger` for the
+per-month spend, pruned to the current + previous month).
+
+Also enforced:
+
+- **Children can't escalate** — no family endpoints, no sub-children.
+- **Suspension** — a suspended child's login returns 403 and live sessions/API
+  keys stop authenticating immediately (401) until unsuspended.
+- **Family card** — a child with no card of their own pays with the parent's
+  default card (`payment.family_card: true` on the sign response; the payment
+  file notes the substitution). A parent saving a card backfills their
+  children's still-unpaid policies.
+- **Removal** — deleting a child purges the user record, live sessions, limits
+  and spend ledger. Max 10 children per parent.
+
+Children see their limits and month-to-date spend read-only in their own
+Account sheet; parents get per-child spend bars and limits editing in theirs.
+`GET /api/health` advertises `family: { parentalControls: true }`.
 
 ## Conversation history & Purchases view
 

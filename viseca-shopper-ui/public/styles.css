@@ -923,3 +923,41 @@ body::after {
 .pm-split .field { flex: 1; }
 
 .acct-btn--mini { padding: 4px 8px; font-size: 11px; }
+
+/* ---------- family / parental controls ---------- */
+
+.fam-form { margin: 8px 0 4px; }
+.fam-new-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.fam-new-row input { flex: 1 1 150px; border: 1px solid var(--ink); background: var(--paper); padding: 8px 10px; font: inherit; font-size: 13px; min-width: 0; }
+.fam-family-banner { border: 1px solid var(--ink); padding: 10px 12px; }
+
+.fam-child { border: 1px solid var(--ink); padding: 12px 14px; margin: 10px 0; background: var(--paper); }
+.fam-child--suspended { opacity: 0.62; border-style: dashed; }
+.fam-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.fam-name { font-weight: 700; font-size: 15px; }
+.fam-email { color: var(--ink-soft, #6b675c); }
+.fam-state { margin-left: auto; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+.fam-child--suspended .fam-state { color: #b3001b; }
+
+.fam-spend { margin: 10px 0 4px; }
+.fam-bar { height: 6px; background: rgba(23, 21, 15, 0.1); margin-bottom: 5px; }
+.fam-bar-fill { height: 100%; background: #1c7c33; }
+.fam-bar-fill.fam-bar--over { background: #b3001b; }
+.fam-spend-text { font-size: 10.5px; color: var(--ink-soft, #6b675c); }
+
+.fam-limits { display: flex; gap: 10px; margin: 10px 0; }
+.fam-limits .field { flex: 1; min-width: 130px; }
+.fam-limits input { border: 1px solid var(--ink); background: var(--paper); padding: 8px 10px; font: inherit; font-size: 14px; width: 100%; }
+
+.fam-cats-label { display: block; margin: 4px 0 2px; }
+.fam-cat-list { margin-top: 4px; }
+.fam-cat-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px dashed var(--hairline, #d8d2c2); }
+.fam-cat-name { font-size: 13px; font-weight: 600; min-width: 110px; }
+.fam-cat-row input { width: 90px; border: 1px solid var(--ink); background: var(--paper); padding: 4px 8px; font: inherit; font-size: 13px; }
+.fam-cat-spent { color: var(--ink-soft, #6b675c); font-size: 10px; margin-left: auto; }
+.fam-cat-add { display: flex; gap: 8px; margin-top: 8px; align-items: center; flex-wrap: wrap; }
+.fam-cat-add select { border: 1px solid var(--ink); background: var(--paper); padding: 6px 8px; font: inherit; font-size: 13px; }
+.fam-cat-add input { width: 110px; border: 1px solid var(--ink); background: var(--paper); padding: 6px 8px; font: inherit; font-size: 13px; }
+
+.fam-actions { display: flex; gap: 8px; margin-top: 12px; align-items: center; flex-wrap: wrap; }
+.fam-actions .form-error { margin: 0; }

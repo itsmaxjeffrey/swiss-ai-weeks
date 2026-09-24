@@ -57,6 +57,9 @@ const PLAN_IDS = Object.keys(PLANS);
 
 const REGISTRATION_OPEN = process.env.REGISTRATION_OPEN !== "false";
 
+/** How many child accounts one parent may create. */
+const MAX_CHILDREN = 10;
+
 /* ---------- demo account (pitch/testing) ----------
  * Credentials are deliberately NOT in the repo. Set DEMO_PASSWORD to control
  * them — it is rotated onto the account on every boot when set (change env →
@@ -145,6 +148,10 @@ const saveNow = flushSync;
 process.on("exit", () => { if (saveTimer) flushSync(); });
 
 function findUser(id) { return users.find((u) => u.id === id) || null; }
+const findUserById = findUser; // family.js binds this lookup
+function childrenOf(parentId) {
+  return users.filter((u) => u.parentId === parentId).sort((a, b) => a.created - b.created);
+}
 function findUserByEmail(email) {
   const norm = String(email || "").trim().toLowerCase();
   return users.find((u) => u.email === norm) || null;
@@ -156,8 +163,10 @@ class ApiError extends Error {
 
 /* ---------- registration / login ---------- */
 
-function createUser({ email, password, name }) {
-  if (!REGISTRATION_OPEN) throw new ApiError(403, "Registration is currently closed.");
+function createUser({ email, password, name }, opts = {}) {
+  // Public signup can be closed (REGISTRATION_OPEN=false) — a signed-in parent
+  // creating a child account is always allowed (opts.parental).
+  if (!opts.parental && !REGISTRATION_OPEN) throw new ApiError(403, "Registration is currently closed.");
   const norm = String(email || "").trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(norm)) throw new ApiError(400, "Please provide a valid email address.");
   if (!password || String(password).length < PASSWORD_MIN) {
@@ -177,10 +186,38 @@ function createUser({ email, password, name }) {
     created: Date.now(),
     usage: {},
     apiKeys: [],
+    parentId: opts.parentId || null, // set ⇒ child account (parental controls)
   };
   users.push(user);
   saveSoon();
   return user;
+}
+
+/** A signed-in parent creates a managed child account. The child gets a
+ *  normal login but is governed by the parental limits in family.js and can
+ *  never create children of its own. */
+function createChildAccount(parentId, { email, password, name }) {
+  const parent = findUser(parentId);
+  if (!parent) throw new ApiError(404, "No such parent account.");
+  if (parent.parentId) throw new ApiError(403, "A child account cannot create its own sub-accounts.");
+  if (childrenOf(parentId).length >= MAX_CHILDREN) {
+    throw new ApiError(409, `Family limit reached — at most ${MAX_CHILDREN} children per parent account.`);
+  }
+  return createUser({ email, password, name }, { parentId, parental: true });
+}
+
+/** Parent removes a child account entirely: user record + live sessions.
+ *  Family limits/ledger for the child are dropped by the caller (family.js). */
+function deleteChildAccount(parentId, childId) {
+  const child = findUser(childId);
+  if (!child || child.parentId !== parentId) throw new ApiError(404, "No such child account in your family.");
+  users = users.filter((u) => u.id !== childId);
+  let purged = 0;
+  for (const [h, s] of Object.entries(sessions)) {
+    if (s && s.userId === childId) { delete sessions[h]; purged += 1; }
+  }
+  saveSoon();
+  return { purgedSessions: purged };
 }
 
 function verifyLogin(email, password) {
@@ -391,6 +428,7 @@ function publicUser(user) {
     plan: user.plan,
     planLabel: (PLANS[user.plan] || PLANS.free).label,
     isDemo: Boolean(user.demo),
+    parentId: user.parentId || null,
     usage: usageInfo(user),
     created: user.created,
     apiKeys: (user.apiKeys || [])
@@ -401,10 +439,10 @@ function publicUser(user) {
 
 module.exports = {
   ApiError,
-  PLANS, PLAN_IDS, REGISTRATION_OPEN,
+  PLANS, PLAN_IDS, REGISTRATION_OPEN, MAX_CHILDREN,
   SESSION_COOKIE,
   load, pruneSessions, ensureDemoAccount, ensureDummyAccount,
-  createUser, verifyLogin,
+  createUser, createChildAccount, deleteChildAccount, childrenOf, findUserById, verifyLogin,
   createSession, destroySession, userBySessionToken,
   parseCookies, sessionCookieHeader, clearedSessionCookieHeader,
   createApiKey, userByApiKey, revokeApiKey,
