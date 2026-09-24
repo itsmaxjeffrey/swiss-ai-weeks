@@ -1,0 +1,11 @@
+{
+  "status": "ok",
+  "rows": 5484,
+  "coverage_dns": 0.9867,
+  "coverage_http": 0.953,
+  "coverage_wayback": 0.0005,
+  "coverage_crtsh": 0.0026,
+  "dead_domains": 5171,
+  "parked_like": 0,
+  "http_live": 517
+}

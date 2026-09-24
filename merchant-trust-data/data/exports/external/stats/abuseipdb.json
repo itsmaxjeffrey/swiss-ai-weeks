@@ -1,0 +1,9 @@
+{
+  "status": "ok",
+  "rows": 1000,
+  "queue_total": 5091,
+  "flagged_any_confidence": 850,
+  "flagged_50plus": 203,
+  "median_confidence": 24.0,
+  "coverage_reports": 1.0
+}

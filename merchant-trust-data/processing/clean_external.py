@@ -815,6 +815,54 @@ def clean_sanctions_eu() -> dict:
             "probe": json.loads(probe.read_text()) if probe.exists() else None}
 
 
+
+def clean_abuseipdb() -> dict:
+    rows = []
+    for f in sorted(RAW.glob("abuseipdb/check_*.json")):
+        try:
+            d = json.loads(f.read_text()).get("data") or {}
+        except (json.JSONDecodeError, OSError):
+            continue
+        rows.append({
+            "ip_address": d.get("ipAddress"),
+            "abuse_confidence_score": d.get("abuseConfidenceScore"),
+            "total_reports": d.get("totalReports"),
+            "num_distinct_users": d.get("numDistinctUsers"),
+            "last_reported_at": d.get("lastReportedAt"),
+            "is_tor": d.get("isTor"),
+            "is_whitelisted": d.get("isWhitelisted"),
+            "usage_type": d.get("usageType"),
+            "isp": d.get("isp"),
+            "country_code": d.get("countryCode"),
+            "domain": d.get("domain"),
+            "hostnames": ";".join(d.get("hostnames") or []),
+        })
+    df = pd.DataFrame(rows)
+    n = len(df)
+    if n == 0:
+        return {"status": "missing_raw"}
+    df["last_reported_at"] = pd.to_datetime(df["last_reported_at"], errors="coerce", utc=True)
+    for c in ("abuse_confidence_score", "total_reports", "num_distinct_users"):
+        df[c] = pd.to_numeric(df[c], errors="coerce").astype("Int64")
+    out = _fresh(PEXT / "abuseipdb")
+    df.to_parquet(out / "abuseipdb.parquet", index=False)
+    df.to_csv(_fresh(EXPORTS / "abuseipdb") / "abuseipdb.csv.gz",
+              index=False, compression="gzip")
+    q_total = None
+    qp = RAW / "abuseipdb" / "_ip_queue.json"
+    if qp.exists():
+        try:
+            q_total = len(json.loads(qp.read_text()))
+        except (json.JSONDecodeError, OSError):
+            pass
+    flagged = int((df["abuse_confidence_score"].fillna(0) > 0).sum())
+    return {"status": "ok", "rows": n, "queue_total": q_total,
+            "flagged_any_confidence": flagged,
+            "flagged_50plus": int((df["abuse_confidence_score"].fillna(0) >= 50).sum()),
+            "median_confidence": float(df["abuse_confidence_score"].median()),
+            "coverage_reports": round(float(df["total_reports"].notna().mean()), 4)}
+
+
 # ----------------------------------------------------------- domain_health
 
 def clean_domain_health() -> dict:
@@ -886,6 +934,7 @@ CLEANERS = {
     "sanctions_seco": clean_sanctions_seco,
     "sanctions_eu": clean_sanctions_eu,
     "domain_health": clean_domain_health,
+    "abuseipdb": clean_abuseipdb,
 }
 
 _LICENSES = {
@@ -908,6 +957,7 @@ _LICENSES = {
     "sanctions_seco": "SECO Swiss sanctions via OpenSanctions mirror (CC BY-SA 4.0 on mirror; Swiss public data)",
     "sanctions_eu": "EU consolidated list (public data; bulk download behind EU Login)",
     "domain_health": "protocol lookups + Wayback CDX + crt.sh (public services, bounded/cached)",
+    "abuseipdb": "AbuseIPDB free tier (non-commercial, attribution; per-IP cached)",
 }
 
 

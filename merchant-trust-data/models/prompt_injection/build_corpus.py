@@ -168,6 +168,7 @@ def build() -> None:
     print("taxonomy done", file=sys.stderr)
 
     # -- negatives: AgentDojo clean-run tool outputs + user tasks --------------------
+    adojo_texts: list[str] = []
     n_adojo = 0
     for fjson in sorted(glob.glob(str(RAW / "agentdojo" / "extracted" /
                                          "agentdojo-main" / "runs" / "*" / "*" / "*" / "*" / "none.json"))):
@@ -179,9 +180,66 @@ def build() -> None:
             role = msg.get("role")
             content = msg.get("content")
             if role in ("tool", "user") and isinstance(content, str) and content.strip():
+                adojo_texts.append(content)
                 emit(content, 0, "agentdojo_context", min_filter=False)
                 n_adojo += 1
     print(f"agentdojo done ({n_adojo} msgs)", file=sys.stderr)
+
+    # -- synthetic mixture positives: attacks embedded in benign text ----------------
+    # Deployment reality (LEASH pack): manipulation clauses hide inside mostly-
+    # benign product text. Pure TT attacks are whole-input; mixtures teach the
+    # model to fire on attack n-grams at deployment-like ratios (~25% attack
+    # tokens). Mixture benign sources deliberately EXCLUDE viseca_pack (stays
+    # pure-unseen so its eval FPR is honest) and bipia (eval-only).
+    benign_pool = [t for t in adojo_texts if len(t) >= 40]
+    for page in sorted(glob.glob(str(RAW / "gleif" / "gleif_ch_c*.json"))):
+        try:
+            d = json.load(open(page, encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        arr = d if isinstance(d, list) else d.get("data") or d.get("results") or []
+        for rec in arr:
+            name = ((rec.get("attributes") or {}).get("entity") or {}).get("legalName") or {}
+            if name.get("name"):
+                benign_pool.append(name["name"])
+    if (EXPORTS / "google_taxonomy" / "google_product_taxonomy.csv").exists():
+        with open(EXPORTS / "google_taxonomy" / "google_product_taxonomy.csv", encoding="utf-8") as f:
+            lines = f.read().splitlines()
+        benign_pool.extend(x.strip() for x in lines if x.strip())
+    benign_pool = list(dict.fromkeys(benign_pool))  # dedupe, keep order
+
+    connectors = ["", "System: ", "NOTE: ", "Important: ", "P.S. ", "(internal note: "]
+
+    def mixture_sample(attack: str) -> str | None:
+        h = int(hashlib.md5(("mix" + attack).encode()).hexdigest()[:8], 16)
+        if h % 100 >= 55:            # ~55% of attacks get a mixture variant
+            return None
+        benign = benign_pool[h % len(benign_pool)]
+        conn = connectors[(h >> 8) % len(connectors)]
+        variant = h % 3
+        tail = ")" if conn.endswith("(") else ""
+        if variant == 0:
+            return f"{benign} {conn}{attack}{tail}"
+        if variant == 1:
+            return f"{conn}{attack}{tail} {benign}"
+        return f"{benign[: max(20, len(benign) // 2)]} {conn}{attack}{tail} {benign[len(benign) // 2:]}"
+
+    # requires a second pass over raw attacks (streamed, cheap relative to bz2)
+    with bz2.open(RAW / "tensortrust" / "raw-data__v2__raw_dump_attacks.jsonl.bz2",
+                  "rt", encoding="utf-8") as f:
+        for line in f:
+            attack = norm(json.loads(line).get("attacker_input") or "")
+            if len(attack) < MIN_CHARS or len(TOKEN_RE.findall(attack.lower())) < MIN_TOKENS:
+                continue
+            mix = mixture_sample(attack)
+            if mix and mix.lower() not in seen:
+                seen.add(mix.lower())
+                split = split_of(mix)
+                out_writer(split).write(json.dumps(
+                    {"text": mix, "label": 1, "source": "tensortrust_mixture"},
+                    ensure_ascii=False) + "\n")
+                counts[f"{split}:tensortrust_mixture:pos"] += 1
+    print("mixtures done", file=sys.stderr)
 
     # -- eval-only: BIPIA (partitioned) ----------------------------------------------
     p = EXPORTS / "bipia" / "bipia_attack_texts.csv.gz"

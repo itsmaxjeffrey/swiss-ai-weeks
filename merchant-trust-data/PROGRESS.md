@@ -238,7 +238,8 @@
 | sanctions_seco | 42MB source.xml (list 2026-09-04) | 8,609 unique ssid | 2026-09-24 | via OpenSanctions mirror | polite (single file) |
 | sanctions_eu | 0 — EU Login wall | — | probe 2026-09-24 (307→login) | EU Login required | — |
 | malwarebazaar | 0 — proxy 502 | — | probe 2026-09-24 | egress proxy 502 (blob+API) | — |
-| abuseipdb | 0 — key required | — | probe 2026-09-24 (401) | 401 unauthenticated | free tier 1k/day once keyed |
+| domain_health | 5,484/5,484 domains (DNS MX/NS/A + SPF, HTTP liveness, Wayback first-seen, crt.sh 500-sample) | see stats/domain_health.json | 2026-09-24 | none | polite ≤10 threads |
+| abuseipdb | 1,000 checks (999 ok / 1 err) of 5,091 IP queue | 850 flagged (>0 confidence), 203 ≥50, median 24 | 2026-09-24 | free-tier 1k/day cap | 1k/day; resumable queue reruns tomorrow |
 
 ## Dataset counts (v1, 2026-09-23)
 
