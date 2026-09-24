@@ -12,6 +12,8 @@
   const statusText = document.getElementById("statusText");
   const statusAgent = document.getElementById("statusAgent");
   const turnCounter = document.getElementById("turnCounter");
+  const convList = document.getElementById("convList");
+  const btnNewChat = document.getElementById("btnNewChat");
 
   const authOverlay = document.getElementById("authOverlay");
   const authView = document.getElementById("authView");
@@ -110,6 +112,8 @@
   let lastProgress = null;
   let activityTrail = []; // live steps: {kind, label, ts, ok, durationMs?}
   let trailHost = null;
+  let currentSessionId = null; // active sidebar conversation (null = fresh chat)
+  let sessionsCache = [];
 
   function fmtElapsed(ms) {
     const s = Math.max(0, Math.round((ms || 0) / 1000));
@@ -517,9 +521,10 @@
   }
 
   /** Restore the stored conversation so a reload does not blank the chat. */
-  async function loadHistory() {
+  async function loadHistory(sessionId) {
     try {
-      const r = await fetch("/api/history", { headers: authHeaders() });
+      const qs = sessionId ? `?session=${encodeURIComponent(sessionId)}` : "";
+      const r = await fetch(`/api/history${qs}`, { headers: authHeaders() });
       if (!r.ok) return;
       const j = await r.json();
       const msgs = Array.isArray(j.messages) ? j.messages : [];
@@ -530,6 +535,83 @@
         turnCounter.textContent = `${turns} message${turns === 1 ? "" : "s"}`;
       }
     } catch { /* offline — live chat still works */ }
+  }
+
+  /* ---------- conversation sessions (sidebar) ---------- */
+
+  function relTime(iso) {
+    const t = Date.parse(iso || "");
+    if (Number.isNaN(t)) return "";
+    const s = Math.max(0, (Date.now() - t) / 1000);
+    if (s < 60) return "now";
+    if (s < 3600) return `${Math.floor(s / 60)} min`;
+    if (s < 86400) return `${Math.floor(s / 3600)} h`;
+    return new Date(t).toLocaleDateString("de-CH", { day: "2-digit", month: "short" });
+  }
+
+  async function loadSessions() {
+    if (!authed) return;
+    try {
+      const r = await fetch("/api/sessions", { headers: authHeaders() });
+      if (!r.ok) return;
+      const j = await r.json();
+      sessionsCache = Array.isArray(j.sessions) ? j.sessions : [];
+      renderSessions();
+    } catch { /* offline */ }
+  }
+
+  function renderSessions() {
+    if (!convList) return;
+    if (!sessionsCache.length) {
+      convList.innerHTML = '<p class="conv-empty mono-label">no conversations yet</p>';
+      return;
+    }
+    convList.innerHTML = sessionsCache.map((s) =>
+      `<div class="conv-item${s.id === currentSessionId ? " conv-item--active" : ""}" data-sid="${esc(s.id)}" role="button" tabindex="0" title="${esc(s.title)}">` +
+        `<span class="conv-title">${esc(s.title)}</span>` +
+        `<span class="conv-time mono-label">${esc(relTime(s.updated))}</span>` +
+        `<button class="conv-del" type="button" data-del="${esc(s.id)}" aria-label="Delete ${esc(s.title)}">×</button>` +
+      `</div>`).join("");
+  }
+
+  async function switchSession(id) {
+    if (busy) {
+      addMessage("system", "Wait for the current task to finish before switching chats.");
+      return;
+    }
+    if (id === currentSessionId) return;
+    currentSessionId = id;
+    activityTrail = [];
+    lastProgress = null;
+    resetFeed();
+    await loadHistory(id);
+    renderSessions();
+  }
+
+  async function deleteSession(id) {
+    await fetch("/api/sessions/delete", {
+      method: "POST",
+      headers: authHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ id }),
+    }).catch(() => {});
+    sessionsCache = sessionsCache.filter((s) => s.id !== id);
+    if (id === currentSessionId) {
+      currentSessionId = null;
+      resetFeed();
+      const next = sessionsCache[0];
+      if (next) await switchSession(next.id);
+    }
+    renderSessions();
+  }
+
+  /** On sign-in/reload: list conversations and open the most recent one. */
+  async function initSessions() {
+    await loadSessions();
+    if (!currentSessionId && sessionsCache.length) {
+      currentSessionId = sessionsCache[0].id;
+      await loadHistory(currentSessionId);
+      renderSessions();
+    }
   }
 
   async function loadPurchases() {
@@ -607,7 +689,7 @@
         const r = await fetch("/api/chat", {
           method: "POST",
           headers: authHeaders({ "Content-Type": "application/json" }),
-          body: JSON.stringify({ message: text.trim() }),
+          body: JSON.stringify({ message: text.trim(), sessionId: currentSessionId }),
           signal: controller.signal,
         });
         if (!r.ok) {
@@ -665,6 +747,8 @@
               if (Array.isArray(ev.trail) && ev.trail.length) addTrailCard(ev.trail);
               addMessage("agent", ev.reply);
               if (ev.timings) addTimingsCard(ev.timings);
+              if (ev.sessionId && ev.sessionId !== currentSessionId) currentSessionId = ev.sessionId;
+              loadSessions();
               refreshMe(); // keep the usage chip honest
             } else if (ev.type === "error") {
               settled = true;
@@ -1138,6 +1222,9 @@
     accountSignedOut.hidden = false;
     accountSignedIn.hidden = true;
     setLocked(true);
+    sessionsCache = [];
+    currentSessionId = null;
+    renderSessions();
     resetFeed();
   }
 
@@ -1268,7 +1355,7 @@
       body: JSON.stringify({ email, password: loginForm.password.value }),
     });
     const j = await r.json().catch(() => ({}));
-    if (r.ok) { if (j.session) setToken(j.session); loginForm.reset(); closeAuth(); refreshMe().then(loadHistory); }
+    if (r.ok) { if (j.session) setToken(j.session); loginForm.reset(); closeAuth(); refreshMe().then(initSessions); }
     else { loginError.textContent = j.error || `Sign-in failed (HTTP ${r.status}).`; loginError.hidden = false; }
   });
 
@@ -1316,9 +1403,33 @@
 
   btnClearChat.addEventListener("click", async () => {
     if (busy || !authed) return;
-    await fetch("/api/history", { method: "DELETE", headers: authHeaders() }).catch(() => {});
+    const qs = currentSessionId ? `?session=${encodeURIComponent(currentSessionId)}` : "";
+    await fetch(`/api/history${qs}`, { method: "DELETE", headers: authHeaders() }).catch(() => {});
     resetFeed();
+    loadSessions();
     addMessage("system", "Chat view cleared — the agent's memory of this conversation stays.");
+  });
+
+  /* new chat: start a fresh conversation (created lazily on first message) */
+  if (btnNewChat) btnNewChat.addEventListener("click", () => {
+    if (busy || !authed) return;
+    currentSessionId = null;
+    activityTrail = [];
+    lastProgress = null;
+    resetFeed();
+    renderSessions();
+    input.focus();
+  });
+
+  if (convList) convList.addEventListener("click", async (e) => {
+    const del = e.target.closest("[data-del]");
+    if (del) {
+      e.stopPropagation();
+      if (!busy) await deleteSession(del.dataset.del);
+      return;
+    }
+    const item = e.target.closest("[data-sid]");
+    if (item) await switchSession(item.dataset.sid);
   });
 
   /* stop the running task: abort the stream client-side AND kill the turn server-side */
@@ -1342,7 +1453,7 @@
   (async () => {
     const me = await refreshMe();
     if (me) {
-      loadHistory(); // restore the stored conversation across reloads
+      initSessions(); // restore conversations and open the most recent one
     } else {
       openAuth("login"); // registration-first: gate the concierge
     }

@@ -329,13 +329,56 @@ let historyBaseline = -1;
 
   const chat = await post("/api/chat", { message: "hello bob" }, { Cookie: cookieB });
   assert.equal(chat.status, 200);
-  await sseFrames(chat);
+  const frames = await sseFrames(chat);
+  const done = frames.find((f) => f.type === "done");
+  assert.ok(done && done.sessionId, "done frame carries the lazily-created sessionId");
 
-  const h = await (await fetch(`${BASE}/api/history`, { headers: { Cookie: cookieB } })).json();
+  const h = await (await fetch(`${BASE}/api/history?session=${done.sessionId}`, { headers: { Cookie: cookieB } })).json();
   assert.equal(h.messages.length, historyBaseline + 2);
   assert.equal(h.messages[h.messages.length - 2].role, "user");
   assert.equal(h.messages[h.messages.length - 2].text, "hello bob");
   assert.equal(h.messages[h.messages.length - 1].role, "agent");
+
+  const list = await (await fetch(`${BASE}/api/sessions`, { headers: { Cookie: cookieB } })).json();
+  assert.ok(Array.isArray(list.sessions) && list.sessions.some((s) => s.id === done.sessionId && /hello bob/.test(s.title)),
+    "session listed and auto-titled from the first message");
+});
+
+test("sessions: per-session history, rename + delete", async () => {
+  // fresh user: sessions are per-account, and the free plan caps daily turns
+  const reg = await post("/api/auth/register", { email: "sess@example.com", password: "correct horse battery", name: "Sid" });
+  assert.equal(reg.status, 201);
+  const cookieC = cookieOf(reg);
+
+  // unknown sessionId must NOT be resurrected — the server opens a fresh one
+  const chat2 = await post("/api/chat", { message: "hello again", sessionId: "s_aaaaaaaa" }, { Cookie: cookieC });
+  assert.equal(chat2.status, 200);
+  const frames2 = await sseFrames(chat2);
+  const done2 = frames2.find((f) => f.type === "done");
+  assert.ok(done2 && done2.sessionId && done2.sessionId !== "s_aaaaaaaa", "fresh session replaces the unknown id");
+
+  // a turn without sessionId opens another new session
+  const chat3 = await post("/api/chat", { message: "side quest" }, { Cookie: cookieC });
+  const frames3 = await sseFrames(chat3);
+  const done3 = frames3.find((f) => f.type === "done");
+  assert.ok(done3 && done3.sessionId !== done2.sessionId, "separate turns open separate sessions");
+
+  const list = await (await fetch(`${BASE}/api/sessions`, { headers: { Cookie: cookieC } })).json();
+  assert.ok(list.sessions.length >= 2, `two sessions listed (got ${list.sessions.length})`);
+  const titles = list.sessions.map((s) => s.title).join("|");
+  assert.ok(/hello again/.test(titles), "in-session turn kept its own session");
+  assert.ok(/side quest/.test(titles), "fresh turn auto-titled its own session");
+  assert.ok(!list.sessions.some((s) => /hello bob/.test(s.title)), "bob's sessions stay private to bob");
+
+  const ren = await post("/api/sessions/rename", { id: done3.sessionId, title: "Renamed chat" }, { Cookie: cookieC });
+  assert.equal(ren.status, 200);
+  const list2 = await (await fetch(`${BASE}/api/sessions`, { headers: { Cookie: cookieC } })).json();
+  assert.ok(list2.sessions.some((s) => s.id === done3.sessionId && s.title === "Renamed chat"), "rename sticks");
+
+  const del = await post("/api/sessions/delete", { id: done3.sessionId }, { Cookie: cookieC });
+  assert.equal(del.status, 200);
+  const list3 = await (await fetch(`${BASE}/api/sessions`, { headers: { Cookie: cookieC } })).json();
+  assert.ok(!list3.sessions.some((s) => s.id === done3.sessionId), "deleted session is gone");
 });
 
  test("signing a valid policy maps it to the account and lists it in purchases", async () => {

@@ -546,6 +546,87 @@ function serveStatic(req, res) {
 
 const historyPath = (userId) => path.join(HISTORY_DIR, `${userId}.json`);
 
+/* ---------- conversation sessions (sidebar list) ---------- */
+
+const SESSION_ID_RE = /^(main|s_[0-9a-f]{8})$/;
+const userHistoryDir = (userId) => path.join(HISTORY_DIR, userId);
+const sessionPath = (userId, sessionId) => path.join(userHistoryDir(userId), `${sessionId}.json`);
+
+/** Legacy single-history files migrate into a "Previous chat" session whose
+ *  agent key stays unchanged, so the old conversation keeps its context. */
+function migrateLegacyHistory(userId) {
+  const legacy = historyPath(userId);
+  if (!fs.existsSync(legacy)) return;
+  const dir = userHistoryDir(userId);
+  fs.mkdirSync(dir, { recursive: true });
+  const target = sessionPath(userId, "main");
+  if (!fs.existsSync(target)) {
+    try {
+      const j = JSON.parse(fs.readFileSync(legacy, "utf8"));
+      j.id = "main";
+      j.title = "Previous chat";
+      j.created = j.updated || new Date().toISOString();
+      fs.writeFileSync(target, JSON.stringify(j));
+    } catch { fs.renameSync(legacy, target); }
+  }
+  fs.rmSync(legacy, { force: true });
+}
+
+function listSessions(userId) {
+  migrateLegacyHistory(userId);
+  let files = [];
+  try { files = fs.readdirSync(userHistoryDir(userId)).filter((f) => f.endsWith(".json")); } catch { return []; }
+  const out = [];
+  for (const f of files) {
+    try {
+      const j = JSON.parse(fs.readFileSync(path.join(userHistoryDir(userId), f), "utf8"));
+      const messages = Array.isArray(j.messages) ? j.messages : [];
+      out.push({
+        id: j.id || f.replace(/\.json$/, ""),
+        title: j.title || "(untitled chat)",
+        created: j.created || j.updated || null,
+        updated: j.updated || null,
+        messageCount: messages.length,
+        preview: messages.length ? String(messages[messages.length - 1].text || "").replace(/\s+/g, " ").slice(0, 80) : "",
+      });
+    } catch { /* skip corrupt session files */ }
+  }
+  out.sort((a, b) => String(b.updated || "").localeCompare(String(a.updated || "")));
+  return out;
+}
+
+function loadSession(userId, sessionId) {
+  if (!SESSION_ID_RE.test(String(sessionId || ""))) return null;
+  try { return JSON.parse(fs.readFileSync(sessionPath(userId, sessionId), "utf8")); } catch { return null; }
+}
+
+function saveSession(userId, sess) {
+  fs.mkdirSync(userHistoryDir(userId), { recursive: true });
+  fs.writeFileSync(sessionPath(userId, sess.id), JSON.stringify(sess));
+}
+
+/** The session a turn runs in: adopt the requested one, or lazily create a
+ *  fresh conversation when the client has none (ChatGPT-style new chat). */
+function resolveTurnSession(userId, sessionId) {
+  const existing = loadSession(userId, sessionId);
+  if (existing) return existing;
+  const id = `s_${crypto.randomBytes(4).toString("hex")}`;
+  const now = new Date().toISOString();
+  return { id, title: "", created: now, updated: now, messages: [] };
+}
+
+function appendSessionMessage(userId, sess, role, text) {
+  try {
+    sess.messages.push({ role, text, ts: new Date().toISOString() });
+    if (role === "user" && !sess.title) sess.title = String(text).replace(/\s+/g, " ").slice(0, 48) || "(untitled chat)";
+    sess.updated = new Date().toISOString();
+    sess.messages = sess.messages.slice(-HISTORY_CAP);
+    saveSession(userId, sess);
+  } catch (e) {
+    console.log(`[history] append failed: ${e.message}`);
+  }
+}
+
 function loadHistory(userId) {
   try {
     const j = JSON.parse(fs.readFileSync(historyPath(userId), "utf8"));
@@ -663,9 +744,10 @@ function paymentStatusFor(policyId) {
 
 /* ---------- chat: shared turn runner (SSE for the UI, JSON for /api/v1) ---------- */
 
-const userSessionKey = (user) => `${SESSION}-u${user.sid}`;
+const userSessionKey = (user, sessionId) =>
+  sessionId && sessionId !== "main" ? `${SESSION}-u${user.sid}-c${sessionId}` : `${SESSION}-u${user.sid}`;
 
-async function runChatTurn(req, res, user, message, mode) {
+async function runChatTurn(req, res, user, message, mode, sessionId) {
   const receivedAt = Date.now();
   // one turn at a time per user (their agent session is sequential)
   if (userInFlight.has(user.id)) {
@@ -686,7 +768,8 @@ async function runChatTurn(req, res, user, message, mode) {
   const usage = accounts.usageInfo(user);
 
   const started = Date.now();
-  const sessionKey = userSessionKey(user);
+  let sess = resolveTurnSession(user.id, sessionId) || resolveTurnSession(user.id, null);
+  const sessionKey = userSessionKey(user, sess.id);
   stoppedTurns.delete(user.id);
   const stageLog = { marks: [], onStage: null, activityToken: null };
   turnStageLogs.set(user.id, stageLog);
@@ -699,7 +782,7 @@ async function runChatTurn(req, res, user, message, mode) {
     fullMessage = message + activityNote(stageLog.activityToken);
   }
   console.log(`[chat] turn start  (${message.length} chars) user=${user.email} session=${sessionKey} mode=${mode}`);
-  appendHistory(user.id, "user", message);
+  appendSessionMessage(user.id, sess, "user", message);
 
   /** A customer-requested stop reports differently from a failure. */
   const friendlyError = (err) => {
@@ -773,13 +856,13 @@ async function runChatTurn(req, res, user, message, mode) {
           : "";
         console.log(`[chat] turn done    in ${(timings.agentTurnMs / 1000).toFixed(1)}s (${reply.length} chars back) user=${user.email}`);
         console.log(`[chat] timings     total=${fmtMs(timings.totalMs)} · queue=${fmtMs(timings.processes[0].durationMs)} · think=${fmtMs(timings.processes[1].durationMs)} · tools=${fmtMs(timings.processes[2].durationMs)}${gateBit} user=${user.email}`);
-        appendHistory(user.id, "agent", reply);
-        send({ type: "done", reply, timings, trail: trailFromMarks(stageLog.marks), agent: AGENT, session: sessionKey });
+        appendSessionMessage(user.id, sess, "agent", reply);
+        send({ type: "done", reply, timings, trail: trailFromMarks(stageLog.marks), sessionId: sess.id, agent: AGENT, session: sessionKey });
       })
       .catch((err) => {
         console.log(`[chat] turn FAILED  after ${((Date.now() - started) / 1000).toFixed(1)}s: ${err.message} user=${user.email}`);
         const friendly = friendlyError(err);
-        appendHistory(user.id, "error", friendly);
+        appendSessionMessage(user.id, sess, "error", friendly);
         send({ type: "error", error: friendly });
       })
       .finally(() => {
@@ -797,12 +880,12 @@ async function runChatTurn(req, res, user, message, mode) {
     const { reply, stats } = await turn;
     const timings = buildTimings({ receivedAt, started, finished: Date.now(), stats, marks: stageLog.marks });
     console.log(`[chat] turn done    in ${(timings.agentTurnMs / 1000).toFixed(1)}s (${reply.length} chars back) user=${user.email}`);
-    appendHistory(user.id, "agent", reply);
-    sendJson(res, 200, { reply, agent: AGENT, session: sessionKey, usage, timings, trail: trailFromMarks(stageLog.marks) });
+    appendSessionMessage(user.id, sess, "agent", reply);
+    sendJson(res, 200, { reply, agent: AGENT, session: sessionKey, usage, timings, trail: trailFromMarks(stageLog.marks), sessionId: sess.id });
   } catch (err) {
     console.log(`[chat] turn FAILED  after ${((Date.now() - started) / 1000).toFixed(1)}s: ${err.message} user=${user.email}`);
     const friendly = friendlyError(err);
-    appendHistory(user.id, "error", friendly);
+    appendSessionMessage(user.id, sess, "error", friendly);
     sendJson(res, 502, { error: friendly });
   } finally {
     if (stageLog.activityToken) activityTokens.delete(stageLog.activityToken);
@@ -1268,11 +1351,11 @@ async function handle(req, res) {
       return sendJson(res, 413, { error: "Message too large (32 KB limit)." });
     }
     if (body === null) return sendJson(res, 400, { error: "Invalid JSON body." });
-    const { message } = body;
+    const { message, sessionId } = body;
     if (!message || typeof message !== "string" || !message.trim()) {
       return sendJson(res, 400, { error: "Field 'message' is required." });
     }
-    return runChatTurn(req, res, auth.user, message.trim(), pathname === "/api/chat" ? "sse" : "json");
+    return runChatTurn(req, res, auth.user, message.trim(), pathname === "/api/chat" ? "sse" : "json", typeof sessionId === "string" ? sessionId : "");
   }
 
   /* ----- chat history (reload-safe conversation view) ----- */
@@ -1280,14 +1363,50 @@ async function handle(req, res) {
   if (pathname === "/api/history") {
     const auth = authenticate(req);
     if (!auth) return sendJson(res, 401, { error: "Sign in." });
+    const qs = new URL(req.url, "http://x").searchParams;
+    const sessionId = SESSION_ID_RE.test(qs.get("session") || "") ? qs.get("session") : "main";
     if (req.method === "GET") {
-      return sendJson(res, 200, { ok: true, messages: loadHistory(auth.user.id) });
+      const sess = loadSession(auth.user.id, sessionId);
+      return sendJson(res, 200, { ok: true, sessionId, messages: sess && Array.isArray(sess.messages) ? sess.messages : [] });
     }
     if (req.method === "DELETE") {
-      fs.rmSync(historyPath(auth.user.id), { force: true });
-      console.log(`[history] cleared for ${auth.user.email}`);
-      return sendJson(res, 200, { ok: true });
+      fs.rmSync(sessionPath(auth.user.id, sessionId), { force: true });
+      console.log(`[history] cleared session ${sessionId} for ${auth.user.email}`);
+      return sendJson(res, 200, { ok: true, sessionId });
     }
+  }
+
+  /* ----- conversation sessions (sidebar list) ----- */
+
+  if (pathname === "/api/sessions" && req.method === "GET") {
+    const auth = authenticate(req);
+    if (!auth) return sendJson(res, 401, { error: "Sign in." });
+    return sendJson(res, 200, { ok: true, sessions: listSessions(auth.user.id) });
+  }
+
+  if (req.method === "POST" && pathname === "/api/sessions/delete") {
+    const auth = authenticate(req);
+    if (!auth) return sendJson(res, 401, { error: "Sign in." });
+    const body = await readJsonBody(req, 2).catch(() => null);
+    const id = body ? String(body.id || "") : "";
+    if (!SESSION_ID_RE.test(id)) return sendJson(res, 400, { error: "Invalid session id." });
+    fs.rmSync(sessionPath(auth.user.id, id), { force: true });
+    console.log(`[sessions] ${auth.user.email} deleted ${id}`);
+    return sendJson(res, 200, { ok: true, id });
+  }
+
+  if (req.method === "POST" && pathname === "/api/sessions/rename") {
+    const auth = authenticate(req);
+    if (!auth) return sendJson(res, 401, { error: "Sign in." });
+    const body = await readJsonBody(req, 2).catch(() => null);
+    const id = body ? String(body.id || "") : "";
+    const title = body && typeof body.title === "string" ? body.title.trim().slice(0, 80) : "";
+    if (!SESSION_ID_RE.test(id) || !title) return sendJson(res, 400, { error: "Fields 'id' and 'title' are required." });
+    const sess = loadSession(auth.user.id, id);
+    if (!sess) return sendJson(res, 404, { error: "No such session." });
+    sess.title = title;
+    saveSession(auth.user.id, sess);
+    return sendJson(res, 200, { ok: true, id, title });
   }
 
   /* ----- signed policies for this account ----- */
