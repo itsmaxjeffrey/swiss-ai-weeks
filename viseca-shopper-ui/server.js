@@ -94,6 +94,8 @@ const MIME = {
 
 /* one agent turn at a time per user session; global cap across users */
 const userInFlight = new Map(); // userId -> promise
+const userProcs = new Map();    // userId -> child process of the running turn (for stop)
+const stoppedTurns = new Set(); // userId -> turn was stopped by the customer
 let activeTurns = 0;
 
 function sendJson(res, code, obj, extraHeaders) {
@@ -199,8 +201,9 @@ function turnError(kind, message, detail) {
   return err;
 }
 
-/** Run one agent turn through the Gateway CLI and resolve the reply text. */
-function agentTurn(message, sessionKey, timeoutMs = TIMEOUT_MS) {
+/** Run one agent turn through the Gateway CLI and resolve the reply text.
+ *  onSpawn receives the child process right after launch (used for stop). */
+function agentTurn(message, sessionKey, timeoutMs = TIMEOUT_MS, onSpawn = null) {
   return new Promise((resolve, reject) => {
     const args = [
       "agent",
@@ -211,6 +214,7 @@ function agentTurn(message, sessionKey, timeoutMs = TIMEOUT_MS) {
     ];
     if (MODEL) args.push("--model", MODEL);
     const child = spawn(BIN, args, { stdio: ["ignore", "pipe", "pipe"] });
+    if (onSpawn) { try { onSpawn(child); } catch { /* registry is best-effort */ } }
 
     let stdout = "";
     let stderr = "";
@@ -269,15 +273,15 @@ const CONTINUE_NUDGE =
 /** One agent turn with a single budget-aware retry when the run died without
  *  a reply. The session keeps the partial work, so a continuation nudge lets
  *  the agent finish cheaply instead of redoing the whole task. */
-async function turnWithRetry(message, sessionKey) {
+async function turnWithRetry(message, sessionKey, onSpawn = null) {
   const deadline = Date.now() + OVERALL_BUDGET_MS;
   try {
-    return await agentTurn(message, sessionKey, OVERALL_BUDGET_MS);
+    return await agentTurn(message, sessionKey, OVERALL_BUDGET_MS, onSpawn);
   } catch (err) {
     const left = deadline - Date.now();
     if (err.kind === "no-reply" && left > 90000) {
       console.log(`[chat] retry after no-reply (${err.detail || "no detail"}); ${Math.round(left / 1000)}s left`);
-      return await agentTurn(message + CONTINUE_NUDGE, sessionKey, left);
+      return await agentTurn(message + CONTINUE_NUDGE, sessionKey, left, onSpawn);
     }
     throw err;
   }
@@ -557,15 +561,26 @@ async function runChatTurn(req, res, user, message, mode) {
 
   const started = Date.now();
   const sessionKey = userSessionKey(user);
+  stoppedTurns.delete(user.id);
   console.log(`[chat] turn start  (${message.length} chars) user=${user.email} session=${sessionKey} mode=${mode}`);
   appendHistory(user.id, "user", message);
+
+  /** A customer-requested stop reports differently from a failure. */
+  const friendlyError = (err) => {
+    if (stoppedTurns.has(user.id)) {
+      stoppedTurns.delete(user.id);
+      return "Stopped — the task is no longer running. (Anything already ordered stays done.) Tell me what to do next.";
+    }
+    return friendlyTurnError(err);
+  };
 
   const turn = (async () => {
     activeTurns += 1;
     try {
-      return await turnWithRetry(message, sessionKey);
+      return await turnWithRetry(message, sessionKey, (child) => userProcs.set(user.id, child));
     } finally {
       activeTurns -= 1;
+      userProcs.delete(user.id);
     }
   })();
   userInFlight.set(user.id, turn);
@@ -605,7 +620,7 @@ async function runChatTurn(req, res, user, message, mode) {
       })
       .catch((err) => {
         console.log(`[chat] turn FAILED  after ${((Date.now() - started) / 1000).toFixed(1)}s: ${err.message} user=${user.email}`);
-        const friendly = friendlyTurnError(err);
+        const friendly = friendlyError(err);
         appendHistory(user.id, "error", friendly);
         send({ type: "error", error: friendly });
       })
@@ -625,7 +640,7 @@ async function runChatTurn(req, res, user, message, mode) {
     sendJson(res, 200, { reply, agent: AGENT, session: sessionKey, usage });
   } catch (err) {
     console.log(`[chat] turn FAILED  after ${((Date.now() - started) / 1000).toFixed(1)}s: ${err.message} user=${user.email}`);
-    const friendly = friendlyTurnError(err);
+    const friendly = friendlyError(err);
     appendHistory(user.id, "error", friendly);
     sendJson(res, 502, { error: friendly });
   } finally {
@@ -1049,6 +1064,17 @@ async function handle(req, res) {
   }
 
   /* ----- chat ----- */
+
+  if (req.method === "POST" && pathname === "/api/chat/stop") {
+    const auth = authenticate(req);
+    if (!auth) return sendJson(res, 401, { error: "Sign in or send a Bearer API key." });
+    const child = userProcs.get(auth.user.id);
+    if (!child) return sendJson(res, 404, { error: "No running turn to stop." });
+    stoppedTurns.add(auth.user.id);
+    child.kill("SIGKILL");
+    console.log(`[chat] STOP requested by ${auth.user.email}`);
+    return sendJson(res, 200, { ok: true });
+  }
 
   if (req.method === "POST" && (pathname === "/api/chat" || pathname === "/api/v1/chat")) {
     const auth = authenticate(req);

@@ -213,6 +213,7 @@ body::after {
 
 .feed {
   flex: 1;
+  min-height: 0; /* without this flex:1 lets the feed grow to content height instead of scrolling */
   overflow-y: auto;
   padding: 34px 34px 12px;
   scroll-behavior: smooth;

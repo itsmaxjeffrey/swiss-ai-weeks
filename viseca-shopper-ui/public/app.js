@@ -42,6 +42,7 @@
   const btnLogout = document.getElementById("btnLogout");
   const btnClearChat = document.getElementById("btnClearChat");
   const policyList = document.getElementById("policyList");
+  const btnStopTurn = document.getElementById("btnStopTurn");
   /* shopping settings */
   const shopCap = document.getElementById("shopCap");
   const shopCapSave = document.getElementById("shopCapSave");
@@ -79,6 +80,8 @@
   let busy = false;
   let locked = true; // composer locked until signed in
   let authed = false;
+  let activeController = null; // aborts the in-flight chat fetch
+  let stopRequested = false;
 
   /* Session token fallback: some embedded contexts (iframes with third-party
    * cookies blocked) never send cookies back, so the login response also
@@ -378,6 +381,8 @@
     composer.classList.toggle("busy", on);
     sendBtn.disabled = on || locked;
     typing.hidden = !on;
+    if (btnStopTurn) btnStopTurn.hidden = !on;
+    if (!on) { activeController = null; stopRequested = false; }
     if (on) {
       thinkingStep = 0;
       lastProgress = null;
@@ -494,6 +499,7 @@
       // final done/error frame. Abort timer is the safety net if the
       // connection dies without notice (bridge gives up after 10 min).
       const controller = new AbortController();
+      activeController = controller;
       const abortTimer = setTimeout(() => controller.abort(), 630000);
       try {
         const r = await fetch("/api/chat", {
@@ -557,12 +563,16 @@
         clearTimeout(abortTimer);
       }
     } catch (e) {
-      addMessage(
-        "error",
-        e.name === "AbortError"
-          ? "Connection lost while the agent was working. The turn may still have completed — reload and ask a follow-up."
-          : `Could not reach the bridge: ${e.message}`
-      );
+      if (stopRequested) {
+        addMessage("system", "Task stopped — the agent is no longer working on it. (Anything already ordered stays done.)");
+      } else {
+        addMessage(
+          "error",
+          e.name === "AbortError"
+            ? "Connection lost while the agent was working. The turn may still have completed — reload and ask a follow-up."
+            : `Could not reach the bridge: ${e.message}`
+        );
+      }
     } finally {
       setBusy(false);
       input.focus();
@@ -1129,10 +1139,16 @@
   loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     loginError.hidden = true;
+    const email = String(loginForm.email.value || "").trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      loginError.textContent = "Please enter a valid email address (e.g. you@example.com).";
+      loginError.hidden = false;
+      return;
+    }
     const r = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: loginForm.email.value, password: loginForm.password.value }),
+      body: JSON.stringify({ email, password: loginForm.password.value }),
     });
     const j = await r.json().catch(() => ({}));
     if (r.ok) { if (j.session) setToken(j.session); loginForm.reset(); closeAuth(); refreshMe().then(loadHistory); }
@@ -1186,6 +1202,14 @@
     await fetch("/api/history", { method: "DELETE", headers: authHeaders() }).catch(() => {});
     resetFeed();
     addMessage("system", "Chat view cleared — the agent's memory of this conversation stays.");
+  });
+
+  /* stop the running task: abort the stream client-side AND kill the turn server-side */
+  if (btnStopTurn) btnStopTurn.addEventListener("click", async () => {
+    if (!busy || stopRequested) return;
+    stopRequested = true;
+    await fetch("/api/chat/stop", { method: "POST", headers: authHeaders() }).catch(() => {});
+    if (activeController) activeController.abort();
   });
 
   btnShowAuth.addEventListener("click", () => openAuth(authed ? "account" : "login"));

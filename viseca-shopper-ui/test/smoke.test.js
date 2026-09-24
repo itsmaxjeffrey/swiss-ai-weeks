@@ -821,3 +821,13 @@ async function famLimitsFetch(cookie, body) {
   const j = await (await fetch(`${BASE}/api/account/family`, { headers: { Cookie: cookieParent } })).json();
   assert.equal(j.children.length, 1);
 });
+
+/* ---------- stop button (server-side turn kill) ---------- */
+
+ test("stop requires auth and 404s when idle", async () => {
+  assert.equal((await post("/api/chat/stop", {})).status, 401);
+  const idle = await post("/api/chat/stop", {}, { Cookie: cookieC });
+  assert.equal(idle.status, 404);
+  const j = await idle.json();
+  assert.match(j.error, /No running turn/);
+});
