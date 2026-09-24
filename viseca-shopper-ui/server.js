@@ -1317,3 +1317,11 @@ server.listen(PORT, HOST, () => {
   console.log(`[viseca-shopper-ui] ${url}  →  agent '${AGENT}' (base session key: ${SESSION})`);
   console.log(`[viseca-shopper-ui] multi-user on · plans: ${Object.keys(accounts.PLANS).join("/")} · registration ${accounts.REGISTRATION_OPEN ? "open" : "closed"} · agent slots: ${MAX_CONCURRENT}`);
 });
+
+/* Last words: two silent deaths tonight (22:55, ~23:22) left no evidence.
+   Next time the log tells us whether a signal arrived or the code crashed.
+   The watchdog automation relaunches within 5 min either way. */
+process.on("SIGTERM", () => { console.log(`[lifecycle] SIGTERM ${new Date().toISOString()} — exiting`); process.exit(0); });
+process.on("SIGINT", () => { console.log(`[lifecycle] SIGINT ${new Date().toISOString()} — exiting`); process.exit(0); });
+process.on("uncaughtException", (err) => { console.error(`[fatal] uncaughtException ${new Date().toISOString()}: ${(err && err.stack) || err}`); process.exit(1); });
+process.on("unhandledRejection", (err) => { console.error(`[warn] unhandledRejection ${new Date().toISOString()}: ${(err && (err.stack || err.message)) || err}`); });
