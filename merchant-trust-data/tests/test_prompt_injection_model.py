@@ -67,7 +67,10 @@ def test_scorer_sigmoid_bounds():
 
 # --- exported artifact ---------------------------------------------------------
 
-ART = MODEL_DIR / "injection-model-v1.json"
+DEPLOYED = MODEL_DIR.parents[1].parent / "wallet-control" / "lib" / "injection-model.json"
+ART = DEPLOYED if DEPLOYED.exists() else (
+    sorted(MODEL_DIR.glob("injection-model-v*.json"))[-1] if
+    MODEL_DIR.glob("injection-model-v*.json") else MODEL_DIR / "injection-model-v1.json")
 
 
 @pytest.mark.skipif(not ART.exists(), reason="artifact not trained yet")
@@ -76,29 +79,23 @@ def test_artifact_integrity_and_parity():
     assert art["schema"] == "openclaw.injection-model/1"
     assert art["tokenizer"] == "[a-z0-9']+"
     assert 0 < art["threshold"] < 1
-    import numpy as np
+    assert len(art["weights"]) > 1000, "suspiciously few exported features"
 
-    n_feat = art["n_features"]
-    idf = np.zeros(n_feat)
-    coef = np.zeros(n_feat)
-    for k, (i, w) in art["weights"].items():
-        idf[int(k)] = i
-        coef[int(k)] = w
-
-    keep_idx = np.zeros(n_feat, dtype=bool)
-    for k in art["weights"]:
-        keep_idx[int(k)] = True
-
+    # parity must use the artifact-faithful scorer (window-max), the same
+    # contract wallet-control/lib/injection-model.js implements
+    cal = _load("calibrate_threshold")
+    score = cal.make_scorer(art)
     parity = json.loads((MODEL_DIR / "parity_vectors.json").read_text())["parity"]
     for p in parity:
-        got = train.score_row(p["text"], int(math.log2(n_feat)), idf, keep_idx,
-                              coef, art["intercept"])
+        got = score(p["text"])
         assert abs(got - p["p"]) < 1e-6, f"parity drift on: {p['text'][:60]}"
 
 
 @pytest.mark.skipif(not ART.exists(), reason="artifact not trained yet")
 def test_deployed_copy_matches_canonical():
-    deployed = MODEL_DIR.parents[1].parent / "wallet-control" / "lib" / "injection-model.json"
-    if not deployed.exists():
-        pytest.skip("deployed copy not present")
-    assert json.loads(deployed.read_text()) == json.loads(ART.read_text())
+    """The deployed copy must match the canonical artifact of the same version."""
+    deployed = json.loads(DEPLOYED.read_text())
+    canonical = MODEL_DIR / f"injection-model-{deployed['version']}.json"
+    if not canonical.exists():
+        pytest.skip(f"canonical {canonical.name} not present")
+    assert json.loads(canonical.read_text()) == deployed

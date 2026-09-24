@@ -10,7 +10,7 @@
 // Usage: node models/prompt_injection/make_fixtures.mjs   (from merchant-trust-data)
 import { createHash } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -72,5 +72,6 @@ if (!picked.length || !benignPicked.length) {
   process.exit(1);
 }
 const out = { generated: new Date().toISOString().slice(0, 10), threshold, suspect: Number(suspect.toFixed(4)), injection_cases: picked, benign_cases: benignPicked };
+mkdirSync(path.join(WC, 'test/fixtures'), { recursive: true });
 writeFileSync(path.join(WC, 'test/fixtures/injection_cases.json'), JSON.stringify(out, null, 2) + '\n');
 console.log(`fixtures: ${picked.length} regex-escaping attacks (scores ${picked[picked.length-1].score}–${picked[0].score}), ${benignPicked.length} benign`);

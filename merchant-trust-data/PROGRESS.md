@@ -4,6 +4,20 @@
 
 ## DONE
 
+- 2026-09-24: **prompt-injection detector v2 built, calibrated, deployed into
+  wallet-control** (`models/prompt_injection/`): corpus v2 (TT attacks 203k /
+  defenses 69k + benign GLEIF/Tranco/taxonomy/AgentDojo 55k; BIPIA + Viseca
+  pack held out eval-only), md5-hashed TF-IDF (2^19, uni+bi) + two-phase SGD
+  logreg, window-max scoring (40-token windows, stride 20), per-pool-FPR
+  threshold calibration (τ=0.0542; 0% FPR on Viseca pack, BIPIA benign, pack
+  clean texts). JS scorer `wallet-control/lib/injection-model.js` (md5 lockstep
+  with Python, parity-tested ±1e-6) + engine step_up-with-evidence integration
+  + suspect band; 8 regex-escaping held-out attacks locked into fixtures.
+  Documented failures: v1 (defenses-only negatives inverted the domain — 31.8%
+  FPR on benign product text), v3 mixture training (carrier leakage collapsed
+  the score distribution — benign p99 0.95) — both kept as ablations in
+  EVAL.md. Tests: JS 30 (25 engine + 5 model), Python 32. Details:
+  models/prompt_injection/EVAL.md.
 - 2026-09-23: repo scaffold: canonical schema (`schemas/canonical_schema.py`),
   three-state conventions (NA ≠ False), provenance columns, leakage policy.
 - 2026-09-23: collectors: openphish, urlhaus, gleif (paginated, cached,

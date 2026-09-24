@@ -17,3 +17,6 @@ reports/*.csv
 
 # local secrets — never commit
 .env
+
+# ablation artifact — failed mixture training, documented in EVAL.md; reproducible via train_detector.py
+models/prompt_injection/injection-model-v3.json

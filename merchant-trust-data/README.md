@@ -124,6 +124,18 @@ Swiss pack (sha256-verified).
 - Integrity: publisher-constant checks are asserted per source (row counts,
   fraud counts, Viseca sha256 manifest); see `EXTERNAL_QUALITY_REPORT.md`.
 
+## Prompt-injection detector (model)
+
+`models/prompt_injection/` trains a hashed TF-IDF + linear detector on the
+collected prompt-injection corpora (TensorTrust attacks vs broadened benign
+text) and exports a portable sparse-weight artifact consumed by the
+`wallet-control` engine as an escalation-only signal (never approves/declines;
+missing artifact → layer inert). Threshold is calibrated per benign pool
+(`calibrate_threshold.py`); scoring is window-max so short embedded clauses
+are not diluted. Full honest evaluation — including two documented failed
+variants — lives in `models/prompt_injection/EVAL.md`; tests in
+`tests/test_prompt_injection_model.py` and `wallet-control/test/`.
+
 ## Canonical schema conventions (critical)
 
 Full column list: `schemas/canonical_schema.py`.
