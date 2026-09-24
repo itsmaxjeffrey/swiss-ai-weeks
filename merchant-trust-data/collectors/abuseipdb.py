@@ -84,38 +84,61 @@ def collect() -> tuple[str, dict, bool]:
     return "probe-ok", status, False
 
 
-def _load_queue(limit: int) -> list[str]:
+def _load_queue(limit: int | None = None) -> list[str]:
     q = common.raw_dir("abuseipdb") / "_ip_queue.json"
     if not q.exists():
         raise FileNotFoundError("missing data/raw/abuseipdb/_ip_queue.json")
     ips = json.loads(q.read_text())
-    return ips[:limit]
+    return ips if limit is None else ips[:limit]
 
 
-def run_checks(limit: int = 1000, sleep_s: float = 1.1) -> dict:
-    """Check top IP-literal threat hosts (free tier: 1k/day), cached per IP."""
+def run_checks(max_fresh: int = 950, sleep_s: float = 1.1, limit: int | None = None) -> dict:
+    """Check top IP-literal threat hosts (free tier: 1k/day), cached per IP.
+
+    Cap-aware nightly resume: cached IPs are skipped WITHOUT sleeping and
+    without counting against max_fresh — only fresh API calls count. Stops
+    cleanly when max_fresh is reached or the API answers 429 (daily quota
+    spent): no 429 error storms, and no lost IPs — uncached entries are
+    simply retried by the next run. Failures are never cached (check()
+    raises before the cache write).
+    """
     import time
     client = AbuseIPDBClient()
     client._require_token()
     ips = _load_queue(limit)
-    done = fresh = errors = 0
+    fresh = errors = skipped = 0
+    cap_reached = False
     log = common.raw_dir("abuseipdb") / "_run.log"
-    for i, ip in enumerate(ips, 1):
+    for ip in ips:
+        if (common.raw_dir("abuseipdb") / f"check_{ip}.json").exists():
+            skipped += 1
+            continue
+        if fresh >= max_fresh:
+            cap_reached = True
+            break
         try:
             data = client.check(ip)
             if isinstance(data.get("data"), dict):
                 fresh += 1
-        except Exception as e:  # noqa: BLE001 — log and continue
+        except requests.HTTPError as e:
+            if e.response is not None and e.response.status_code == 429:
+                cap_reached = True  # daily quota spent — resume tomorrow
+                break
             errors += 1
-        done += 1
-        if done % 100 == 0:
+        except Exception:  # noqa: BLE001 — log and continue
+            errors += 1
+        if fresh % 100 == 0:
             with log.open("a") as f:
-                f.write(json.dumps({"done": done, "total": len(ips),
-                                    "ok": fresh, "errors": errors}) + "\n")
+                f.write(json.dumps({"fresh": fresh, "skipped": skipped,
+                                    "errors": errors}) + "\n")
         time.sleep(sleep_s)
-    stats = {"source": "abuseipdb", "checked": done, "ok": fresh,
-             "errors": errors, "queue_total": len(json.loads(
-                 (common.raw_dir("abuseipdb") / "_ip_queue.json").read_text()))}
+    queue_total = len(json.loads(
+        (common.raw_dir("abuseipdb") / "_ip_queue.json").read_text()))
+    stats = {"source": "abuseipdb", "checked": fresh, "ok": fresh,
+             "errors": errors, "cached_skipped": skipped,
+             "cap_reached": cap_reached,
+             "remaining": max(0, queue_total - skipped - fresh - errors),
+             "queue_total": queue_total}
     (common.raw_dir("abuseipdb") / "run_stats.json").write_text(json.dumps(stats, indent=2))
     return stats
 
@@ -123,7 +146,10 @@ def run_checks(limit: int = 1000, sleep_s: float = 1.1) -> dict:
 if __name__ == "__main__":
     import argparse
     ap = argparse.ArgumentParser()
-    ap.add_argument("--limit", type=int, default=1000)
+    ap.add_argument("--max-fresh", type=int, default=950,
+                    help="max fresh API calls this run (free tier 1000/day; 950 headroom)")
+    ap.add_argument("--limit", type=int, default=None,
+                    help="only walk the first N queue entries (default: whole queue)")
     ap.add_argument("--sleep", type=float, default=1.1)
     a = ap.parse_args()
-    print(json.dumps(run_checks(a.limit, a.sleep), indent=2))
+    print(json.dumps(run_checks(a.max_fresh, a.sleep, a.limit), indent=2))
