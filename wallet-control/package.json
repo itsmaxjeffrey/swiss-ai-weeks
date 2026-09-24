@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "replay": "node cli.js",
-    "test": "node test/engine.test.js && node test/injection-model.test.js && node test/behavior-model.test.js"
+    "test": "node test/engine.test.js && node test/injection-model.test.js && node test/behavior-model.test.js && node test/injection-battery.test.js"
   },
   "engines": { "node": ">=20" },
   "license": "MIT"
