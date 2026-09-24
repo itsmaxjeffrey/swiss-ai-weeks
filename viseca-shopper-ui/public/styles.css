@@ -854,3 +854,7 @@ body::after {
 .purchase-state--done { color: #1c7c33; }
 .purchase-req { font-size: 13.5px; margin-bottom: 4px; overflow-wrap: anywhere; }
 .purchase-meta { font-family: var(--mono); font-size: 10.5px; color: var(--ink-soft); }
+
+/* `hidden` must always win over author display rules (overlay is display:flex;
+   without this the login sheet never closes). Applies app-wide. */
+[hidden] { display: none !important; }
