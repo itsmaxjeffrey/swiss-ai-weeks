@@ -45,6 +45,19 @@
   let busy = false;
   let locked = true; // composer locked until signed in
   let authed = false;
+
+  /* Session token fallback: some embedded contexts (iframes with third-party
+   * cookies blocked) never send cookies back, so the login response also
+   * returns the token and we attach it as a Bearer header on API calls. */
+  const SESSION_KEY = "shopper_session_token";
+  function getToken() { try { return localStorage.getItem(SESSION_KEY) || ""; } catch { return ""; } }
+  function setToken(t) { try { if (t) localStorage.setItem(SESSION_KEY, t); else localStorage.removeItem(SESSION_KEY); } catch {} }
+  function authHeaders(extra) {
+    const h = Object.assign({}, extra || {});
+    const t = getToken();
+    if (t) h.Authorization = `Bearer ${t}`;
+    return h;
+  }
   let currentUser = null;
   let plansCache = null;
 
@@ -262,7 +275,7 @@
       try {
         const r = await fetch("/api/policy/sign", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: authHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify({ policy }),
         });
         const j = await r.json().catch(() => ({}));
@@ -372,7 +385,7 @@
       try {
         const r = await fetch("/api/chat", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: authHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify({ message: text.trim() }),
           signal: controller.signal,
         });
@@ -497,7 +510,7 @@
 
   async function refreshMe() {
     try {
-      const r = await fetch("/api/auth/me");
+      const r = await fetch("/api/auth/me", { headers: authHeaders() });
       if (!r.ok) { renderSignedOut(); return null; }
       const j = await r.json();
       renderSignedIn(j.user);
@@ -553,7 +566,7 @@
           card.disabled = true;
           await fetch("/api/account/plan", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: authHeaders({ "Content-Type": "application/json" }),
             body: JSON.stringify({ plan: id }),
           }).catch(() => {});
           await refreshMe();
@@ -580,7 +593,7 @@
       row.querySelector("button").addEventListener("click", async () => {
         await fetch("/api/account/keys/revoke", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: authHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify({ id: k.id }),
         });
         await refreshMe();
@@ -601,7 +614,7 @@
       body: JSON.stringify({ email: loginForm.email.value, password: loginForm.password.value }),
     });
     const j = await r.json().catch(() => ({}));
-    if (r.ok) { loginForm.reset(); closeAuth(); refreshMe(); }
+    if (r.ok) { if (j.session) setToken(j.session); loginForm.reset(); closeAuth(); refreshMe(); }
     else { loginError.textContent = j.error || `Sign-in failed (HTTP ${r.status}).`; loginError.hidden = false; }
   });
 
@@ -614,7 +627,7 @@
       body: JSON.stringify({ name: registerForm.name.value, email: registerForm.email.value, password: registerForm.password.value }),
     });
     const j = await r.json().catch(() => ({}));
-    if (r.ok) { registerForm.reset(); closeAuth(); refreshMe(); addMessage("system", "Welcome — your account is ready. Open Account for plans and API keys."); }
+    if (r.ok) { if (j.session) setToken(j.session); registerForm.reset(); closeAuth(); refreshMe(); addMessage("system", "Welcome — your account is ready. Open Account for plans and API keys."); }
     else { registerError.textContent = j.error || `Registration failed (HTTP ${r.status}).`; registerError.hidden = false; }
   });
 
@@ -622,7 +635,7 @@
     e.preventDefault();
     const r = await fetch("/api/account/keys", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({ name: keyForm.name.value.trim() || "api key" }),
     });
     const j = await r.json().catch(() => ({}));
@@ -641,7 +654,8 @@
   });
 
   btnLogout.addEventListener("click", async () => {
-    await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+    setToken("");
+    await fetch("/api/auth/logout", { method: "POST", headers: authHeaders() }).catch(() => {});
     closeAuth();
     renderSignedOut();
     addMessage("system", "Signed out.");

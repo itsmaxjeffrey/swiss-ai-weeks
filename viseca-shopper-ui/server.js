@@ -103,15 +103,20 @@ function isSecure(req) {
 
 /* ---------- auth glue ---------- */
 
-/** Resolve the requesting user: cookie session or Bearer API key. */
+/** Resolve the requesting user: cookie session, Bearer API key, or Bearer
+ *  session token (browsers block cookies outright in some embedded contexts —
+ *  the UI keeps its token in localStorage and sends it as a Bearer header). */
 function authenticate(req) {
   const cookies = accounts.parseCookies(req.headers.cookie);
   const viaCookie = accounts.userBySessionToken(cookies[accounts.SESSION_COOKIE]);
   if (viaCookie) return { user: viaCookie, via: "session" };
   const authz = req.headers.authorization || "";
   if (/^Bearer\s+/i.test(authz)) {
-    const hit = accounts.userByApiKey(authz.replace(/^Bearer\s+/i, ""));
+    const raw = authz.replace(/^Bearer\s+/i, "").trim();
+    const hit = accounts.userByApiKey(raw);
     if (hit) return { user: hit.user, via: "apikey", key: hit.key };
+    const sess = accounts.userBySessionToken(raw);
+    if (sess) return { user: sess, via: "session" };
   }
   return null;
 }
@@ -605,7 +610,7 @@ async function handle(req, res) {
     const token = accounts.createSession(user.id);
     res.setHeader("Set-Cookie", accounts.sessionCookieHeader(token, isSecure(req)));
     console.log(`[auth] registered ${user.email}`);
-    return sendJson(res, 201, { ok: true, user: accounts.publicUser(user) });
+    return sendJson(res, 201, { ok: true, user: accounts.publicUser(user), session: token });
   }
 
   if (req.method === "POST" && pathname === "/api/auth/login") {
@@ -619,7 +624,7 @@ async function handle(req, res) {
     const token = accounts.createSession(user.id);
     res.setHeader("Set-Cookie", accounts.sessionCookieHeader(token, isSecure(req)));
     console.log(`[auth] login ${user.email}`);
-    return sendJson(res, 200, { ok: true, user: accounts.publicUser(user) });
+    return sendJson(res, 200, { ok: true, user: accounts.publicUser(user), session: token });
   }
 
   if (req.method === "POST" && pathname === "/api/auth/logout") {
