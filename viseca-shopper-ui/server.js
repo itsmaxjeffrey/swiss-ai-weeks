@@ -612,7 +612,10 @@ async function handle(req, res) {
     const body = await readJsonBody(req, 16).catch(() => null);
     if (body === null) return sendJson(res, 413, { error: "Payload too large." });
     const user = accounts.verifyLogin(body.email, body.password);
-    if (!user) return sendJson(res, 401, { error: "Wrong email or password." });
+    if (!user) {
+      console.log(`[auth] FAILED login ${String(body.email || "").slice(0, 80)}`);
+      return sendJson(res, 401, { error: "Wrong email or password." });
+    }
     const token = accounts.createSession(user.id);
     res.setHeader("Set-Cookie", accounts.sessionCookieHeader(token, isSecure(req)));
     console.log(`[auth] login ${user.email}`);
@@ -742,6 +745,7 @@ try {
 accounts.load();
 accounts.pruneSessions();
 accounts.ensureDemoAccount();
+accounts.ensureDummyAccount();
 
 server.listen(PORT, HOST, () => {
   const url = `http://${HOST}:${PORT}`;

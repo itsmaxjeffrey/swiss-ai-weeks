@@ -482,7 +482,7 @@
     accountSignedIn.hidden = false;
     acctName.textContent = user.name + (user.isDemo ? " (demo)" : "");
     acctPlan.textContent = user.planLabel + (user.isDemo ? " · demo" : "");
-    acctUsage.textContent = `${user.usage.used}/${user.usage.limit} msgs`;
+    acctUsage.textContent = user.usage.limit == null ? `${user.usage.used}/∞ msgs` : `${user.usage.used}/${user.usage.limit} msgs`;
     setLocked(false);
     if (!authOverlay.hidden && !accountView.hidden) renderAccountView(user);
   }
@@ -563,8 +563,8 @@
     }
 
     const u = user.usage;
-    usageText.textContent = `${u.used} of ${u.limit} messages used today · ${u.remaining} left`;
-    usageFill.style.width = `${Math.min(100, Math.round((u.used / Math.max(1, u.limit)) * 100))}%`;
+    usageText.textContent = u.limit == null ? `${u.used} messages used today · unlimited` : `${u.used} of ${u.limit} messages used today · ${u.remaining} left`;
+    usageFill.style.width = u.limit == null ? "0%" : `${Math.min(100, Math.round((u.used / Math.max(1, u.limit)) * 100))}%`;
 
     keyList.innerHTML = "";
     const keys = user.apiKeys || [];

@@ -230,11 +230,17 @@ function parseCookies(header) {
   return out;
 }
 
+/* SameSite=None over https so the session also works when the site is embedded
+ * in an iframe (Lax cookies are never sent from cross-site frames — the bug that
+ * made iframe logins bounce straight back to the gate); plain-http LAN access
+ * keeps Lax (None requires Secure). */
 function sessionCookieHeader(token, secure) {
-  return `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${Math.floor(SESSION_TTL_MS / 1000)}${secure ? "; Secure" : ""}`;
+  const site = secure ? "SameSite=None; Secure" : "SameSite=Lax";
+  return `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; ${site}; Max-Age=${Math.floor(SESSION_TTL_MS / 1000)}`;
 }
 function clearedSessionCookieHeader(secure) {
-  return `${SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure ? "; Secure" : ""}`;
+  const site = secure ? "SameSite=None; Secure" : "SameSite=Lax";
+  return `${SESSION_COOKIE}=; Path=/; HttpOnly; ${site}; Max-Age=0`;
 }
 
 /* ---------- API keys (external surfaces: ChatGPT, Claude, OpenClaw) ---------- */
@@ -294,6 +300,11 @@ function countMessage(userId) {
   if (user.usage[today] === undefined) {
     user.usage = { [today]: 0 }; // drop old days
   }
+  if (user.unlimited) {
+    user.usage[today] += 1; // tracked for display only — never capped
+    saveSoon();
+    return { ok: true, used: user.usage[today], limit: null, plan };
+  }
   if (user.usage[today] >= plan.daily) {
     return { ok: false, used: user.usage[today], limit: plan.daily, plan };
   }
@@ -305,6 +316,9 @@ function countMessage(userId) {
 function usageInfo(user) {
   const plan = PLANS[user.plan] || PLANS.free;
   const used = user.usage[todayKey()] || 0;
+  if (user.unlimited) {
+    return { plan: user.plan, planLabel: plan.label, used, limit: null, remaining: null };
+  }
   return { plan: user.plan, planLabel: plan.label, used, limit: plan.daily, remaining: Math.max(0, plan.daily - used) };
 }
 
@@ -347,6 +361,27 @@ function ensureDemoAccount() {
   return { created, user, apiKey: seeded ? seeded.key : null };
 }
 
+/** Optional always-on demo guest with no message cap: DUMMY_EMAIL/DUMMY_PASSWORD
+ *  env seed it at boot (created once; unlimited flag re-asserted every boot).
+ *  Returns null when DUMMY_EMAIL is unset. */
+function ensureDummyAccount() {
+  const email = (process.env.DUMMY_EMAIL || "").trim().toLowerCase();
+  if (!email) return null;
+  const password = (process.env.DUMMY_PASSWORD || "").trim();
+  let user = findUserByEmail(email);
+  if (!user) {
+    if (password.length < PASSWORD_MIN) {
+      console.warn(`[accounts] DUMMY_EMAIL set but DUMMY_PASSWORD missing/too short — dummy account not created.`);
+      return null;
+    }
+    user = createUser({ email, password, name: "Demo Guest" });
+    console.log(`[accounts] dummy account ready: ${email} (unlimited)`);
+  }
+  user.unlimited = true;
+  saveSoon();
+  return user;
+}
+
 /** Safe projection of a user for the client. */
 function publicUser(user) {
   return {
@@ -368,7 +403,7 @@ module.exports = {
   ApiError,
   PLANS, PLAN_IDS, REGISTRATION_OPEN,
   SESSION_COOKIE,
-  load, pruneSessions, ensureDemoAccount,
+  load, pruneSessions, ensureDemoAccount, ensureDummyAccount,
   createUser, verifyLogin,
   createSession, destroySession, userBySessionToken,
   parseCookies, sessionCookieHeader, clearedSessionCookieHeader,
