@@ -123,3 +123,8 @@ Add conventions, style, and rules as you learn what works for this workspace.
 - [Default AGENTS.md](/reference/AGENTS.default)
 - [Automations vs heartbeat](/automation#automations-vs-heartbeat)
 - [Heartbeat](/gateway/heartbeat)
+
+### Environment gotchas (this host)
+
+- `NODE_USE_ENV_PROXY=1` + `HTTP_PROXY` point at the OpenClaw egress proxy: Node `fetch` proxies even `127.0.0.1` URLs, and `curl` needs `--noproxy '*'` for local requests. In tests/harnesses: `delete process.env.NODE_USE_ENV_PROXY; process.env.NO_PROXY = "127.0.0.1,localhost";` before any fetch.
+- `node --test` treats every `.js` under `test/` as a test file — pass explicit paths when a dir contains non-test helpers/stubs.
