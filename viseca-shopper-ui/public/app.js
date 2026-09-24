@@ -500,7 +500,9 @@
       // connection dies without notice (bridge gives up after 10 min).
       const controller = new AbortController();
       activeController = controller;
-      const abortTimer = setTimeout(() => controller.abort(), 630000);
+      // Must stay above the server's OPENCLAW_OVERALL_BUDGET_MS (890s) so the
+      // UI sees the turn complete instead of aborting first.
+      const abortTimer = setTimeout(() => controller.abort(), 920000);
       try {
         const r = await fetch("/api/chat", {
           method: "POST",

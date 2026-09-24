@@ -265,8 +265,9 @@ function agentTurn(message, sessionKey, timeoutMs = TIMEOUT_MS, onSpawn = null) 
   });
 }
 
-// Retry budget stays under the UI client's 630s abort timer.
-const OVERALL_BUDGET_MS = Math.min(TIMEOUT_MS, 590000);
+// Retry budget stays under the UI client's abort timer (app.js keeps its timer
+// above this value). Override per-deployment for long real-shop checkouts.
+const OVERALL_BUDGET_MS = Math.min(TIMEOUT_MS, parseInt(process.env.OPENCLAW_OVERALL_BUDGET_MS || "590000", 10));
 const CONTINUE_NUDGE =
   "\n\n(System note: your previous attempt at this request was cut off before you produced a reply. Continue from where you left off and give your final answer now — do not restart the research from scratch.)";
 
