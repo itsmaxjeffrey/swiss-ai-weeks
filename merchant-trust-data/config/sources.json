@@ -14,7 +14,9 @@
   "gleif": {
     "enabled": true,
     "api_base": "https://api.gleif.org/api/v1/lei-records",
-    "countries": ["CH"],
+    "countries": [
+      "CH"
+    ],
     "page_size": 200,
     "max_pages": 200,
     "sleep_seconds": 0.35,
@@ -43,7 +45,6 @@
     "license": "n/a (protocol lookups)",
     "notes": "A/MX/TXT existence via dnspython. NXDOMAIN recorded as dns_error=nxdomain, all False (domain gone)."
   },
-
   "threatfox": {
     "enabled": true,
     "csv_url": "https://threatfox.abuse.ch/export/csv/recent/",
@@ -74,11 +75,11 @@
     "notes": "EU probed 2026-09-24: redirects to EU Login even with ?anonymous=true -> BLOCKED-needs-login. SECO has no stable anonymous bulk URL -> collected via OpenSanctions source.xml mirror."
   },
   "abuseipdb": {
-    "enabled": false,
+    "enabled": true,
     "api_base": "https://api.abuseipdb.com/api/v2",
     "auth_env_var": "LEASH_ABUSEIPDB_KEY",
     "license": "AbuseIPDB free tier: non-commercial, attribution; responses not for redistribution as-is",
-    "notes": "Scaffold key-ready; 401 without key (probe recorded). Flip enabled after LEASH_ABUSEIPDB_KEY is set."
+    "notes": "Live since 2026-09-24: key in gitignored .env (LEASH_ABUSEIPDB_KEY); cap-aware resume (950 fresh/run), per-IP cached."
   },
   "domain_health": {
     "crtsh_sample_limit": 500,
@@ -87,7 +88,6 @@
     "license": "n/a (protocol lookups; Wayback CDX + crt.sh public services, bounded + cached)",
     "notes": "DNS MX/NS/A/SPF + HTTP liveness/parked-sniff + Wayback first-seen for all confirmed-malicious root domains; crt.sh bounded sample."
   },
-
   "tranco": {
     "enabled": true,
     "list_url": "https://tranco-list.eu/top-1m.csv.zip",
@@ -109,7 +109,9 @@
   "viseca": {
     "enabled": true,
     "tarball_url": "https://codeload.github.com/Swiss-ai-Weeks/viseca-2026/tar.gz/refs/heads/main",
-    "members": ["viseca-2026-main/data"],
+    "members": [
+      "viseca-2026-main/data"
+    ],
     "license": "Viseca public synthetic pack (Swiss-ai-Weeks/viseca-2026); synthetic data, license per repo README",
     "notes": "Swiss synthetic authorization/merchant/customer CSVs + JSON schemas; LLM-agent shopping scenario fixtures."
   },
@@ -122,7 +124,10 @@
   "ieee_cis": {
     "enabled": true,
     "hf_repo": "aliceczr/ieee-fraud-detection",
-    "files": ["train_transaction.csv", "train_identity.csv"],
+    "files": [
+      "train_transaction.csv",
+      "train_identity.csv"
+    ],
     "auth_env_var": "LEASH_HF_TOKEN",
     "license": "IEEE-CIS Fraud Detection (Kaggle competition data); unofficial HF mirror; research use per competition rules",
     "notes": "Mirror of Vesta/IEEE-CIS train files; verified post-download (row counts / label rate). Official source needs Kaggle creds."
@@ -136,7 +141,9 @@
   "hackaprompt": {
     "enabled": true,
     "hf_repo": "hackaprompt/hackaprompt-dataset",
-    "files": ["hackaprompt.parquet"],
+    "files": [
+      "hackaprompt.parquet"
+    ],
     "auth_env_var": "LEASH_HF_TOKEN",
     "license": "MIT (per HF hackaprompt/hackaprompt-dataset)",
     "notes": "Gated on HF (auto-approve): requires LEASH_HF_TOKEN with accepted terms; collector is token-ready."
@@ -144,14 +151,19 @@
   "bipia": {
     "enabled": true,
     "tarball_url": "https://codeload.github.com/microsoft/BIPIA/tar.gz/refs/heads/main",
-    "members": ["BIPIA-main/benchmark"],
+    "members": [
+      "BIPIA-main/benchmark"
+    ],
     "license": "Microsoft BIPIA: MIT (per repo LICENSE/NOTICE)",
     "notes": "Indirect prompt-injection benchmark: QA/email/table/code/abstract attack+context files."
   },
   "agentdojo": {
     "enabled": true,
     "tarball_url": "https://codeload.github.com/ethz-spylab/agentdojo/tar.gz/refs/heads/main",
-    "members": ["agentdojo-main/src", "agentdojo-main/runs"],
+    "members": [
+      "agentdojo-main/src",
+      "agentdojo-main/runs"
+    ],
     "license": "AgentDojo (ETH): MIT (per repo LICENSE); benchmark results included as published",
     "notes": "Task suites (banking/workspace/travel/slack) + injection vectors in Python; runs/ holds published attack/utility results."
   },

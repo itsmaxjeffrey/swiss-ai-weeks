@@ -143,6 +143,23 @@ def run_checks(max_fresh: int = 950, sleep_s: float = 1.1, limit: int | None = N
     return stats
 
 
+def collect() -> tuple[str, dict, bool]:
+    """update_all contract (path, meta, cached): run one cap-aware resume batch.
+
+    Missing key raises MissingCredential -> update_all records 'blocked'
+    (remediation stays visible without failing the batch). A spent daily
+    quota is NOT an error: run_checks stops cleanly and we report cached=True
+    so the batch moves on; uncached IPs are picked up by the next run.
+    """
+    stats = run_checks()
+    meta = {
+        "retrieved_at": common.utcnow(),
+        "stats": stats,
+        "note": "free tier 1000 checks/day; cap-aware per-IP cached resume",
+    }
+    return str(common.raw_dir("abuseipdb")), meta, stats.get("checked", 0) == 0
+
+
 if __name__ == "__main__":
     import argparse
     ap = argparse.ArgumentParser()

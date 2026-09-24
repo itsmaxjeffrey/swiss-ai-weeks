@@ -57,6 +57,40 @@ def test_plan_subset_respects_enabled_flag(monkeypatch):
     assert plan["clean"] == ["tranco"]  # from CLEANER_FOR mapping
 
 
+def test_abuseipdb_collect_contract(monkeypatch):
+    """collect() maps run_checks stats onto the (path, meta, cached) contract:
+    cached=True when nothing fresh landed (quota spent / all cached), and a
+    missing key surfaces as MissingCredential so update_all reports blocked."""
+    from collectors import abuseipdb
+
+    monkeypatch.setattr(abuseipdb, "run_checks",
+                        lambda *a, **k: {"source": "abuseipdb", "checked": 0,
+                                         "ok": 0, "errors": 0,
+                                         "cached_skipped": 999,
+                                         "cap_reached": True,
+                                         "remaining": 4092, "queue_total": 5091})
+    path, meta, cached = abuseipdb.collect()
+    assert path.endswith("abuseipdb")
+    assert meta["stats"]["cap_reached"] is True
+    assert cached is True  # nothing fresh -> derived artifacts not needed
+
+    monkeypatch.setattr(abuseipdb, "run_checks",
+                        lambda *a, **k: {"source": "abuseipdb", "checked": 950,
+                                         "ok": 950, "errors": 0,
+                                         "cached_skipped": 999,
+                                         "cap_reached": True,
+                                         "remaining": 3142, "queue_total": 5091})
+    _, _, cached = abuseipdb.collect()
+    assert cached is False  # fresh data landed
+
+    def boom(*a, **k):
+        raise abuseipdb.MissingCredential("no key")
+
+    monkeypatch.setattr(abuseipdb, "run_checks", boom)
+    with pytest.raises(abuseipdb.MissingCredential):
+        abuseipdb.collect()
+
+
 def test_plan_full_mode_groups_and_skips_static_by_default():
     plan = update_all.build_plan()
     assert plan["mode"] == "update"

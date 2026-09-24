@@ -78,9 +78,9 @@ STATIC_SOURCES = [
     "google_taxonomy", "viseca", "bipia", "agentdojo", "tensortrust",
     "ulb_creditcard", "ieee_cis", "tabformer", "hackaprompt",
 ]
-ENRICHMENT_SOURCES = ["domain_health"]
-# Runnable but gated/disabled collectors; subset runs report them as disabled.
-GATED_SOURCES = ["abuseipdb"]
+ENRICHMENT_SOURCES = ["domain_health", "abuseipdb"]
+# Collectors that stay out of plans until their key/config is provided and
+# flipped on (config/sources.json enabled=false keeps them 'disabled').
 
 # collector name -> clean_external.CLEANERS keys to rebuild after fresh data
 CLEANER_FOR: dict[str, list[str]] = {
@@ -91,6 +91,7 @@ CLEANER_FOR: dict[str, list[str]] = {
     "tranco": ["tranco"],
     "majestic": ["majestic"],
     "domain_health": ["domain_health"],
+    "abuseipdb": ["abuseipdb"],
     "google_taxonomy": ["google_taxonomy"],
     "viseca": ["viseca"],
     "bipia": ["bipia"],
@@ -151,7 +152,7 @@ def build_plan(refresh_all: bool = False, only: list[str] | None = None,
                skip_core: bool = False, skip_clean: bool = False,
                skip_report: bool = False) -> dict:
     if only:
-        known = FEED_SOURCES + STATIC_SOURCES + ENRICHMENT_SOURCES + GATED_SOURCES
+        known = FEED_SOURCES + STATIC_SOURCES + ENRICHMENT_SOURCES
         sources = [s for s in only if s in known and _enabled(s)]
         unknown = [s for s in only if s not in known]
         disabled = [s for s in only if s in known and not _enabled(s)]
