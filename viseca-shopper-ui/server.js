@@ -17,9 +17,11 @@
  */
 
 const http = require("http");
-const { spawn } = require("child_process");
+const { spawn, spawnSync } = require("child_process");
 const fs = require("fs");
+const os = require("os");
 const path = require("path");
+const crypto = require("crypto");
 
 const PORT = parseInt(process.env.PORT || "8794", 10);
 const HOST = process.env.HOST || "127.0.0.1";
@@ -28,6 +30,30 @@ const SESSION = process.env.OPENCLAW_SESSION || "webui";
 const BIN = process.env.OPENCLAW_BIN || "openclaw";
 const TIMEOUT_MS = parseInt(process.env.OPENCLAW_TIMEOUT_MS || "300000", 10);
 const PUBLIC_DIR = path.join(__dirname, "public");
+
+/* Order Policy Gate — the bridge is the trusted signing authority.
+ * The Ed25519 PRIVATE key lives HERE (outside the agent workspace); the agent
+ * only ever gets the public key, so it can verify but never forge a policy.
+ * See viseca-shopper/scripts/policy.js. */
+const AGENT_WS = process.env.POLICY_AGENT_WS || "/home/coffee/.openclaw/workspace/viseca-shopper";
+const POLICY_SCRIPT = process.env.POLICY_SCRIPT || path.join(AGENT_WS, "scripts", "policy.js");
+const POLICY_DIR = process.env.POLICY_DIR || path.join(AGENT_WS, "policies");
+const POLICY_PUB_OUT = process.env.POLICY_PUB_OUT || path.join(AGENT_WS, "keys", "policy-authority.public.pem");
+const POLICY_KEYS_DIR = process.env.POLICY_KEYS_DIR || path.join(__dirname, "keys");
+const POLICY_PRIV_KEY = path.join(POLICY_KEYS_DIR, "policy-authority.private.pem");
+
+function ensurePolicyKeys() {
+  fs.mkdirSync(POLICY_KEYS_DIR, { recursive: true });
+  if (!fs.existsSync(POLICY_PRIV_KEY)) {
+    const r = spawnSync(process.execPath, [POLICY_SCRIPT, "init-keys", "--dir", POLICY_KEYS_DIR, "--pubout", POLICY_PUB_OUT], { encoding: "utf8" });
+    if (r.status !== 0) throw new Error(`policy key init failed: ${(r.stderr || r.stdout || "").slice(-300)}`);
+    console.log(`[policy] generated new Ed25519 authority keypair -> ${POLICY_KEYS_DIR} (private key mode 0600)`);
+  }
+  fs.mkdirSync(path.dirname(POLICY_PUB_OUT), { recursive: true });
+  fs.copyFileSync(path.join(POLICY_KEYS_DIR, "policy-authority.public.pem"), POLICY_PUB_OUT);
+  const pubPem = fs.readFileSync(path.join(POLICY_KEYS_DIR, "policy-authority.public.pem"), "utf8");
+  return { fingerprint: crypto.createHash("sha256").update(pubPem).digest("hex").slice(0, 16) };
+}
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -117,6 +143,38 @@ function agentTurn(message) {
   });
 }
 
+/** Validate + sign via scripts/policy.js, then file the signed envelope as
+ *  policies/<policy_id>.signed.json in the agent workspace. The script itself
+ *  REFUSES incomplete policies (exit 4) — that is the no-missing-data rule. */
+function signPolicy(policy, res) {
+  const tmpIn = path.join(os.tmpdir(), `policy-in-${process.pid}-${Date.now()}.json`);
+  const tmpOut = `${tmpIn}.signed`;
+  fs.writeFileSync(tmpIn, JSON.stringify(policy, null, 2));
+  try {
+    const r = spawnSync(process.execPath, [POLICY_SCRIPT, "sign", "--file", tmpIn, "--key", POLICY_PRIV_KEY, "--out", tmpOut], { encoding: "utf8" });
+    const stdout = r.stdout || "";
+    let payload = null;
+    try { payload = JSON.parse(stdout.slice(stdout.indexOf("{"))); } catch { /* fall through */ }
+    if (r.status === 0 && payload && payload.ok) {
+      const env = JSON.parse(fs.readFileSync(tmpOut, "utf8"));
+      fs.mkdirSync(POLICY_DIR, { recursive: true });
+      const finalPath = path.join(POLICY_DIR, `${env.policy.policy_id}.signed.json`);
+      fs.copyFileSync(tmpOut, finalPath);
+      payload.signed_path = finalPath;
+      console.log(`[policy] SIGNED ${env.policy.policy_id} (fingerprint ${payload.signed_by}) -> ${finalPath}`);
+      return sendJson(res, 200, payload);
+    }
+    console.log(`[policy] sign REFUSED (exit ${r.status})`);
+    return sendJson(res, r.status === 4 ? 422 : 500,
+      payload || { ok: false, error: (r.stderr || "sign failed").slice(-400) });
+  } catch (e) {
+    return sendJson(res, 500, { ok: false, error: e.message });
+  } finally {
+    fs.rmSync(tmpIn, { force: true });
+    fs.rmSync(tmpOut, { force: true });
+  }
+}
+
 function serveStatic(req, res) {
   let urlPath = decodeURIComponent(new URL(req.url, "http://x").pathname);
   if (urlPath === "/") urlPath = "/index.html";
@@ -142,7 +200,40 @@ const server = http.createServer((req, res) => {
       session: SESSION,
       bridge: "openclaw-cli",
       busy: Boolean(inFlight),
+      policy: {
+        authority_fingerprint: AUTH ? AUTH.fingerprint : null,
+        policy_dir: POLICY_DIR,
+      },
     });
+  }
+
+  if (req.method === "GET" && req.url === "/api/policy/pubkey") {
+    return sendJson(res, 200, {
+      ok: true,
+      fingerprint: AUTH ? AUTH.fingerprint : null,
+      public_key_pem: fs.readFileSync(path.join(POLICY_KEYS_DIR, "policy-authority.public.pem"), "utf8"),
+      agent_public_key: POLICY_PUB_OUT,
+      note: "agent verifies with this key; only this bridge holds the signing key",
+    });
+  }
+
+  if (req.method === "POST" && req.url === "/api/policy/sign") {
+    let body = "";
+    let oversize = false;
+    req.on("data", (chunk) => {
+      body += chunk;
+      if (body.length > 64 * 1024) { oversize = true; req.destroy(); }
+    });
+    req.on("end", () => {
+      if (oversize) return sendJson(res, 413, { error: "Policy too large (64 KB limit)." });
+      let policy;
+      try { ({ policy } = JSON.parse(body)); } catch { return sendJson(res, 400, { error: "Invalid JSON body." }); }
+      if (!policy || typeof policy !== "object" || Array.isArray(policy)) {
+        return sendJson(res, 400, { error: "Field 'policy' must be an object." });
+      }
+      signPolicy(policy, res);
+    });
+    return;
   }
 
   if (req.method === "POST" && req.url === "/api/chat") {
@@ -188,6 +279,15 @@ const server = http.createServer((req, res) => {
 
   serveStatic(req, res);
 });
+
+let AUTH = null;
+try {
+  AUTH = ensurePolicyKeys();
+  console.log(`[policy] authority ready · fingerprint ${AUTH.fingerprint} · agent pubkey ${POLICY_PUB_OUT}`);
+} catch (e) {
+  console.error(`[policy] FATAL: ${e.message}`);
+  process.exit(1);
+}
 
 server.listen(PORT, HOST, () => {
   const url = `http://${HOST}:${PORT}`;

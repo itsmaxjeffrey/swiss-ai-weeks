@@ -468,3 +468,118 @@ body::after {
   .composer { margin: 0 20px; }
   .composer-hint { padding: 8px 20px 20px; }
 }
+
+/* ---------------- order policy approval cards ---------------- */
+
+.policy-card {
+  margin: 14px 0 6px;
+  border: 1px solid var(--ink);
+  background: var(--paper-deep);
+  box-shadow: 4px 4px 0 rgba(23, 21, 15, 0.12);
+}
+
+.policy-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--hairline);
+  background: linear-gradient(var(--paper), var(--paper-deep));
+}
+
+.policy-kicker { color: var(--ink-soft); letter-spacing: 0.08em; }
+
+.policy-state {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--red-deep);
+  white-space: nowrap;
+}
+
+.policy-card--signed .policy-state { color: #1d6b3c; }
+
+.policy-rows { padding: 6px 0; }
+
+.policy-row {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 12px;
+  padding: 7px 14px;
+  border-bottom: 1px solid var(--hairline-soft);
+}
+.policy-row:last-child { border-bottom: none; }
+
+.policy-row dt {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+  padding-top: 2px;
+}
+
+.policy-row dd { font-family: var(--serif); font-size: 0.95rem; line-height: 1.45; }
+
+.policy-items { margin: 0 0 0 16px; }
+.policy-items li { margin-bottom: 3px; }
+
+.mono-dim {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+}
+
+.policy-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  border-top: 1px solid var(--hairline);
+}
+
+.policy-btn {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 8px 16px;
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.15s var(--ease);
+}
+
+.policy-btn:hover:not(:disabled) { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 rgba(23, 21, 15, 0.25); }
+.policy-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.policy-btn--approve { background: var(--red); border-color: var(--red-deep); color: #fff; }
+.policy-btn--approve:hover:not(:disabled) { background: var(--red-deep); }
+
+.policy-note {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
+.policy-result {
+  padding: 12px 14px;
+  border-top: 1px solid var(--hairline);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+.policy-result p + p { margin-top: 6px; }
+.policy-result ul { margin: 6px 0 0 18px; }
+.policy-result code { font-family: var(--mono); font-size: 0.78rem; background: var(--paper); padding: 1px 4px; }
+
+.policy-card--signed { border-color: #1d6b3c; }
+.policy-card--signed .policy-card-head { background: linear-gradient(#eaf3ec, var(--paper-deep)); }
+
+.policy-card--rejected, .policy-card--failed { border-color: var(--red-deep); }
+.policy-card--rejected .policy-card-head, .policy-card--failed .policy-card-head {
+  background: linear-gradient(#f7e6e4, var(--paper-deep));
+}

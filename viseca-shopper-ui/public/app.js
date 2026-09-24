@@ -97,12 +97,155 @@
     const names = { user: "You", agent: "Viseca Shopper", error: "Error", system: "System" };
     const marks = { user: "→", agent: "+", error: "!", system: "·" };
 
+    const policyBlocks = role === "agent" ? extractPolicyBlocks(text) : null;
+    const bodyHtml = role === "agent"
+      ? md(policyBlocks.stripped).replace(/\u0000POLICYCARD(\d+)\u0000/g,
+          '<span class="policy-slot" data-policy-slot="$1"></span>')
+      : esc(text).replace(/\n/g, "<br>");
+
     el.innerHTML = `
       <div class="msg-meta"><span class="red">${marks[role] || "·"}</span> ${names[role] || role} — ${nowLabel()}</div>
-      <div class="msg-body">${role === "agent" ? md(text) : esc(text).replace(/\n/g, "<br>")}</div>`;
+      <div class="msg-body">${bodyHtml}</div>`;
     feed.appendChild(el);
+    if (policyBlocks) {
+      policyBlocks.blocks.forEach((raw, i) => {
+        const slot = el.querySelector(`[data-policy-slot="${i}"]`);
+        if (!slot) return;
+        let policy = null;
+        try { policy = JSON.parse(raw); } catch { /* card shows invalid state */ }
+        slot.replaceWith(buildPolicyCard(policy));
+      });
+    }
     feed.scrollTop = feed.scrollHeight;
     return el;
+  }
+
+  /* ---------- order policy approval cards ---------- */
+
+  const POLICY_SLOT_PREFIX = "\u0000POLICYCARD";
+
+  /** Pull ```policy-json fenced blocks out of the reply and leave mount slots. */
+  function extractPolicyBlocks(text) {
+    const blocks = [];
+    const stripped = String(text || "").replace(/```policy-json\s*\n([\s\S]*?)```/g, (m, json) => {
+      blocks.push(json.trim());
+      return `${POLICY_SLOT_PREFIX}${blocks.length - 1}\u0000`;
+    });
+    return { blocks, stripped };
+  }
+
+  function fmtZurich(iso) {
+    const t = Date.parse(iso || "");
+    if (Number.isNaN(t)) return esc(iso || "—");
+    return new Date(t).toLocaleString("de-CH", {
+      timeZone: "Europe/Zurich", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
+    });
+  }
+
+  function buildPolicyCard(policy) {
+    const card = document.createElement("div");
+    card.className = "policy-card";
+
+    if (!policy || typeof policy !== "object" || !policy.policy_id) {
+      card.classList.add("policy-card--failed");
+      card.innerHTML = `
+        <div class="policy-card-head"><span class="policy-kicker mono-label">Order policy</span>
+        <span class="policy-state">unparseable</span></div>
+        <p class="policy-note">The agent posted a policy block that is not valid JSON — ask it to re-post.</p>`;
+      return card;
+    }
+
+    const items = (policy.items || []).map((it) =>
+      `<li>${esc((it && it.product) || "?")} × ${esc(String((it && it.quantity) ?? 1))}${
+        it && it.max_unit_price ? ` · max ${esc(String(it.max_unit_price.amount))} ${esc(it.max_unit_price.currency || "")}/pc` : ""}</li>`
+    ).join("");
+    const t = policy.timing || {};
+    const msc = (policy.payment || {}).max_single_charge || {};
+    const allowed = ((policy.merchant || {}).allowed_domains || []);
+    const rows = [
+      ["Request", policy.request],
+      ["Items", items ? `<ul class="policy-items">${items}</ul>` : "—"],
+      ["Budget", policy.budget ? `max ${esc(String(policy.budget.max_total))} ${esc(policy.budget.currency || "")}` : "—"],
+      ["Order by", t.order_by ? `${fmtZurich(t.order_by)} <span class="mono-dim">${esc(t.order_by)}</span>` : "—"],
+      ["Deliver by", t.deliver_by ? `${fmtZurich(t.deliver_by)} <span class="mono-dim">${esc(t.deliver_by)}</span>` : "—"],
+      ...(t.search_until ? [["Search until", fmtZurich(t.search_until)]] : []),
+      ["Deliver to", policy.delivery ? esc(policy.delivery.address || "") : "—"],
+      ["Payment", policy.payment ? `${esc(policy.payment.method || "")} · max ${esc(String(msc.amount))} ${esc(msc.currency || "")}` : "—"],
+      ...(allowed.length ? [["Shops", allowed.map(esc).join(", ")]] : []),
+    ];
+
+    card.innerHTML = `
+      <div class="policy-card-head">
+        <span class="policy-kicker mono-label">Order policy · ${esc(policy.policy_id)}</span>
+        <span class="policy-state" data-state>awaiting your approval</span>
+      </div>
+      <dl class="policy-rows">
+        ${rows.map(([k, v]) => `<div class="policy-row"><dt class="mono-label">${esc(k)}</dt><dd>${v == null ? "—" : v}</dd></div>`).join("")}
+      </dl>
+      <div class="policy-actions">
+        <button type="button" class="policy-btn policy-btn--approve">Approve &amp; Sign</button>
+        <button type="button" class="policy-btn policy-btn--reject">Reject</button>
+        <span class="policy-note">Signing freezes this policy (Ed25519) — the agent cannot change it afterwards.</span>
+      </div>
+      <div class="policy-result" hidden></div>`;
+
+    const state = card.querySelector("[data-state]");
+    const result = card.querySelector(".policy-result");
+    const actions = card.querySelector(".policy-actions");
+    const setBusy = (approveDisabled) => {
+      card.querySelectorAll(".policy-btn").forEach((b) => {
+        b.disabled = b.classList.contains("policy-btn--approve") ? approveDisabled : true;
+      });
+    };
+
+    card.querySelector(".policy-btn--approve").addEventListener("click", async () => {
+      setBusy(true);
+      state.textContent = "signing…";
+      try {
+        const r = await fetch("/api/policy/sign", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ policy }),
+        });
+        const j = await r.json().catch(() => ({}));
+        if (r.ok && j.ok) {
+          card.classList.add("policy-card--signed");
+          state.textContent = "signed ✓";
+          actions.hidden = true;
+          result.hidden = false;
+          result.innerHTML = `
+            <p><strong>Signed &amp; frozen.</strong> authority <code>${esc(j.signed_by || "")}</code></p>
+            <p class="mono-dim">${esc(j.signed_path || "")}</p>
+            <p>Telling the agent to run the gate checks…</p>`;
+          setTimeout(() => send(`Policy ${policy.policy_id} is approved and signed — run the gate check and proceed.`), 700);
+        } else if (r.status === 422) {
+          state.textContent = "refused — incomplete";
+          card.classList.add("policy-card--failed");
+          setBusy(false);
+          result.hidden = false;
+          const missing = (j.missing || []).map((m) => `<li><code>${esc(m)}</code></li>`).join("");
+          result.innerHTML = `<p><strong>The authority refused to sign — the policy is incomplete.</strong> The agent must ask you for:</p><ul>${missing}</ul>`;
+        } else {
+          throw new Error(j.error || `HTTP ${r.status}`);
+        }
+      } catch (e) {
+        state.textContent = "signing failed";
+        card.classList.add("policy-card--failed");
+        setBusy(false);
+        result.hidden = false;
+        result.innerHTML = `<p><strong>Could not sign:</strong> ${esc(e.message)}</p>`;
+      }
+    });
+
+    card.querySelector(".policy-btn--reject").addEventListener("click", () => {
+      card.classList.add("policy-card--rejected");
+      state.textContent = "rejected";
+      actions.hidden = true;
+      result.hidden = false;
+      result.innerHTML = `<p>Rejected. Tell the agent what to change — it must propose a new policy (new policy_id).</p>`;
+    });
+
+    return card;
   }
 
   function setBusy(on) {
