@@ -37,6 +37,14 @@ Status legend: ✅ collected · 🟡 interface ready, awaiting credential · ⏳
 | SEC EDGAR | US company identities | free, no key; queued for Phase 3 |
 | UID-Register (uid.admin.ch) | Swiss UID validation | API registration required |
 | Reddit / consumer complaints | reputation signals (low weight, aggregates only) | Phase 3; official interfaces only, no scraping of restricted surfaces |
+| Cloudflare Radar Domain Rankings | 3rd maintained benign popularity baseline next to Tranco/Majestic; CSV downloads (global/per-country, up to 1M) | free, no auth (radar.cloudflare.com/domains); collector TODO |
+| Curlie (DMOZ successor) Shopping directory | human-curated shopping-site directory incl. regional categories → whitelist expansion candidates; RDF dump via curlie.org/download | open license; dump is large → prune, then gate by Tranco rank or RDAP domain age |
+| Wikidata SPARQL (query.wikidata.org) | CC0; retail/e-commerce/marketplace companies + `official website` → domain candidates with industry labels | query + normalization work only |
+| Swiss Online Garantie (HANDELSVERBAND.swiss trustmark) | 400+ certified Swiss online shops → highest-signal CH whitelist source; verified directory exists 2026-09-24 (swiss-online-garantie.ch/onlineshops/) | no bulk export → polite scrape; `LICENSE_REVIEW_REQUIRED` |
+| Trusted Shops public API (api.trustedshops.com) | per-domain quality-seal/review lookup to *annotate* whitelist candidates (not bulk enumeration) | ToS review for bulk use |
+| Google Safe Browsing Lookup API | free negative validation: confirm whitelist candidates are not blocklisted | API key; responses non-redistributable |
+| Trustpilot public API | review-score annotation per domain (trust signal) | free key required; ToS review |
+| National EU trustmark directories (FEVAD FR, Thuiswinkel NL, Ecommerce Europe network) | certified-shop domains per country → cross-border whitelist coverage | per-trustmark scraping/ToS review |
 
 ## Notes
 

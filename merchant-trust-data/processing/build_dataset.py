@@ -17,6 +17,7 @@ import datetime as dt
 import io
 import json
 import pathlib
+import re
 import sys
 
 from schemas.canonical_schema import ALL_COLUMNS, LABELS, build_feature_object, new_row
@@ -110,11 +111,19 @@ def step_enrich() -> None:
     op_rows = _read_jsonl(INTER / "openphish_records.jsonl")
     uh_rows = _read_jsonl(INTER / "urlhaus_records.jsonl")
     domains = []
+    skipped_ipish = 0
     for r in op_rows + uh_rows:
-        if r.get("root_domain") and r["root_domain"] not in domains:
-            domains.append(r["root_domain"])
+        rd = r.get("root_domain")
+        if not rd or rd in domains:
+            continue
+        # IP-literal hosts (e.g. "0.100" fragments of 0.100.14.129 from
+        # IP-hosted URLhaus URLs) have no domain RDAP record; skip them.
+        if not re.search(r"[a-z]", rd.lower()):
+            skipped_ipish += 1
+            continue
+        domains.append(rd)
 
-    print(json.dumps({"enrich": "rdap", "domains": min(len(domains), int(common.CONFIG["rdap"]["max_domains"]))}), file=sys.stderr)
+    print(json.dumps({"enrich": "rdap", "domains": min(len(domains), int(common.CONFIG["rdap"]["max_domains"])), "skipped_ipish": skipped_ipish}), file=sys.stderr)
     rdap.enrich(domains)
     dns_enrich.enrich(domains)
     print(json.dumps({"enrich": "done", "candidate_domains": len(domains)}), file=sys.stderr)

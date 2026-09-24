@@ -29,6 +29,17 @@
   CH slice collected: 28,222 records in 142 cached pages (`gleif_ch_c*.json`).
   RDAP/DNS limits raised (rdap 6000, dns 6000); full-domain enrichment run
   started (see IN PROGRESS).
+- 2026-09-23 (night): **dataset v2 built**: 42,489 raw rows → 33,706 entities
+  (28,222 companies + 5,484 domain-keyed rows) → 0 duplicates, 0 validation
+  problems. Labels: 25,606 likely_legitimate · 5,484 confirmed_malicious ·
+  2,616 unknown (GLEIF rows lacking registration/creation dates — honest
+  unknowns, shrink once Zefix supplies true dates).
+- 2026-09-23 (night): **enrichment scoping fix**: discovered 4,908 of the
+  5,484 "root domains" are IP-literal hosts (URLhaus malware infra is mostly
+  bare-IP; e.g. "0.100" fragments of 0.100.14.129). `step_enrich` now skips
+  letter-less roots (576 real domains enriched: DNS A/MX known for 568/576;
+  RDAP docs + not_found cached for ~1,204 domain keys). Failed RDAP stubs from
+  the proxy-407 storm moved to `data/raw/rdap/_retry_stash2/`.
 
 ### Bugs found & fixed while building (documented to avoid repeats)
 
@@ -55,6 +66,16 @@
   GLEIF-sourced rows currently mean "age of the LEI record". True incorporation
   dates come from Zefix once the token exists (NEXT). Do not use
   company_age_days as company age for GLEIF rows without this caveat.
+- **Egress proxy 407 storms**: mid-bulk-run the env's HTTP proxy started
+  rejecting CONNECT tunnels (`407 Proxy Authentication Required`) → thousands
+  of RDAP lookups failed with identical ProxyError stubs. Transient: probes
+  succeeded again shortly after. If bulk collectors fail en masse with 407,
+  pause and retry later instead of burning retries; keep error stubs stashable
+  (`_retry_stash*/`) so re-runs only fetch the gaps.
+- **URLhaus reality check**: csv_recent is majority bare-IP hosting (12,570 of
+  14,265 threat rows; 4,908 unique IP-literal "roots" vs 576 real domains).
+  Never RDAP/DNS IP literals as domains; enrich set is filtered for letter-less
+  roots in `step_enrich`.
 
 - 2026-09-23 (evening): **Phase-2 external datasets collected + cleaned** (11 sources,
   owner-requested batch): TabFormer, IEEE-CIS, ULB CC fraud, HackAPrompt, BIPIA,
@@ -84,13 +105,7 @@
 
 ## IN PROGRESS
 
-- 2026-09-23 (evening): **v2 data expansion run** (collect → enrich → build → report):
-  - GLEIF CH full slice: 28,222 records pulled via cursor pagination (was 6,000).
-  - RDAP + DNS enrichment over all 5,484 threat domains (was 167); the 14 stale
-    error stubs (11× http_429, 3× http_403) were moved to
-    `data/raw/rdap/_retry_stash/` so this run re-fetches them.
-  - RDAP pace ≈ 0.8 s + latency per uncached domain → roughly 60–90 min for the
-    full set; cached lookups are skipped, so the run is resumable at any point.
+- Nothing right now.
 
 ## BLOCKED
 
@@ -117,7 +132,7 @@
 ## NEXT
 
 1. ~~Raise `rdap.max_domains`/`dns.max_domains` and re-run `make enrich`~~
-   → running now (see IN PROGRESS); verify coverage after build, rebuild v2.
+   → done (see DONE night entry); RDAP/DNS now cover all 576 real domains.
 2. Website crawler (Phase 2): homepage/Impressum fetch, legal-page detection,
    identity extraction → registry-vs-website consistency features.
 3. Zefix token → full Swiss registry pull incl. UID, canton, true
@@ -128,9 +143,13 @@
    DBs) — Phase 3, low weight, never ground truth.
 7. Baseline models (Phase 4): LogReg/RF/XGBoost, entity-level + temporal
    splits, calibration, SHAP sanity checks.
-8. ~~Retry the 11 http_429 + 3 http_403 RDAP lookups~~ → folded into the
-   current run (stubs stashed in `data/raw/rdap/_retry_stash/`); check
-   residual 403s afterwards (some registries block rdap.org by policy).
+8. ~~Retry the 11 http_429 + 3 http_403 RDAP lookups~~ → superseded by the
+   night re-run; residual failures are stashed in `data/raw/rdap/_retry_stash2/`.
+9. Add `host_type` flag (domain | ip_literal) at entity resolution so the
+   4,908 IP-host entities are typed correctly instead of masquerading as
+   "domains"; feature columns stay NA for them (already the case post-filter).
+10. Optionally re-scrape the two threat feeds in a few days for fresh rows
+    (feeds move fast); GLEIF CH slice refresh is cheap (cursor-cached).
 
 ## Source status table
 

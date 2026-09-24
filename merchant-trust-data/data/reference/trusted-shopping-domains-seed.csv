@@ -1,0 +1,98 @@
+domain,merchant_name,category,country,source,confidence
+digitec.ch,Digitec,electronics,CH,manual_seed_2026-09-24,high
+galaxus.ch,Galaxus,marketplace,CH,manual_seed_2026-09-24,high
+galaxus.de,Galaxus DE,marketplace,DE,manual_seed_2026-09-24,high
+brack.ch,Brack,electronics,CH,manual_seed_2026-09-24,high
+microspot.ch,Microspot,electronics,CH,manual_seed_2026-09-24,high
+interdiscount.ch,Interdiscount,electronics,CH,manual_seed_2026-09-24,high
+melectronics.ch,Melectronics,electronics,CH,manual_seed_2026-09-24,high
+fust.ch,Fust,appliances,CH,manual_seed_2026-09-24,high
+mediaworld.ch,MediaMarkt Schweiz,electronics,CH,manual_seed_2026-09-24,high
+ricardo.ch,Ricardo,marketplace,CH,manual_seed_2026-09-24,high
+tutti.ch,Tutti,secondhand,CH,manual_seed_2026-09-24,high
+anibis.ch,Anibis,secondhand,CH,manual_seed_2026-09-24,high
+coop.ch,Coop Online,groceries,CH,manual_seed_2026-09-24,high
+migros.ch,Migros Online,groceries,CH,manual_seed_2026-09-24,high
+farmy.ch,Farmy,groceries,CH,manual_seed_2026-09-24,high
+volg.ch,Volg,groceries,CH,manual_seed_2026-09-24,high
+lidl.ch,Lidl Schweiz,groceries,CH,manual_seed_2026-09-24,high
+ikea.ch,IKEA Schweiz,furniture,CH,manual_seed_2026-09-24,high
+confor.ch,Conforama Schweiz,furniture,CH,manual_seed_2026-09-24,high
+pfister.ch,Pfister,furniture,CH,manual_seed_2026-09-24,high
+micasa.ch,Micasa,furniture,CH,manual_seed_2026-09-24,high
+jumbo.ch,Jumbo,diy,CH,manual_seed_2026-09-24,high
+hornbach.ch,Hornbach Schweiz,diy,CH,manual_seed_2026-09-24,high
+obi.ch,OBI Schweiz,diy,CH,manual_seed_2026-09-24,high
+bauhaus.ch,Bauhaus Schweiz,diy,CH,manual_seed_2026-09-24,high
+ochsnersport.ch,Ochsner Sport,sports,CH,manual_seed_2026-09-24,high
+sportxx.ch,SportXX,sports,CH,manual_seed_2026-09-24,high
+decathlon.ch,Decathlon Schweiz,sports,CH,manual_seed_2026-09-24,high
+exlibris.ch,Ex Libris,books,CH,manual_seed_2026-09-24,high
+orellfuessli.ch,Orell Fuessli,books,CH,manual_seed_2026-09-24,high
+thalia.ch,Thalia Schweiz,books,CH,manual_seed_2026-09-24,high
+zurrose.ch,Zur Rose,pharmacy,CH,manual_seed_2026-09-24,high
+shop-apotheke.ch,Shop Apotheke Schweiz,pharmacy,CH,manual_seed_2026-09-24,high
+amavita.ch,Amavita,pharmacy,CH,manual_seed_2026-09-24,high
+sunstore.ch,Sun Store,pharmacy,CH,manual_seed_2026-09-24,high
+mueller.ch,Mueller Schweiz,drugstore,CH,manual_seed_2026-09-24,high
+zalando.ch,Zalando Schweiz,fashion,CH,manual_seed_2026-09-24,high
+aboutyou.ch,About You Schweiz,fashion,CH,manual_seed_2026-09-24,high
+douglas.ch,Douglas Schweiz,beauty,CH,manual_seed_2026-09-24,high
+bucherer.ch,Bucherer,watches_jewelry,CH,manual_seed_2026-09-24,high
+interflora.ch,Interflora Schweiz,flowers,CH,manual_seed_2026-09-24,high
+fleurop.ch,Fleurop Schweiz,flowers,CH,manual_seed_2026-09-24,high
+blume3000.ch,Blume3000,flowers,CH,manual_seed_2026-09-24,high
+bruneau.ch,Bruneau Schweiz,office,CH,manual_seed_2026-09-24,high
+qualipet.ch,Qualipet,pet,CH,manual_seed_2026-09-24,high
+ticketcorner.ch,Ticketcorner,tickets,CH,manual_seed_2026-09-24,high
+starticket.ch,Starticket,tickets,CH,manual_seed_2026-09-24,high
+amazon.com,Amazon,marketplace,US,manual_seed_2026-09-24,high
+amazon.de,Amazon DE,marketplace,DE,manual_seed_2026-09-24,high
+amazon.fr,Amazon FR,marketplace,FR,manual_seed_2026-09-24,high
+amazon.it,Amazon IT,marketplace,IT,manual_seed_2026-09-24,high
+amazon.es,Amazon ES,marketplace,ES,manual_seed_2026-09-24,high
+amazon.co.uk,Amazon UK,marketplace,GB,manual_seed_2026-09-24,high
+ebay.com,eBay,marketplace,US,manual_seed_2026-09-24,high
+ebay.de,eBay DE,marketplace,DE,manual_seed_2026-09-24,high
+etsy.com,Etsy,marketplace,US,manual_seed_2026-09-24,high
+aliexpress.com,AliExpress,marketplace,CN,manual_seed_2026-09-24,medium
+bol.com,bol.com,marketplace,NL,manual_seed_2026-09-24,high
+coolblue.nl,Coolblue,electronics,NL,manual_seed_2026-09-24,high
+otto.de,Otto,marketplace,DE,manual_seed_2026-09-24,high
+backmarket.com,Back Market,secondhand,FR,manual_seed_2026-09-24,high
+rebuy.de,reBuy,secondhand,DE,manual_seed_2026-09-24,high
+vinted.com,Vinted,secondhand,LT,manual_seed_2026-09-24,high
+willhaben.at,willhaben,secondhand,AT,manual_seed_2026-09-24,high
+mediamarkt.de,MediaMarkt,electronics,DE,manual_seed_2026-09-24,high
+conrad.de,Conrad,electronics,DE,manual_seed_2026-09-24,high
+cyberport.de,Cyberport,electronics,DE,manual_seed_2026-09-24,high
+alternate.de,Alternate,electronics,DE,manual_seed_2026-09-24,high
+notebooksbilliger.de,Notebooksbilliger,electronics,DE,manual_seed_2026-09-24,high
+fnac.com,Fnac,electronics,FR,manual_seed_2026-09-24,high
+darty.com,Darty,electronics,FR,manual_seed_2026-09-24,high
+boulanger.com,Boulanger,electronics,FR,manual_seed_2026-09-24,high
+cdiscount.com,Cdiscount,marketplace,FR,manual_seed_2026-09-24,high
+zalando.de,Zalando,fashion,DE,manual_seed_2026-09-24,high
+aboutyou.de,About You,fashion,DE,manual_seed_2026-09-24,high
+asos.com,ASOS,fashion,GB,manual_seed_2026-09-24,high
+zara.com,Zara,fashion,ES,manual_seed_2026-09-24,high
+hm.com,H&M,fashion,SE,manual_seed_2026-09-24,high
+uniqlo.com,UNIQLO,fashion,JP,manual_seed_2026-09-24,high
+galeria.de,Galeria,fashion,DE,manual_seed_2026-09-24,high
+momoxfashion.de,momox fashion,fashion,DE,manual_seed_2026-09-24,high
+nike.com,Nike,brand_store,US,manual_seed_2026-09-24,high
+adidas.com,adidas,brand_store,DE,manual_seed_2026-09-24,high
+wayfair.com,Wayfair,furniture,US,manual_seed_2026-09-24,high
+ikea.com,IKEA,furniture,SE,manual_seed_2026-09-24,high
+lego.com,LEGO,brand_store,DK,manual_seed_2026-09-24,high
+zooplus.de,zooplus,pet,DE,manual_seed_2026-09-24,high
+shop-apotheke.de,Shop Apotheke,pharmacy,DE,manual_seed_2026-09-24,high
+walmart.com,Walmart,marketplace,US,manual_seed_2026-09-24,high
+target.com,Target,marketplace,US,manual_seed_2026-09-24,high
+bestbuy.com,Best Buy,electronics,US,manual_seed_2026-09-24,high
+costco.com,Costco,marketplace,US,manual_seed_2026-09-24,high
+apple.com,Apple,brand_store,US,manual_seed_2026-09-24,high
+samsung.com,Samsung,brand_store,KR,manual_seed_2026-09-24,high
+lenovo.com,Lenovo,brand_store,CN,manual_seed_2026-09-24,high
+dell.com,Dell,brand_store,US,manual_seed_2026-09-24,high
+hp.com,HP,brand_store,US,manual_seed_2026-09-24,high

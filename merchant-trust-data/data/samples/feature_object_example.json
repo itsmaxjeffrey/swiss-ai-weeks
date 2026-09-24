@@ -1,20 +1,20 @@
 {
   "merchant": {
-    "name": "Dr. Nagler & Company AG",
-    "country": "CH",
+    "name": "CELGENE LOGISTICS SÀRL",
+    "country": "US",
     "domain": null
   },
   "identity": {
     "registry_verified": true,
-    "registry_id": "3912003RJTLNVZ5HWQ31",
-    "registry_age_days": 1,
+    "registry_id": "031K640IPWCPFDXYCT54",
+    "registry_age_days": 5054,
     "registry_status": "ACTIVE"
   },
   "domain": {
     "domain_age_days": null,
     "registrar": null,
     "tls_valid": null,
-    "lookalike_score": 0.5,
+    "lookalike_score": 0.6,
     "possible_brand_impersonation": false
   },
   "threat_intelligence": {
@@ -29,7 +29,7 @@
   },
   "provenance": {
     "sources": "gleif",
-    "collected_at": "2026-09-23T08:06:54Z",
+    "collected_at": "2026-09-23T18:56:44Z",
     "data_license": "GLEIF LEI data (free and open, GLEIF terms of use)"
   }
 }

@@ -31,7 +31,7 @@
   "rdap": {
     "endpoint": "https://rdap.org/domain/{domain}",
     "max_domains": 6000,
-    "sleep_seconds": 0.8,
+    "sleep_seconds": 1.0,
     "timeout_seconds": 25,
     "license": "Registry RDAP responses; per-registry terms, generally factual registration metadata",
     "notes": "rdap.org redirects to authoritative registry RDAP. Rate-limit friendly: cached per domain, resume-safe."

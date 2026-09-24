@@ -1,0 +1,22 @@
+{
+  "dataset": "trusted-shopping-domains-seed",
+  "created_at": "2026-09-24",
+  "created_by": "manual curation, owner-requested (assistant-curated, owner-review pending)",
+  "description": "Hand-curated seed whitelist of well-known shopping domains (Swiss-first). Positive trust signal for merchant scoring; complements OpenPhish/URLhaus negative lists and GLEIF/Zefix identity data.",
+  "license": "Factual list of publicly known shopping domains, hand-curated; no third-party dataset ingested. No license constraints.",
+  "row_count": 99,
+  "columns": {
+    "domain": "registrable domain (eTLD+1), lowercase, no scheme/www",
+    "merchant_name": "common trading name",
+    "category": "retail category label",
+    "country": "market country (not legal domicile)",
+    "source": "manual_seed_<date> for every row",
+    "confidence": "high = major established retailer/platform; medium = legit platform with variable seller quality (e.g. marketplaces with 3P sellers)"
+  },
+  "usage_notes": [
+    "Whitelist = positive evidence, never overriding: keep combining with blocklists, domain age, registry identity per canonical schema (missing info is not negative evidence).",
+    "Marketplace domains (amazon.*, ebay.*, ricardo.ch, aliexpress.com) vouch for the platform, NOT individual third-party sellers.",
+    "Matching must use domain_normalized (eTLD+1); subdomains like www.digitec.ch resolve to digitec.ch.",
+    "Expansion path: Curlie shopping directory, Wikidata retail queries, Swiss Online Garantie / trustmark member lists, Tranco+category gate (see DATA_SOURCES.md 'Planned / queued')."
+  ]
+}
