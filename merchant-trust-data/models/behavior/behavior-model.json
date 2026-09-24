@@ -1,7 +1,7 @@
 {
  "schema": "openclaw.behavior-model/1",
- "version": "behavior-model-v1",
- "trained_at": "2026-09-24T13:47:46+00:00",
+ "version": "behavior-model-v2",
+ "trained_at": "2026-09-24T16:19:58+00:00",
  "semantics": "advisory-only: may add evidence/uncertainty and escalate to the customer; never approves, declines, or loosens",
  "label_caveat": "trained on historical authorization outcomes, which are not fraud labels and not an answer key for attempts",
  "features": [
@@ -16,7 +16,8 @@
   "device_unfamiliar",
   "hour_unobserved",
   "velocity_10m",
-  "customer_log_total"
+  "customer_log_total",
+  "night_hour"
  ],
  "feature_labels": {
   "log_amount_z": "amount far outside your usual range",
@@ -30,23 +31,25 @@
   "device_unfamiliar": "device never seen in your history",
   "hour_unobserved": "hour of day you never buy at",
   "velocity_10m": "burst of attempts within 10 minutes",
-  "customer_log_total": "little overall history"
+  "customer_log_total": "little overall history",
+  "night_hour": "purchase in the middle of the night"
  },
  "weights": {
-  "log_amount_z": 0.023549791484937375,
-  "amount_p95_ratio": 0.25781473471503474,
-  "merchant_log_count": 0.023366371983689113,
-  "merchant_unfamiliar": -0.055475449441357086,
-  "category_unfamiliar": 0.06183960006937799,
-  "country_unfamiliar": 0.2614325013508662,
-  "channel_unfamiliar": 0.007714584821043635,
-  "currency_unfamiliar": 0.3699438371344754,
-  "device_unfamiliar": -0.2256445672585066,
-  "hour_unobserved": 0.2546639953936757,
-  "velocity_10m": 0.4533014879894301,
-  "customer_log_total": -0.0627230464052813
+  "log_amount_z": 0.13731604240443865,
+  "amount_p95_ratio": 0.20742938975054392,
+  "merchant_log_count": -0.02628728379834223,
+  "merchant_unfamiliar": -0.008662986009278154,
+  "category_unfamiliar": 0.04964477342637623,
+  "country_unfamiliar": 0.2385168163320507,
+  "channel_unfamiliar": 0.006417133859996251,
+  "currency_unfamiliar": 0.26032771911650954,
+  "device_unfamiliar": -0.14863075133150802,
+  "hour_unobserved": 0.16873079889928622,
+  "velocity_10m": 0.4275282687659703,
+  "customer_log_total": -0.05332115632602377,
+  "night_hour": 0.32019989398383897
  },
- "intercept": -0.48154648357932334,
+ "intercept": -0.5106341347805636,
  "standardization": {
   "mean": [
    0.0026438985990605724,
@@ -60,7 +63,8 @@
    0.01796276013143483,
    0.10580503833515882,
    0.10733844468784227,
-   4.381146572151401
+   4.381146572151401,
+   0.15531215772179627
   ],
   "std": [
    1.0825490430746052,
@@ -74,12 +78,13 @@
    0.13281603585370244,
    0.30758792596276835,
    0.43840899300598407,
-   0.972141826679303
+   0.972141826679303,
+   0.3622020035637441
   ]
  },
  "thresholds": {
-  "escalate": 0.7811393028225108,
-  "suspect": 0.42962661655238094
+  "escalate": 0.7629404320505624,
+  "suspect": 0.41961723762780934
  },
  "profiles": {
   "CU0009": {
@@ -1938,237 +1943,237 @@
   "escalate_quantile": 0.97,
   "approved_escalation_rate": 0.03018342233573253,
   "declined_escalation_rate": 0.4263565891472868,
-  "auc_insample": 0.7733179086506012,
-  "auc_leave_customer_out": 0.7422224142058268,
+  "auc_insample": 0.8077606672390177,
+  "auc_leave_customer_out": 0.7849665138597164,
   "attempt_bands": {
-   "normal": 29,
-   "suspect": 16,
-   "escalate": 0
+   "normal": 28,
+   "suspect": 15,
+   "escalate": 2
   },
   "attempt_scores": [
    {
     "authorization_id": "AU0001",
-    "score": 0.2887,
+    "score": 0.2294,
     "band": "normal"
    },
    {
     "authorization_id": "AU0002",
-    "score": 0.3187,
+    "score": 0.2742,
     "band": "normal"
    },
    {
     "authorization_id": "AU0003",
-    "score": 0.4091,
+    "score": 0.3775,
     "band": "normal"
    },
    {
     "authorization_id": "AU0004",
-    "score": 0.4164,
+    "score": 0.385,
     "band": "normal"
    },
    {
     "authorization_id": "AU0005",
-    "score": 0.3489,
+    "score": 0.3117,
     "band": "normal"
    },
    {
     "authorization_id": "AU0006",
-    "score": 0.5948,
+    "score": 0.5375,
     "band": "suspect"
    },
    {
     "authorization_id": "AU0007",
-    "score": 0.3394,
+    "score": 0.3004,
     "band": "normal"
    },
    {
     "authorization_id": "AU0008",
-    "score": 0.3436,
+    "score": 0.3054,
     "band": "normal"
    },
    {
     "authorization_id": "AU0009",
-    "score": 0.2938,
+    "score": 0.238,
     "band": "normal"
    },
    {
     "authorization_id": "AU0010",
-    "score": 0.4311,
-    "band": "suspect"
+    "score": 0.4001,
+    "band": "normal"
    },
    {
     "authorization_id": "AU0011",
-    "score": 0.3704,
-    "band": "normal"
-   },
-   {
-    "authorization_id": "AU0012",
-    "score": 0.3798,
-    "band": "normal"
-   },
-   {
-    "authorization_id": "AU0013",
-    "score": 0.3729,
-    "band": "normal"
-   },
-   {
-    "authorization_id": "AU0014",
-    "score": 0.366,
-    "band": "normal"
-   },
-   {
-    "authorization_id": "AU0015",
-    "score": 0.3749,
-    "band": "normal"
-   },
-   {
-    "authorization_id": "AU0016",
-    "score": 0.3867,
-    "band": "normal"
-   },
-   {
-    "authorization_id": "AU0017",
-    "score": 0.3902,
-    "band": "normal"
-   },
-   {
-    "authorization_id": "AU0018",
-    "score": 0.3999,
-    "band": "normal"
-   },
-   {
-    "authorization_id": "AU0019",
-    "score": 0.3818,
-    "band": "normal"
-   },
-   {
-    "authorization_id": "AU0020",
-    "score": 0.3489,
-    "band": "normal"
-   },
-   {
-    "authorization_id": "AU0021",
-    "score": 0.4147,
-    "band": "normal"
-   },
-   {
-    "authorization_id": "AU0022",
-    "score": 0.4007,
-    "band": "normal"
-   },
-   {
-    "authorization_id": "AU0023",
-    "score": 0.3329,
-    "band": "normal"
-   },
-   {
-    "authorization_id": "AU0024",
-    "score": 0.3747,
-    "band": "normal"
-   },
-   {
-    "authorization_id": "AU0025",
-    "score": 0.41,
-    "band": "normal"
-   },
-   {
-    "authorization_id": "AU0026",
-    "score": 0.1048,
-    "band": "normal"
-   },
-   {
-    "authorization_id": "AU0027",
-    "score": 0.1029,
-    "band": "normal"
-   },
-   {
-    "authorization_id": "AU0028",
-    "score": 0.2518,
-    "band": "normal"
-   },
-   {
-    "authorization_id": "AU0029",
-    "score": 0.4865,
-    "band": "suspect"
-   },
-   {
-    "authorization_id": "AU0030",
-    "score": 0.7288,
-    "band": "suspect"
-   },
-   {
-    "authorization_id": "AU0031",
     "score": 0.3361,
     "band": "normal"
    },
    {
+    "authorization_id": "AU0012",
+    "score": 0.3499,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0013",
+    "score": 0.3428,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0014",
+    "score": 0.3357,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0015",
+    "score": 0.345,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0016",
+    "score": 0.357,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0017",
+    "score": 0.3605,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0018",
+    "score": 0.3703,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0019",
+    "score": 0.3521,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0020",
+    "score": 0.3174,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0021",
+    "score": 0.3848,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0022",
+    "score": 0.4342,
+    "band": "suspect"
+   },
+   {
+    "authorization_id": "AU0023",
+    "score": 0.376,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0024",
+    "score": 0.3484,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0025",
+    "score": 0.3843,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0026",
+    "score": 0.1581,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0027",
+    "score": 0.3785,
+    "band": "normal"
+   },
+   {
+    "authorization_id": "AU0028",
+    "score": 0.6275,
+    "band": "suspect"
+   },
+   {
+    "authorization_id": "AU0029",
+    "score": 0.8172,
+    "band": "escalate"
+   },
+   {
+    "authorization_id": "AU0030",
+    "score": 0.9228,
+    "band": "escalate"
+   },
+   {
+    "authorization_id": "AU0031",
+    "score": 0.3045,
+    "band": "normal"
+   },
+   {
     "authorization_id": "AU0032",
-    "score": 0.4564,
+    "score": 0.4308,
     "band": "suspect"
    },
    {
     "authorization_id": "AU0033",
-    "score": 0.3153,
+    "score": 0.357,
     "band": "normal"
    },
    {
     "authorization_id": "AU0034",
-    "score": 0.4727,
+    "score": 0.448,
     "band": "suspect"
    },
    {
     "authorization_id": "AU0035",
-    "score": 0.467,
+    "score": 0.4596,
     "band": "suspect"
    },
    {
     "authorization_id": "AU0036",
-    "score": 0.467,
+    "score": 0.4596,
     "band": "suspect"
    },
    {
     "authorization_id": "AU0037",
-    "score": 0.6327,
+    "score": 0.6129,
     "band": "suspect"
    },
    {
     "authorization_id": "AU0038",
-    "score": 0.5474,
+    "score": 0.5241,
     "band": "suspect"
    },
    {
     "authorization_id": "AU0039",
-    "score": 0.4513,
+    "score": 0.5034,
     "band": "suspect"
    },
    {
     "authorization_id": "AU0040",
-    "score": 0.4744,
+    "score": 0.4666,
     "band": "suspect"
    },
    {
     "authorization_id": "AU0041",
-    "score": 0.5905,
+    "score": 0.5745,
     "band": "suspect"
    },
    {
     "authorization_id": "AU0042",
-    "score": 0.5118,
+    "score": 0.5019,
     "band": "suspect"
    },
    {
     "authorization_id": "AU0043",
-    "score": 0.3986,
+    "score": 0.3921,
     "band": "normal"
    },
    {
     "authorization_id": "AU0044",
-    "score": 0.476,
+    "score": 0.4816,
     "band": "suspect"
    },
    {
     "authorization_id": "AU0045",
-    "score": 0.5482,
+    "score": 0.5357,
     "band": "suspect"
    }
   ]

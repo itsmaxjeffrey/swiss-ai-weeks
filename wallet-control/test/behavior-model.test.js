@@ -42,7 +42,7 @@ const model = getBehaviorModel();
 test('artifact deployed and schema-valid', () => {
   assert.ok(model, 'no behavior-model artifact found (deploy lib/behavior-model.json)');
   assert.equal(model.schema, 'openclaw.behavior-model/1');
-  assert.equal(model.features.length, 12);
+  assert.equal(model.features.length, 13);
   assert.ok(model.thresholds.escalate > model.thresholds.suspect);
   assert.ok(model.profiles.CU0001, 'pack customer CU0001 has a learned profile');
 });

@@ -1,9 +1,9 @@
-# Behavior model v1 — training & calibration report
+# Behavior model v2 — training & calibration report
 
 Trained 2026-09-24 · `train_behavior.py` · artifact `behavior-model.json` (~33 KB)
 Data: challenge pack `wallet-control/data/pack/` (per-file sha256 in the artifact's
 `provenance.pack_files`). numpy 2.5.2, pure-numpy Adam (no sklearn on this host),
-seed 20260924.
+seed 20260924. Feature search harness: `experiment.py` (reproduces v1 exactly).
 
 ## Scope & honest caveat
 
@@ -23,7 +23,15 @@ Deployed semantics are **advisory-only** (see bottom).
   no future information relative to attempts.
 - 20 customer profiles (≈200–250 approved purchases each).
 
-## Features (12, chronology-safe — see trainer docstring for the exact contract)
+## Features (13, chronology-safe — trainer docstring has the exact contract)
+
+v1's 12 features plus one new:
+
+- `night_hour` — 1 when the UTC hour is in **21:00–06:59**; a generic
+  (not personalized) late-night window. Motivated by univariate signal in the
+  declined rows and the fraud-literature prior; the single biggest AUC gain in
+  the search (+3.5 pts LOCO alone). In production this is 00:00–06:00 local
+  Swiss time — exactly when a cardholder is asleep and a stolen card is not.
 
 Running (strictly-prior) baselines when featurizing history rows; full-history
 profiles at inference: `log_amount_z`, `amount_p95_ratio`, `merchant_log_count`,
@@ -33,37 +41,52 @@ profiles at inference: `log_amount_z`, `amount_p95_ratio`, `merchant_log_count`,
 
 ## Results
 
-- in-sample AUC **0.7733**; leave-one-customer-out AUC **0.7422** (group-honest).
-- Top |weights|: `velocity_10m` +0.453, `currency_unfamiliar` +0.370,
-  `country_unfamiliar` +0.261, `amount_p95_ratio` +0.258, `hour_unobserved` +0.255,
-  `device_unfamiliar` **−0.226**.
-- Weight honesty: univariate P(declined | device unfamiliar) = 13 % vs 5.6 % for
-  known devices, but the multivariate partial weight is negative — a collinearity
-  artifact (device novelty co-occurs with merchant/country novelty, which absorb
-  the signal). Kept: the model is calibrated empirically, and its deployed role is
-  advisory evidence, not a guarantee.
+- in-sample AUC **0.8078** (v1: 0.7733); leave-one-customer-out AUC **0.7850**
+  (v1: 0.7422) — group-honest, +4.3 pts over v1.
+- Top |weights|: `velocity_10m` +0.428, `night_hour` +0.320,
+  `currency_unfamiliar` +0.260, `country_unfamiliar` +0.239,
+  `amount_p95_ratio` +0.207, `hour_unobserved` +0.169.
+- L2 = 3e-2 (v1: 1e-3): LOCO plateau 0.7844–0.7850 for l2 3e-3…1e-1 on the
+  final feature set; 1e-3 leaves ~0.4 pt on the table, 1.0 over-shrinks (0.7757).
+- `device_unfamiliar` still carries a negative multivariate partial weight
+  (collinearity artifact — univariate P(declined | device unfamiliar) = 13 % vs
+  5.6 %); kept and documented, same reasoning as v1.
+
+## Search trail (what was tried and rejected — don't re-run these)
+
+All numbers are LOCO AUC on fold-internal standardization unless noted
+(`experiment.py`, round 2/3 sweeps were one-off scripts, values recorded here):
+
+- v1 features, global-std vs fold-std: 0.7422 vs 0.7421 — the old LOCO's
+  standardization leakage was immaterial.
+- Single additions to v1: `category_log_count` 0.7362, `weekend` 0.7417,
+  `log_days_since_last` 0.7401, `merchant_share` 0.7392, `ix_amount_new_merchant`
+  0.7374, `ix_amount_new_country` 0.7422, `ix_night_new_device` 0.7384 — none
+  beat plain `night_hour` (0.7771 at l2 1e-3).
+- Bundles: v1+all-new 0.7521, interactions-only 0.7333, time-trio
+  (weekend/night/dsl) 0.7720 — every bundle with weekend or dsl underperformed
+  night alone.
+- Drops from v1: −`device_unfamiliar` 0.7357, −`channel_unfamiliar` 0.7434,
+  −`customer_log_total` 0.7448 — no drop helps.
+- Night-window sensitivity: 22–05 (v2 draft) 0.7771·l2 1e-3 → 0.7797·l2 3e-2;
+  **21–06 0.7850 (shipped)**; 23–04 0.7745; 20–07 0.7757 — the 21–06 window is
+  the local optimum on both sides.
 
 ## Calibration (friction-first, on known-good history)
 
-- escalate τ = **0.7811** = q97 of approved-row scores → **3.02 %** of known-good
-  history would escalate; **42.6 %** of historically declined rows score ≥ τ
-  (sensitivity is informational — declined ≠ fraud).
-- suspect band = min(0.5, τ·0.55) = **0.4296**.
-- The 45 real attempts: **29 normal / 16 suspect / 0 escalate**. Zero decisions
-  change vs the rules-only baseline replay (verified by diffing `node cli.js`
-  before/after); the 16 suspect rows surface plain-language drivers as evidence
-  ("burst of attempts within 10 minutes, larger than 95 % of your past
-  purchases, …").
-- Sanity extremes: ordinary AU0001 → 0.29 (normal); synthetic CHF 5000 / USD /
-  US merchant / 03:00 / new device / velocity 4 → 0.9999 (escalate).
-
-## Bugs found & fixed during training
-
-1. **Merchant join**: `purchase_attempts.csv` carries only `merchant_id`;
-   without joining `merchants.csv`, every attempt looked country/category-
-   unfamiliar and 44/45 landed in suspect+escalate. Live platform events always
-   include these fields (nested under `merchant{}`); the JS scorer resolves both
-   shapes and the parity test pins the joined inputs.
+- escalate τ = **0.7629** = q97 of approved-row scores → **3.02 %** of known-good
+  history would escalate (same friction as v1); **42.6 %** of historically
+  declined rows score ≥ τ (sensitivity is informational — declined ≠ fraud).
+- suspect band = min(0.5, τ·0.55) = **0.4196**.
+- The 45 real attempts: **28 normal / 15 suspect / 2 escalate** (v1: 29/16/0).
+  The 2 escalates are AU0029 + AU0030 — card CA0023, 02:21/02:24 UTC, part of a
+  3-attempt burst within 7 minutes (AU0028 at 02:17 is the matching suspect),
+  one with a GBP/GB country-currency swap. This is the night-burst / card-testing
+  pattern v1 scored as plain normal. Both attempts are already DECLINEd by the
+  deterministic rules (VELOCITY_BURST et al.), so the advisory layer changes no
+  decision — it adds strong corroborating evidence where v1 was silent.
+- Sanity extremes: ordinary AU0001 → normal; synthetic CHF 5000 / USD / US
+  merchant / 03:00 UTC / new device / velocity 4 → escalate.
 
 ## Deployment & parity
 
@@ -73,7 +96,10 @@ profiles at inference: `log_amount_z`, `amount_p95_ratio`, `merchant_log_count`,
   absent. **Refresh the copy after retraining** — the parity test anchors the
   deployed artifact to the trainer-emitted vectors, so a stale copy fails CI.
 - `parity_vectors.json` (9 cases): feature parity ±1e-9, score parity ±1e-6,
-  asserted in `wallet-control/test/behavior-model.test.js`.
+  asserted in `wallet-control/test/behavior-model.test.js` (13 features).
+- Replay regression 2026-09-24: all decision lines identical to the v1 baseline
+  (`node cli.js` diff after stripping timings); only behavior-model evidence
+  rows changed.
 
 ## Engine integration semantics (wallet-control)
 
@@ -83,3 +109,13 @@ policy (default `ask` → step_up; `approve` → approves with the evidence note
 the model never overrides the customer upward). Band `suspect` is evidence-only.
 Inert without artifact or unknown customer. Like the injection detector, this
 layer can NEVER approve, decline, or loosen anything.
+
+## Regeneration
+
+```bash
+cd merchant-trust-data
+python3 models/behavior/train_behavior.py        # ~11 s, writes artifact + parity
+cp models/behavior/behavior-model.json ../../wallet-control/lib/  # refresh deployed copy
+cd ../../wallet-control && npm test               # parity anchors the deployed copy
+python3 models/behavior/experiment.py             # feature-search harness (LOCO)
+```

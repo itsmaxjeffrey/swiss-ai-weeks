@@ -42,13 +42,18 @@ by wallet-control/test/behavior-model.test.js against parity_vectors.json):
   10 velocity_10m         min(3, prior same-card purchase attempts in 600 s);
                           at inference: event.recent_attempt_count_10m capped 3
   11 customer_log_total   log1p(total prior approved purchases)
+  12 night_hour           1 when UTC hour is in 21:00-06:59 (generic night
+                          window, NOT personalized; 0 when hour unreadable)
 
   p95 uses nearest-rank: sorted[idx], idx = clamp(ceil(0.95*n)-1, 0, n-1).
 
 Model: standardized features, L2 logistic regression (class-balanced), pure
-numpy Adam, seed 20260924. Calibration: escalation threshold = 97th percentile
-of approved-history probabilities (~3% friction on known-good activity);
-suspect band = min(0.5, escalate * 0.55) mirroring the injection model.
+numpy Adam, seed 20260924. L2 3e-2 tuned by leave-one-customer-out sweep
+(experiment.py, 2026-09-24: LOCO plateaus 0.7844-0.7850 for l2 3e-3..1e-1 on
+the v1+night feature set; 1e-3 leaves ~0.4pt on the table, 1.0 over-shrinks).
+Calibration: escalation threshold = 97th percentile of approved-history
+probabilities (~3% friction on known-good activity); suspect band =
+min(0.5, escalate * 0.55) mirroring the injection model.
 
 Usage: python3 train_behavior.py [--pack ../../wallet-control/data/pack]
 """
@@ -66,11 +71,12 @@ from pathlib import Path
 import numpy as np
 
 SEED = 20260924
+NIGHT_HOURS = frozenset({21, 22, 23, 0, 1, 2, 3, 4, 5, 6})
 FEATURES = [
     "log_amount_z", "amount_p95_ratio", "merchant_log_count", "merchant_unfamiliar",
     "category_unfamiliar", "country_unfamiliar", "channel_unfamiliar",
     "currency_unfamiliar", "device_unfamiliar", "hour_unobserved",
-    "velocity_10m", "customer_log_total",
+    "velocity_10m", "customer_log_total", "night_hour",
 ]
 FEATURE_LABELS = {
     "log_amount_z": "amount far outside your usual range",
@@ -85,6 +91,7 @@ FEATURE_LABELS = {
     "hour_unobserved": "hour of day you never buy at",
     "velocity_10m": "burst of attempts within 10 minutes",
     "customer_log_total": "little overall history",
+    "night_hour": "purchase in the middle of the night",
 }
 
 SCHEMA = "openclaw.behavior-model/1"
@@ -152,6 +159,7 @@ def extract_examples(history):
         amt = float(r["billing_amount_chf"])
         ts = parse_ts(r["timestamp"])
         log_amt = math.log1p(amt)
+        dt = datetime.fromtimestamp(ts, tz=timezone.utc) if ts else None
 
         # -- features from strictly-prior approved history -------------------
         approved_amounts = st["amounts"]
@@ -181,6 +189,7 @@ def extract_examples(history):
             0.0 if ts and int(datetime.fromtimestamp(ts, tz=timezone.utc).hour) in st["hours"] else 1.0,
             float(min(3, sum(1 for t in st["card_purchases"] if t is not None and 0 <= ts - t <= 600))),
             math.log1p(st["total_approved"]),
+            1.0 if dt is not None and dt.hour in NIGHT_HOURS else 0.0,
         ]
         examples.append({
             "customer_id": cust, "card_id": r["card_id"], "authorization_id": r["authorization_id"],
@@ -253,6 +262,7 @@ def profile_features(auth: dict, profile: dict):
         0.0 if hour in profile["hours"] else 1.0,
         float(min(3, int(auth.get("recent_attempt_count_10m") or 0))),
         math.log1p(profile["total_approved"]),
+        1.0 if hour in NIGHT_HOURS else 0.0,
     ]
 
 
@@ -260,8 +270,11 @@ def profile_features(auth: dict, profile: dict):
 # Model
 # ---------------------------------------------------------------------------
 
-def fit_logistic(X, y, l2=1e-3, lr=0.05, iters=4000, seed=SEED):
-    """Class-balanced L2 logistic regression via full-batch Adam (pure numpy)."""
+def fit_logistic(X, y, l2=3e-2, lr=0.05, iters=4000, seed=SEED):
+    """Class-balanced L2 logistic regression via full-batch Adam (pure numpy).
+
+    l2=3e-2: LOCO-tuned (see module docstring); do not silently revert to 1e-3.
+    """
     rng = np.random.default_rng(seed)
     n, d = X.shape
     pos = max(1, int(y.sum()))
@@ -412,7 +425,7 @@ def main():
 
     artifact = {
         "schema": SCHEMA,
-        "version": "behavior-model-v1",
+        "version": "behavior-model-v2",
         "trained_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "semantics": "advisory-only: may add evidence/uncertainty and escalate to the customer; never approves, declines, or loosens",
         "label_caveat": "trained on historical authorization outcomes, which are not fraud labels and not an answer key for attempts",

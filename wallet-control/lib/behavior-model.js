@@ -27,11 +27,16 @@
 //   9  hour_unobserved        1 when UTC hour never approved
 //   10 velocity_10m          min(3, recent_attempt_count_10m)
 //   11 customer_log_total    log1p(total_approved)
+//   12 night_hour            1 when UTC hour in 21:00-06:59 (generic night
+//                            window, NOT personalized; 0 when unreadable)
 //
 // p95 = nearest-rank; amounts are billing_amount_chf; auth fields resolve from
 // the flat attempt shape or the live event's merchant{} object.
 
 import { readFileSync } from 'node:fs';
+
+// Mirrors NIGHT_HOURS in train_behavior.py — keep in lockstep.
+const NIGHT_HOURS = new Set([21, 22, 23, 0, 1, 2, 3, 4, 5, 6]);
 
 function loadModel() {
   const candidates = [
@@ -97,6 +102,10 @@ export function behaviorFeatures(auth, profile) {
 
   // 11 customer_log_total
   f.push(Math.log1p(profile.total_approved || 0));
+
+  // 12 night_hour (generic window; 0 when timestamp unreadable — parity cases
+  // always carry a valid timestamp, so this only affects degenerate callers)
+  f.push(hour != null && !Number.isNaN(hour) && NIGHT_HOURS.has(hour) ? 1.0 : 0.0);
 
   return f;
 }
