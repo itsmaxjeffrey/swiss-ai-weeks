@@ -965,3 +965,47 @@ body::after {
 
 .fam-actions { display: flex; gap: 8px; margin-top: 12px; align-items: center; flex-wrap: wrap; }
 .fam-actions .form-error { margin: 0; }
+
+/* ---------- process timings card (per-purchase pipeline report) ---------- */
+
+.msg--timings {
+  max-width: 74%;
+  margin: -14px 0 26px;
+  padding: 12px 16px 10px;
+  border: 1px solid var(--hairline);
+  border-left: 3px solid var(--red);
+  background: var(--paper-deep);
+  animation: msgIn 0.5s var(--ease) both;
+}
+
+.msg--timings .msg-meta { margin-bottom: 8px; }
+
+.timing-list { font-family: var(--mono); font-size: 12px; }
+
+.timing-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.timing-row--sub { padding-left: 18px; color: var(--ink-soft); }
+
+.timing-row--sub .timing-label::before { content: "↳ "; color: var(--red); }
+
+.timing-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.timing-note { color: var(--ink-soft); }
+
+.timing-dots {
+  flex: 1;
+  border-bottom: 1px dotted var(--hairline);
+  transform: translateY(-3px);
+  min-width: 16px;
+}
+
+.timing-ms { font-weight: 600; color: var(--ink); white-space: nowrap; }
+
+@media (max-width: 760px) {
+  .msg--timings { max-width: 92%; }
+}

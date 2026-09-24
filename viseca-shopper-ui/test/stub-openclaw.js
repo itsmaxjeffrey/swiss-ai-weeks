@@ -30,6 +30,10 @@ if (args[0] === "agent") {
         sessionKey,
         events: [{ type: "assistant", text: `Stub reply for ${sessionKey}: you said "${message.slice(0, 40)}"` }],
         finalAssistantVisibleText: `Stub reply for **${sessionKey}** — got "${message.slice(0, 60)}"`,
+        assistantTurns: 2,
+        toolSummary: { calls: 3, tools: ["browser", "read"], totalToolTimeMs: 120 },
+        model: "stub-model",
+        provider: "stub",
       })
     );
     process.exit(0);

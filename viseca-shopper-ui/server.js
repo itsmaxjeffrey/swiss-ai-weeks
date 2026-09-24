@@ -98,6 +98,69 @@ const userProcs = new Map();    // userId -> child process of the running turn (
 const stoppedTurns = new Set(); // userId -> turn was stopped by the customer
 let activeTurns = 0;
 
+/* ---------- per-turn process timing ---------- */
+
+/** One timing record per in-flight chat turn: ordered stage marks plus an
+ *  optional live listener (SSE) so the UI sees stages as they happen. */
+const turnStageLogs = new Map(); // userId -> { marks: [], onStage: fn|null }
+
+/** Record a process-stage mark for the user's in-flight turn (no-op when no
+ *  turn is running, e.g. a policy card approved after the reply arrived). */
+function recordTurnStage(userId, mark) {
+  const log = turnStageLogs.get(userId);
+  if (!log) return;
+  mark.at = Date.now();
+  log.marks.push(mark);
+  if (log.onStage) {
+    try { log.onStage(mark); } catch { /* SSE client may be gone */ }
+  }
+}
+
+/** Human-readable duration for logs and cards: ms under 1 s, else s / m s. */
+function fmtMs(ms) {
+  if (typeof ms !== "number" || !isFinite(ms)) return "?";
+  if (ms < 1000) return `${Math.round(ms)}ms`;
+  const s = ms / 1000;
+  if (s < 60) return `${s.toFixed(1)}s`;
+  return `${Math.floor(s / 60)}m${String(Math.round(s % 60)).padStart(2, "0")}s`;
+}
+
+/** Assemble the per-process timing report attached to every finished turn.
+ *  `think` is derived (turn minus tool time); sign/gate marks are measured
+ *  where they happen and can land inside the tool-work window. */
+function buildTimings({ receivedAt, started, finished, stats, marks }) {
+  const totalMs = Math.max(0, finished - receivedAt);
+  const queueMs = Math.max(0, started - receivedAt);
+  const agentTurnMs = Math.max(0, finished - started);
+  const toolMs = (stats && stats.toolTimeMs) || 0;
+  const thinkMs = Math.max(0, agentTurnMs - toolMs);
+  const processes = [
+    { label: "Request accepted (bridge queue + auth)", durationMs: queueMs },
+    {
+      label: "Agent thinking (model turns)",
+      durationMs: thinkMs,
+      note: stats && stats.assistantTurns != null ? `${stats.assistantTurns} model turns` : null,
+    },
+    {
+      label: "Tool work (finding products, browsing shops)",
+      durationMs: toolMs,
+      note: stats && stats.toolCalls != null ? `${stats.toolCalls} tool calls` : null,
+    },
+  ];
+  for (const m of marks) {
+    processes.push({
+      label: m.ok === false
+        ? "Viseca control — order policy refused"
+        : "Viseca control — order policy signed",
+      durationMs: m.durationMs,
+      note: m.policyId || m.detail || null,
+      insideToolWork: true,
+    });
+  }
+  processes.push({ label: "Bridge overhead (streaming, history)", durationMs: Math.max(0, totalMs - queueMs - agentTurnMs) });
+  return { totalMs, agentTurnMs, processes };
+}
+
 function sendJson(res, code, obj, extraHeaders) {
   const body = JSON.stringify(obj);
   res.writeHead(code, Object.assign({
@@ -193,6 +256,24 @@ function findDiagnostics(node, acc = {}) {
   return acc;
 }
 
+/** Run stats from the CLI envelope: docs place run-stats on meta.agentMeta
+ *  with the tool summary on meta.toolSummary, but flat envelopes also occur. */
+function extractRunStats(parsed) {
+  const meta = parsed && typeof parsed === "object" ? parsed.meta || {} : {};
+  const obj = (v) => (v && typeof v === "object" && !Array.isArray(v) ? v : null);
+  const am = obj(meta.agentMeta) || parsed || {};
+  const ts = obj(meta.toolSummary) || obj(parsed && parsed.toolSummary) || {};
+  const num = (v) => (typeof v === "number" && isFinite(v) && v >= 0 ? v : null);
+  return {
+    assistantTurns: num(am.assistantTurns),
+    toolCalls: num(ts.calls),
+    toolTimeMs: num(ts.totalToolTimeMs),
+    tools: Array.isArray(ts.tools) ? ts.tools.slice(0, 8) : null,
+    model: typeof parsed.model === "string" && parsed.model ? parsed.model : null,
+    provider: typeof parsed.provider === "string" && parsed.provider ? parsed.provider : null,
+  };
+}
+
 /** Structured agent-turn failure so the runner can decide on retries. */
 function turnError(kind, message, detail) {
   const err = new Error(message);
@@ -260,7 +341,7 @@ function agentTurn(message, sessionKey, timeoutMs = TIMEOUT_MS, onSpawn = null) 
         ].filter(Boolean).join(" · ");
         return reject(turnError("no-reply", "Agent JSON contained no reply text.", bits));
       }
-      resolve(reply);
+      resolve({ reply, stats: extractRunStats(parsed) });
     });
   });
 }
@@ -304,6 +385,8 @@ function friendlyTurnError(err) {
  *  policies/<policy_id>.signed.json in the agent workspace. The script itself
  *  REFUSES incomplete policies (exit 4) — that is the no-missing-data rule. */
 function signPolicy(policy, res, user) {
+  const signT0 = Date.now(); // every exit below reports its gate duration
+
   /* Shopping controls first: spend cap + website whitelist (see shopping.js).
    * Violations are a different refusal than incompleteness — they carry
    * `violations` (the customer must change settings or the budget), while the
@@ -311,6 +394,7 @@ function signPolicy(policy, res, user) {
   const chk = shopping.checkPolicyAgainstSettings(user.id, policy);
   if (!chk.ok) {
     console.log(`[policy] sign REFUSED (shopping settings) user=${user.email}: ${chk.violations.join(" | ")}`);
+    recordTurnStage(user.id, { stage: "policy_sign", ok: false, detail: "refused: shopping settings", durationMs: Date.now() - signT0 });
     return sendJson(res, 422, {
       ok: false,
       error: "The authority refused to sign — the policy conflicts with your shopping settings.",
@@ -323,6 +407,7 @@ function signPolicy(policy, res, user) {
   const pchk = family.checkParentalLimits(user.id, policy);
   if (!pchk.ok) {
     console.log(`[policy] sign REFUSED (parental limits) user=${user.email}: ${pchk.violations.join(" | ")}`);
+    recordTurnStage(user.id, { stage: "policy_sign", ok: false, detail: "refused: parental limits", durationMs: Date.now() - signT0 });
     return sendJson(res, 422, {
       ok: false,
       error: "The authority refused to sign — the policy exceeds the parental limits on this account.",
@@ -365,12 +450,15 @@ function signPolicy(policy, res, user) {
       );
       payload.payment = { card_on_file: Boolean(method), brand: method ? method.brand : null, last4: method ? method.last4 : null, family_card: payerUid !== user.id };
       console.log(`[policy] SIGNED ${env.policy.policy_id} (fingerprint ${payload.signed_by}) -> ${finalPath}`);
+      recordTurnStage(user.id, { stage: "policy_sign", ok: true, policyId: env.policy.policy_id, durationMs: Date.now() - signT0 });
       return sendJson(res, 200, payload);
     }
     console.log(`[policy] sign REFUSED (exit ${r.status})`);
+    recordTurnStage(user.id, { stage: "policy_sign", ok: false, detail: r.status === 4 ? "refused: incomplete policy" : "signer error", durationMs: Date.now() - signT0 });
     return sendJson(res, r.status === 4 ? 422 : 500,
       payload || { ok: false, error: (r.stderr || "sign failed").slice(-400) });
   } catch (e) {
+    recordTurnStage(user.id, { stage: "policy_sign", ok: false, detail: "signer error", durationMs: Date.now() - signT0 });
     return sendJson(res, 500, { ok: false, error: e.message });
   } finally {
     fs.rmSync(tmpIn, { force: true });
@@ -542,6 +630,7 @@ function paymentStatusFor(policyId) {
 const userSessionKey = (user) => `${SESSION}-u${user.sid}`;
 
 async function runChatTurn(req, res, user, message, mode) {
+  const receivedAt = Date.now();
   // one turn at a time per user (their agent session is sequential)
   if (userInFlight.has(user.id)) {
     return sendJson(res, 409, { error: "Your previous message is still being answered — one turn at a time." }, { "Retry-After": "20" });
@@ -563,6 +652,8 @@ async function runChatTurn(req, res, user, message, mode) {
   const started = Date.now();
   const sessionKey = userSessionKey(user);
   stoppedTurns.delete(user.id);
+  const stageLog = { marks: [], onStage: null };
+  turnStageLogs.set(user.id, stageLog);
   console.log(`[chat] turn start  (${message.length} chars) user=${user.email} session=${sessionKey} mode=${mode}`);
   appendHistory(user.id, "user", message);
 
@@ -598,6 +689,16 @@ async function runChatTurn(req, res, user, message, mode) {
       } catch { /* client gone — the turn still completes server-side */ }
     };
     send({ type: "start", agent: AGENT, session: sessionKey });
+    // Live process-stage events (e.g. the Viseca control policy gate) reach
+    // the UI the moment they happen, not only in the final done frame.
+    stageLog.onStage = (mark) => send({
+      type: "stage",
+      stage: mark.stage,
+      ok: mark.ok,
+      policyId: mark.policyId || null,
+      detail: mark.detail || null,
+      durationMs: mark.durationMs,
+    });
 
     const poll = setInterval(() => {
       sessionSnapshot(sessionKey).then((snap) => {
@@ -614,10 +715,16 @@ async function runChatTurn(req, res, user, message, mode) {
     }, 4000);
 
     turn
-      .then((reply) => {
-        console.log(`[chat] turn done    in ${((Date.now() - started) / 1000).toFixed(1)}s (${reply.length} chars back) user=${user.email}`);
+      .then(({ reply, stats }) => {
+        const finished = Date.now();
+        const timings = buildTimings({ receivedAt, started, finished, stats, marks: stageLog.marks });
+        const gateBit = stageLog.marks.length
+          ? ` · gate=${stageLog.marks.map((m) => fmtMs(m.durationMs)).join("+")}`
+          : "";
+        console.log(`[chat] turn done    in ${(timings.agentTurnMs / 1000).toFixed(1)}s (${reply.length} chars back) user=${user.email}`);
+        console.log(`[chat] timings     total=${fmtMs(timings.totalMs)} · queue=${fmtMs(timings.processes[0].durationMs)} · think=${fmtMs(timings.processes[1].durationMs)} · tools=${fmtMs(timings.processes[2].durationMs)}${gateBit} user=${user.email}`);
         appendHistory(user.id, "agent", reply);
-        send({ type: "done", reply, agent: AGENT, session: sessionKey });
+        send({ type: "done", reply, timings, agent: AGENT, session: sessionKey });
       })
       .catch((err) => {
         console.log(`[chat] turn FAILED  after ${((Date.now() - started) / 1000).toFixed(1)}s: ${err.message} user=${user.email}`);
@@ -627,6 +734,7 @@ async function runChatTurn(req, res, user, message, mode) {
       })
       .finally(() => {
         clearInterval(poll);
+        turnStageLogs.delete(user.id);
         res.end();
         userInFlight.delete(user.id);
       });
@@ -635,16 +743,18 @@ async function runChatTurn(req, res, user, message, mode) {
 
   // plain JSON (ChatGPT Actions / skills cannot consume SSE)
   try {
-    const reply = await turn;
-    console.log(`[chat] turn done    in ${((Date.now() - started) / 1000).toFixed(1)}s (${reply.length} chars back) user=${user.email}`);
+    const { reply, stats } = await turn;
+    const timings = buildTimings({ receivedAt, started, finished: Date.now(), stats, marks: stageLog.marks });
+    console.log(`[chat] turn done    in ${(timings.agentTurnMs / 1000).toFixed(1)}s (${reply.length} chars back) user=${user.email}`);
     appendHistory(user.id, "agent", reply);
-    sendJson(res, 200, { reply, agent: AGENT, session: sessionKey, usage });
+    sendJson(res, 200, { reply, agent: AGENT, session: sessionKey, usage, timings });
   } catch (err) {
     console.log(`[chat] turn FAILED  after ${((Date.now() - started) / 1000).toFixed(1)}s: ${err.message} user=${user.email}`);
     const friendly = friendlyError(err);
     appendHistory(user.id, "error", friendly);
     sendJson(res, 502, { error: friendly });
   } finally {
+    turnStageLogs.delete(user.id);
     userInFlight.delete(user.id);
   }
 }

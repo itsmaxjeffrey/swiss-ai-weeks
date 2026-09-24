@@ -108,10 +108,20 @@
   let thinkingTimer = null;
   let thinkingStep = 0;
   let lastProgress = null;
+  let lastStage = null;
 
   function fmtElapsed(ms) {
     const s = Math.max(0, Math.round((ms || 0) / 1000));
     return s >= 60 ? `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, "0")}s` : `${s}s`;
+  }
+
+  /** Precise duration for the process-timings card: ms under 1 s, else s / m s. */
+  function fmtDuration(ms) {
+    if (typeof ms !== "number" || !isFinite(ms) || ms < 0) return "—";
+    if (ms < 1000) return `${Math.round(ms)} ms`;
+    const s = ms / 1000;
+    if (s < 60) return `${s >= 10 ? Math.round(s) : s.toFixed(1)} s`;
+    return `${Math.floor(s / 60)}m ${String(Math.round(s % 60)).padStart(2, "0")}s`;
   }
 
   function fmtTokens(n) {
@@ -119,8 +129,18 @@
     return n >= 1000 ? `${(n / 1000).toFixed(1)}k tok` : `${n} tok`;
   }
 
-  /** Renders the live status line: friendly word + real data when available. */
+  /** Renders the live status line: friendly word + real data when available.
+   *  A live process-stage event (e.g. the Viseca control gate) takes over. */
   function renderBusyLine() {
+    if (lastStage) {
+      const label = lastStage.ok === false
+        ? "Viseca control refused the order policy"
+        : "Viseca control — order policy signed";
+      const bits = [`${label} ✓`, fmtDuration(lastStage.durationMs)];
+      if (lastStage.policyId) bits.push(lastStage.policyId);
+      typingText.textContent = bits.join(" · ");
+      return;
+    }
     const base = THINKING_WORDS[thinkingStep % THINKING_WORDS.length];
     if (!lastProgress) {
       typingText.textContent = base;
@@ -229,6 +249,28 @@
         slot.replaceWith(buildPolicyCard(policy, { readOnly: fromHistory }));
       });
     }
+    feed.scrollTop = feed.scrollHeight;
+    return el;
+  }
+
+  /** Per-process timing card under a finished reply: how long each step of
+   *  the purchase pipeline took (queue, thinking, product work, gate). */
+  function addTimingsCard(timings) {
+    if (!timings || !Array.isArray(timings.processes)) return;
+    const rows = timings.processes.map((p) => {
+      const note = p.note ? ` <span class="timing-note">(${esc(p.note)})</span>` : "";
+      const sub = p.insideToolWork ? " timing-row--sub" : "";
+      return `<div class="timing-row${sub}">` +
+        `<span class="timing-label">${esc(p.label)}${note}</span>` +
+        `<span class="timing-dots"></span>` +
+        `<span class="timing-ms">${fmtDuration(p.durationMs)}</span></div>`;
+    }).join("");
+    const el = document.createElement("div");
+    el.className = "msg msg--timings";
+    el.innerHTML = `
+      <div class="msg-meta"><span class="red">⏱</span> Process timings — total ${fmtDuration(timings.totalMs)}</div>
+      <div class="msg-body timing-list">${rows}</div>`;
+    feed.appendChild(el);
     feed.scrollTop = feed.scrollHeight;
     return el;
   }
@@ -494,6 +536,7 @@
     addMessage("user", text.trim());
     input.value = "";
     input.style.height = "auto";
+    lastStage = null;
     setBusy(true);
     turns += 1;
     turnCounter.textContent = `${turns} message${turns === 1 ? "" : "s"}`;
@@ -552,9 +595,13 @@
             if (ev.type === "progress") {
               lastProgress = ev;
               renderBusyLine();
+            } else if (ev.type === "stage") {
+              lastStage = ev;
+              renderBusyLine();
             } else if (ev.type === "done") {
               settled = true;
               addMessage("agent", ev.reply);
+              if (ev.timings) addTimingsCard(ev.timings);
               refreshMe(); // keep the usage chip honest
             } else if (ev.type === "error") {
               settled = true;
