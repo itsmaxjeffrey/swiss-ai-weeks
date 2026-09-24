@@ -42,6 +42,27 @@
   const btnLogout = document.getElementById("btnLogout");
   const btnClearChat = document.getElementById("btnClearChat");
   const policyList = document.getElementById("policyList");
+  /* shopping settings */
+  const shopCap = document.getElementById("shopCap");
+  const shopCapSave = document.getElementById("shopCapSave");
+  const shopCapClear = document.getElementById("shopCapClear");
+  const shopCapNote = document.getElementById("shopCapNote");
+  const wlList = document.getElementById("wlList");
+  const wlNote = document.getElementById("wlNote");
+  const wlInput = document.getElementById("wlInput");
+  const wlAdd = document.getElementById("wlAdd");
+  const wlSearch = document.getElementById("wlSearch");
+  const wlResults = document.getElementById("wlResults");
+  const wlError = document.getElementById("wlError");
+  const pmList = document.getElementById("pmList");
+  const pmNote = document.getElementById("pmNote");
+  const pmForm = document.getElementById("pmForm");
+  const pmHolder = document.getElementById("pmHolder");
+  const pmNumber = document.getElementById("pmNumber");
+  const pmBrandHint = document.getElementById("pmBrandHint");
+  const pmExp = document.getElementById("pmExp");
+  const pmCvc = document.getElementById("pmCvc");
+  const pmError = document.getElementById("pmError");
 
   let turns = 0;
   let busy = false;
@@ -303,12 +324,18 @@
             <p>Telling the agent to run the gate checks…</p>`;
           setTimeout(() => send(`Policy ${policy.policy_id} is approved and signed — run the gate check and proceed.`), 700);
         } else if (r.status === 422) {
-          state.textContent = "refused — incomplete";
           card.classList.add("policy-card--failed");
           setBusy(false);
           result.hidden = false;
           const missing = (j.missing || []).map((m) => `<li><code>${esc(m)}</code></li>`).join("");
-          result.innerHTML = `<p><strong>The authority refused to sign — the policy is incomplete.</strong> The agent must ask you for:</p><ul>${missing}</ul>`;
+          const violations = (j.violations || []).map((v) => `<li>${esc(v)}</li>`).join("");
+          if (violations) {
+            state.textContent = "refused — settings conflict";
+            result.innerHTML = `<p><strong>The authority refused to sign — this order conflicts with your shopping settings.</strong></p><ul>${violations}</ul><p class="form-note">Open Account → Shopping settings to fix the cap or whitelist, then have the agent re-propose.</p>`;
+          } else {
+            state.textContent = "refused — incomplete";
+            result.innerHTML = `<p><strong>The authority refused to sign — the policy is incomplete.</strong> The agent must ask you for:</p><ul>${missing}</ul>`;
+          }
         } else if (r.status === 401) {
           openAuth("login");
           throw new Error("Your session expired — sign in again.");
@@ -531,6 +558,197 @@
     }
   }
 
+  /* ---------- shopping settings (spend cap / whitelist / card vault) ---------- */
+
+  let shoppingCache = null;
+  let searchTimer = null;
+
+  async function loadShopping() {
+    try {
+      const r = await fetch("/api/account/shopping", { headers: authHeaders() });
+      if (!r.ok) return;
+      shoppingCache = await r.json();
+      renderShopping();
+    } catch { /* offline */ }
+  }
+
+  function renderShopping() {
+    if (!shoppingCache || !shoppingCache.ok) return;
+    const cap = shoppingCache.spendCapChf;
+    shopCap.value = cap == null ? "" : cap;
+    shopCapNote.textContent = cap == null
+      ? "No cap set — any approved budget can be signed."
+      : `Cap active: the agent can sign orders up to ${cap} CHF per order.`;
+
+    const wl = shoppingCache.whitelist || [];
+    wlList.innerHTML = "";
+    if (!wl.length) {
+      wlNote.textContent = "Empty whitelist — purchases from any website are allowed. Add the shops you actually order from to restrict the agent.";
+    } else {
+      wlNote.textContent = `${wl.length} site${wl.length === 1 ? "" : "s"} whitelisted — the agent may only buy from these domains.`;
+      wl.forEach((d) => {
+        const chip = document.createElement("span");
+        chip.className = "wl-chip";
+        chip.innerHTML = `<code>${esc(d)}</code><button type="button" aria-label="Remove ${esc(d)}">×</button>`;
+        chip.querySelector("button").addEventListener("click", async () => {
+          await fetch("/api/account/shopping/whitelist/remove", {
+            method: "POST",
+            headers: authHeaders({ "Content-Type": "application/json" }),
+            body: JSON.stringify({ domain: d }),
+          }).catch(() => {});
+          loadShopping();
+        });
+        wlList.appendChild(chip);
+      });
+    }
+
+    const methods = shoppingCache.methods || [];
+    pmList.innerHTML = "";
+    methods.forEach((m) => {
+      const row = document.createElement("div");
+      row.className = "pm-row";
+      row.innerHTML = `
+        <span class="pm-brand-badge pm-brand--${esc(m.brand)}">${m.brand === "visa" ? "VISA" : "Mastercard"}</span>
+        <span class="pm-num">•••• ${esc(m.last4)}</span>
+        <span class="pm-exp mono-label">${esc(m.exp)}</span>
+        ${m.isDefault
+          ? '<span class="mono-label pm-default">● default</span>'
+          : '<button type="button" class="acct-btn acct-btn--mini pm-default-btn">make default</button>'}
+        <button type="button" class="acct-btn acct-btn--danger acct-btn--mini pm-del">Delete</button>`;
+      const defBtn = row.querySelector(".pm-default-btn");
+      if (defBtn) defBtn.addEventListener("click", async () => {
+        await fetch("/api/account/shopping/methods/default", {
+          method: "POST",
+          headers: authHeaders({ "Content-Type": "application/json" }),
+          body: JSON.stringify({ id: m.id }),
+        }).catch(() => {});
+        loadShopping();
+      });
+      row.querySelector(".pm-del").addEventListener("click", async () => {
+        await fetch("/api/account/shopping/methods/delete", {
+          method: "POST",
+          headers: authHeaders({ "Content-Type": "application/json" }),
+          body: JSON.stringify({ id: m.id }),
+        }).catch(() => {});
+        loadShopping();
+      });
+      pmList.appendChild(row);
+    });
+    pmNote.textContent = methods.length
+      ? "The agent uses your saved card at checkout — you never paste card details into the chat."
+      : "No card saved yet — add a Visa or Mastercard so the agent can pay at checkout.";
+  }
+
+  shopCapSave.addEventListener("click", async () => {
+    const v = shopCap.value.trim();
+    const r = await fetch("/api/account/shopping/cap", {
+      method: "PUT",
+      headers: authHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ capChf: v === "" ? null : Number(v) }),
+    }).catch(() => null);
+    if (r && r.ok) loadShopping();
+    else if (r) {
+      const j = await r.json().catch(() => ({}));
+      shopCapNote.textContent = j.error || "Could not save the cap.";
+    }
+  });
+
+  shopCapClear.addEventListener("click", async () => {
+    await fetch("/api/account/shopping/cap", {
+      method: "PUT",
+      headers: authHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ capChf: null }),
+    }).catch(() => {});
+    loadShopping();
+  });
+
+  async function wlAddDomain(domain) {
+    wlError.hidden = true;
+    const r = await fetch("/api/account/shopping/whitelist", {
+      method: "POST",
+      headers: authHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ domain }),
+    }).catch(() => null);
+    if (r && r.ok) {
+      wlInput.value = "";
+      [...wlResults.querySelectorAll(".wl-result")].forEach((el) => {
+        if (el.dataset.domain === String(domain).toLowerCase()) el.remove();
+      });
+      loadShopping();
+    } else if (r) {
+      const j = await r.json().catch(() => ({}));
+      wlError.textContent = j.error || "Could not add that domain.";
+      wlError.hidden = false;
+    }
+  }
+
+  wlAdd.addEventListener("click", () => { if (wlInput.value.trim()) wlAddDomain(wlInput.value.trim()); });
+  wlInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); if (wlInput.value.trim()) wlAddDomain(wlInput.value.trim()); }
+  });
+
+  function renderSearchResults(results) {
+    wlResults.innerHTML = "";
+    if (!results.length) { wlResults.hidden = true; return; }
+    results.forEach((r) => {
+      const row = document.createElement("div");
+      row.className = "wl-result";
+      row.dataset.domain = r.domain;
+      row.innerHTML = `<span class="wl-result-name">${esc(r.name || r.domain)}</span>
+        <code class="wl-result-domain">${esc(r.domain)}</code>
+        <span class="mono-label wl-result-cat">${esc(r.category || "")}</span>
+        <button type="button" class="acct-btn acct-btn--mini">Whitelist</button>`;
+      row.querySelector("button").addEventListener("click", () => wlAddDomain(r.domain));
+      wlResults.appendChild(row);
+    });
+    wlResults.hidden = false;
+  }
+
+  wlSearch.addEventListener("input", () => {
+    clearTimeout(searchTimer);
+    const q = wlSearch.value.trim();
+    if (q.length < 2) { wlResults.hidden = true; return; }
+    searchTimer = setTimeout(async () => {
+      try {
+        const r = await fetch(`/api/account/shopping/sites?q=${encodeURIComponent(q)}`, { headers: authHeaders() });
+        if (!r.ok) return;
+        const j = await r.json();
+        renderSearchResults(j.results || []);
+      } catch { /* ignore */ }
+    }, 350);
+  });
+
+  /* live brand detection on the card form */
+  pmNumber.addEventListener("input", () => {
+    const n = pmNumber.value.replace(/[\s-]/g, "");
+    pmBrandHint.textContent = /^4\d{6,}$/.test(n) ? "VISA" : (/^(5[1-5]|2[2-7])\d{5,}$/.test(n) ? "Mastercard" : "");
+  });
+
+  pmForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    pmError.hidden = true;
+    const r = await fetch("/api/account/shopping/methods", {
+      method: "POST",
+      headers: authHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({
+        holder: pmHolder.value.trim(),
+        number: pmNumber.value.trim(),
+        exp: pmExp.value.trim(),
+        cvc: pmCvc.value.trim(),
+      }),
+    }).catch(() => null);
+    if (r && r.ok) {
+      pmForm.reset();
+      pmBrandHint.textContent = "";
+      loadShopping();
+      addMessage("system", "Card saved — the agent can now pay checkout with it (within your budget cap and whitelist).");
+    } else if (r) {
+      const j = await r.json().catch(() => ({}));
+      pmError.textContent = j.error || "Could not save the card.";
+      pmError.hidden = false;
+    }
+  });
+
   /* ---------- events ---------- */
 
   composer.addEventListener("submit", (e) => {
@@ -679,6 +897,7 @@
     document.getElementById("urlOpenapi").textContent = `${location.origin}/openapi.json`;
     document.getElementById("urlPlugin").textContent = `${location.origin}/.well-known/ai-plugin.json`;
     loadPurchases();
+    loadShopping();
   }
 
   loginForm.addEventListener("submit", async (e) => {

@@ -173,6 +173,56 @@
       <div class="usage-bar"><div class="usage-fill" id="usageFill"></div></div>
       <p class="form-note" id="usageText"></p>
 
+      <h4 class="mono-label section-head">Shopping settings</h4>
+      <p class="form-note">The agent obeys these on every purchase: budget cap, allowed websites, and the card it may pay with.</p>
+
+      <div class="shop-block">
+        <span class="mono-label shop-label">Maximum spend per order</span>
+        <div class="shop-cap-row">
+          <input type="number" id="shopCap" min="1" max="100000" step="0.01" placeholder="e.g. 120">
+          <span class="shop-cap-chf">CHF</span>
+          <button class="acct-btn" id="shopCapSave" type="button">Save cap</button>
+          <button class="acct-btn acct-btn--danger" id="shopCapClear" type="button">No limit</button>
+        </div>
+        <p class="form-note" id="shopCapNote">No cap set — any approved budget can be signed.</p>
+      </div>
+
+      <div class="shop-block">
+        <span class="mono-label shop-label">Whitelisted websites</span>
+        <p class="form-note" id="wlNote">Empty whitelist — purchases from any website are allowed. Add the shops you actually order from to restrict the agent.</p>
+        <div class="wl-chips" id="wlList"></div>
+        <div class="wl-add-row">
+          <input type="text" id="wlInput" placeholder="ubereats.com" autocomplete="off">
+          <button class="acct-btn" id="wlAdd" type="button">Whitelist</button>
+        </div>
+        <div class="wl-search-row">
+          <input type="text" id="wlSearch" placeholder="Search shops — e.g. pizza, groceries, migros…" autocomplete="off">
+        </div>
+        <div class="wl-results" id="wlResults" hidden></div>
+        <p class="form-error" id="wlError" hidden></p>
+      </div>
+
+      <div class="shop-block">
+        <span class="mono-label shop-label">Payment method · Visa or Mastercard</span>
+        <p class="form-note" id="pmNote">The agent uses your saved card at checkout — you never paste card details into the chat. Stored locally, never returned in full.</p>
+        <div class="pm-list" id="pmList"></div>
+        <form id="pmForm" class="pm-form" autocomplete="off">
+          <label class="field"><span class="mono-label">Cardholder</span>
+            <input type="text" id="pmHolder" maxlength="80" placeholder="Name on card"></label>
+          <label class="field"><span class="mono-label">Card number</span>
+            <input type="text" id="pmNumber" inputmode="numeric" placeholder="4242 4242 4242 4242">
+            <span class="mono-label pm-brand" id="pmBrandHint"></span></label>
+          <div class="pm-split">
+            <label class="field"><span class="mono-label">Expiry MM/YY</span>
+              <input type="text" id="pmExp" placeholder="09/28" maxlength="5"></label>
+            <label class="field"><span class="mono-label">CVC</span>
+              <input type="text" id="pmCvc" inputmode="numeric" placeholder="123" maxlength="4"></label>
+          </div>
+          <p class="form-error" id="pmError" hidden></p>
+          <button class="acct-btn acct-btn--primary acct-btn--wide" type="submit">Save card</button>
+        </form>
+      </div>
+
       <h4 class="mono-label section-head">Purchases</h4>
       <p class="form-note">Signed order policies — frozen budgets and deadlines the agent must obey. Receipts appear once the agent files them.</p>
       <div id="policyList"></div>

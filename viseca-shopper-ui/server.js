@@ -13,6 +13,9 @@
  *   5. persistence: per-user chat history (GET/DELETE /api/history) survives
  *      reloads; signed order policies are mapped to accounts and listed via
  *      GET /api/policies with receipt status
+*   6. shopping controls (shopping.js): per-account spend cap, website
+*      whitelist, Visa/Mastercard vault. Enforced at /api/policy/sign; the
+*      chosen card is filed as policies/<id>.payment.json for the agent.
  *
  * Config (env):
  *   PORT                  default 8794
@@ -26,6 +29,7 @@
  *   REGISTRATION_OPEN     default true ("false" closes signup)
  *   PLANS_JSON            optional override of plan caps, e.g. '{"free":{"daily":2}}'
  *   ACCOUNTS_DATA_DIR     default ./data
+*   OPENCLAW_MODEL        optional model override passed as --model to every agent turn
  */
 
 const http = require("http");
@@ -35,12 +39,14 @@ const os = require("os");
 const path = require("path");
 const crypto = require("crypto");
 const accounts = require("./accounts");
+const shopping = require("./shopping");
 
 const PORT = parseInt(process.env.PORT || "8794", 10);
 const HOST = process.env.HOST || "127.0.0.1";
 const AGENT = process.env.OPENCLAW_AGENT || "viseca-shopper";
 const SESSION = process.env.OPENCLAW_SESSION || "webui";
 const BIN = process.env.OPENCLAW_BIN || "openclaw";
+const MODEL = (process.env.OPENCLAW_MODEL || "").trim();
 const TIMEOUT_MS = parseInt(process.env.OPENCLAW_TIMEOUT_MS || "600000", 10);
 const MAX_CONCURRENT = Math.max(1, parseInt(process.env.AGENT_MAX_CONCURRENT || "2", 10));
 const PUBLIC_DIR = path.join(__dirname, "public");
@@ -189,13 +195,15 @@ function turnError(kind, message, detail) {
 /** Run one agent turn through the Gateway CLI and resolve the reply text. */
 function agentTurn(message, sessionKey, timeoutMs = TIMEOUT_MS) {
   return new Promise((resolve, reject) => {
-    const child = spawn(BIN, [
+    const args = [
       "agent",
       "--agent", AGENT,
       "--session-key", sessionKey,
       "--json",
       "-m", message,
-    ], { stdio: ["ignore", "pipe", "pipe"] });
+    ];
+    if (MODEL) args.push("--model", MODEL);
+    const child = spawn(BIN, args, { stdio: ["ignore", "pipe", "pipe"] });
 
     let stdout = "";
     let stderr = "";
@@ -284,6 +292,20 @@ function friendlyTurnError(err) {
  *  policies/<policy_id>.signed.json in the agent workspace. The script itself
  *  REFUSES incomplete policies (exit 4) — that is the no-missing-data rule. */
 function signPolicy(policy, res, user) {
+  /* Shopping controls first: spend cap + website whitelist (see shopping.js).
+   * Violations are a different refusal than incompleteness — they carry
+   * `violations` (the customer must change settings or the budget), while the
+   * signer's own exit-4 refusal carries `missing` (the agent must ask). */
+  const chk = shopping.checkPolicyAgainstSettings(user.id, policy);
+  if (!chk.ok) {
+    console.log(`[policy] sign REFUSED (shopping settings) user=${user.email}: ${chk.violations.join(" | ")}`);
+    return sendJson(res, 422, {
+      ok: false,
+      error: "The authority refused to sign — the policy conflicts with your shopping settings.",
+      violations: chk.violations,
+      missing: [],
+    });
+  }
   const tmpIn = path.join(os.tmpdir(), `policy-in-${process.pid}-${Date.now()}.json`);
   const tmpOut = `${tmpIn}.signed`;
   fs.writeFileSync(tmpIn, JSON.stringify(policy, null, 2));
@@ -299,6 +321,9 @@ function signPolicy(policy, res, user) {
       fs.copyFileSync(tmpOut, finalPath);
       payload.signed_path = finalPath;
       recordPolicyOwner(env.policy.policy_id, user);
+      const method = shopping.pickMethod(user.id, env.policy && env.policy.payment && env.policy.payment.method);
+      shopping.writePaymentFile(POLICY_DIR, env.policy.policy_id, method);
+      payload.payment = { card_on_file: Boolean(method), brand: method ? method.brand : null, last4: method ? method.last4 : null };
       console.log(`[policy] SIGNED ${env.policy.policy_id} (fingerprint ${payload.signed_by}) -> ${finalPath}`);
       return sendJson(res, 200, payload);
     }
@@ -395,6 +420,41 @@ function recordPolicyOwner(policyId, user) {
     fs.writeFileSync(POLICY_OWNERS_FILE, JSON.stringify(owners, null, 2));
   } catch (e) {
     console.log(`[policy] owner mapping failed: ${e.message}`);
+  }
+}
+
+/** A policy signed before the customer added any card carries a payment file
+ *  with card:null. When a card arrives, re-file instruments for the account's
+ *  still-unpaid policies so the customer doesn't have to re-sign. */
+function backfillPaymentFiles(user) {
+  const owners = loadPolicyOwners();
+  for (const [pid, owner] of Object.entries(owners)) {
+    if (owner.userId !== user.id) continue;
+    const signedPath = path.join(POLICY_DIR, `${pid}.signed.json`);
+    const payPath = path.join(POLICY_DIR, `${pid}.payment.json`);
+    if (!fs.existsSync(signedPath) || fs.existsSync(path.join(POLICY_DIR, `${pid}.receipt.json`))) continue;
+    try {
+      const cur = JSON.parse(fs.readFileSync(payPath, "utf8"));
+      if (cur && cur.card) continue;
+      const env = JSON.parse(fs.readFileSync(signedPath, "utf8"));
+      const method = shopping.pickMethod(user.id, env.policy && env.policy.payment && env.policy.payment.method);
+      if (method) {
+        shopping.writePaymentFile(POLICY_DIR, pid, method);
+        console.log(`[policy] payment card backfilled -> ${pid} (${method.brand} ••${method.last4})`);
+      }
+    } catch { /* signed envelope unreadable — leave it alone */ }
+  }
+}
+
+/** Card status for GET /api/policies rows (masked — never full numbers). */
+function paymentStatusFor(policyId) {
+  try {
+    const raw = JSON.parse(fs.readFileSync(path.join(POLICY_DIR, `${policyId}.payment.json`), "utf8"));
+    return raw.card
+      ? { card_on_file: true, brand: raw.card.brand, last4: raw.card.last4 }
+      : { card_on_file: false, note: raw.note ? "no card on file" : null };
+  } catch {
+    return { card_on_file: false };
   }
 }
 
@@ -646,6 +706,7 @@ async function handle(req, res) {
         authority_fingerprint: AUTH ? AUTH.fingerprint : null,
         policy_dir: POLICY_DIR,
       },
+      shopping: { spendCap: true, whitelist: true, cardVault: true },
     });
   }
 
@@ -744,6 +805,93 @@ async function handle(req, res) {
       const ok = accounts.revokeApiKey(auth.user.id, String(body.id || ""));
       return sendJson(res, ok ? 200 : 404, ok ? { ok: true } : { error: "No such key." });
     }
+
+    /* ----- shopping controls: spend cap, website whitelist, card vault ----- */
+
+    if (pathname === "/api/account/shopping" && req.method === "GET") {
+      return sendJson(res, 200, {
+        ok: true,
+        spendCapChf: shopping.getSpendCap(auth.user.id),
+        whitelist: shopping.getWhitelist(auth.user.id),
+        methods: shopping.listMethods(auth.user.id),
+        unrestricted: {
+          cap: shopping.getSpendCap(auth.user.id) == null,
+          whitelist: shopping.getWhitelist(auth.user.id).length === 0,
+        },
+      });
+    }
+
+    if (pathname === "/api/account/shopping/cap" && req.method === "PUT") {
+      const body = await readJsonBody(req, 4).catch(() => null);
+      if (body === null) return sendJson(res, 413, { error: "Payload too large." });
+      try {
+        const cap = shopping.setSpendCap(auth.user.id, body.capChf === undefined ? null : body.capChf);
+        console.log(`[shopping] ${auth.user.email} spend cap -> ${cap == null ? "none" : `${cap} CHF`}`);
+        return sendJson(res, 200, { ok: true, spendCapChf: cap });
+      } catch (e) {
+        return sendJson(res, e.status || 500, { error: e.message });
+      }
+    }
+
+    if (pathname === "/api/account/shopping/whitelist" && req.method === "POST") {
+      const body = await readJsonBody(req, 4).catch(() => null);
+      if (body === null) return sendJson(res, 413, { error: "Payload too large." });
+      try {
+        const out = shopping.addWhitelist(auth.user.id, body.domain);
+        console.log(`[shopping] ${auth.user.email} whitelist +${out.added}${out.already ? " (already covered)" : ""}`);
+        return sendJson(res, out.already ? 200 : 201, { ok: true, ...out });
+      } catch (e) {
+        return sendJson(res, e.status || 500, { error: e.message });
+      }
+    }
+
+    if (pathname === "/api/account/shopping/whitelist/remove" && req.method === "POST") {
+      const body = await readJsonBody(req, 4).catch(() => null);
+      if (body === null) return sendJson(res, 413, { error: "Payload too large." });
+      try {
+        const out = shopping.removeWhitelist(auth.user.id, body.domain);
+        return sendJson(res, 200, { ok: true, ...out });
+      } catch (e) {
+        return sendJson(res, e.status || 500, { error: e.message });
+      }
+    }
+
+    if (pathname === "/api/account/shopping/sites" && req.method === "GET") {
+      const q = new URL(req.url, "http://x").searchParams.get("q") || "";
+      try {
+        const results = await shopping.searchSites(q);
+        return sendJson(res, 200, { ok: true, query: q, results });
+      } catch (e) {
+        return sendJson(res, 500, { error: e.message });
+      }
+    }
+
+    if (pathname === "/api/account/shopping/methods" && req.method === "POST") {
+      const body = await readJsonBody(req, 4).catch(() => null);
+      if (body === null) return sendJson(res, 413, { error: "Payload too large." });
+      try {
+        const { record } = shopping.addMethod(auth.user.id, body);
+        console.log(`[shopping] ${auth.user.email} card saved: ${record.brand} ••${record.last4}`);
+        backfillPaymentFiles(auth.user);
+        return sendJson(res, 201, { ok: true, method: record });
+      } catch (e) {
+        return sendJson(res, e.status || 500, { error: e.message });
+      }
+    }
+
+    if (pathname === "/api/account/shopping/methods/default" && req.method === "POST") {
+      const body = await readJsonBody(req, 4).catch(() => null);
+      if (body === null) return sendJson(res, 413, { error: "Payload too large." });
+      const ok = shopping.setDefaultMethod(auth.user.id, String(body.id || ""));
+      return sendJson(res, ok ? 200 : 404, ok ? { ok: true, methods: shopping.listMethods(auth.user.id) } : { error: "No such card." });
+    }
+
+    if (pathname === "/api/account/shopping/methods/delete" && req.method === "POST") {
+      const body = await readJsonBody(req, 4).catch(() => null);
+      if (body === null) return sendJson(res, 413, { error: "Payload too large." });
+      const ok = shopping.deleteMethod(auth.user.id, String(body.id || ""));
+      return sendJson(res, ok ? 200 : 404, ok ? { ok: true, methods: shopping.listMethods(auth.user.id) } : { error: "No such card." });
+    }
   }
 
   /* ----- chat ----- */
@@ -811,6 +959,7 @@ async function handle(req, res) {
           signed_at: env.signed_at || owner.recordedAt,
           signed_by: env.signed_by || null,
           receipt,
+          payment: paymentStatusFor(pid),
         });
       } catch {
         policies.push({ policy_id: pid, request: "(policy file missing)", items: [], budget: null, timing: null, signed_at: owner.recordedAt, signed_by: null, receipt: null, missing: true });
@@ -867,6 +1016,7 @@ accounts.load();
 accounts.pruneSessions();
 accounts.ensureDemoAccount();
 accounts.ensureDummyAccount();
+shopping.load();
 
 server.listen(PORT, HOST, () => {
   const url = `http://${HOST}:${PORT}`;

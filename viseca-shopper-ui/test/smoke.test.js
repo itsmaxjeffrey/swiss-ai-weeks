@@ -55,6 +55,7 @@ function startServer() {
       POLICY_DIR: path.join(tmpDir, "agent-ws", "policies"),
       PLANS_JSON: JSON.stringify({ free: { daily: 2 } }),
       DEMO_PASSWORD: "test-demo-pass-123",
+      SHOPPING_WEB_SEARCH: "0",
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -382,4 +383,237 @@ let historyBaseline = -1;
   assert.equal(del.status, 200);
   const h = await (await fetch(`${BASE}/api/history`, { headers: { Cookie: cookieB } })).json();
   assert.equal(h.messages.length, 0);
+});
+
+/* ---------- shopping controls: spend cap, website whitelist, card vault ---------- */
+
+let cookieC;
+let cookieD;
+const plusDaysC = (n) => new Date(Date.now() + n * 86400000);
+const policyDir = path.join(tmpDir, "agent-ws", "policies");
+
+function fullPolicy(idSuffix, overrides = {}) {
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  const dateTag = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
+  return Object.assign({
+    policy_id: `pol_${dateTag}-${idSuffix}`,
+    created_at: isoZurich(now),
+    request: "One pizza from Uber Eats",
+    items: [{ product: "Pizza margherita", quantity: 1, max_unit_price: { amount: 24, currency: "CHF" } }],
+    budget: { max_total: 24, currency: "CHF" },
+    timing: { order_by: isoZurich(plusDaysC(1)), deliver_by: isoZurich(plusDaysC(2)) },
+    delivery: { address: "Musterstrasse 1, 8000 Zürich", instructions: "" },
+    payment: { method: "card on file", max_single_charge: { amount: 24, currency: "CHF" } },
+    merchant: { allowed_domains: ["ubereats.com"], blocked_domains: [], require_impressum: false },
+    stop_rules: ["stop if nothing within budget"],
+  }, overrides);
+}
+
+const capPut = (c, value) =>
+  fetch(`${BASE}/api/account/shopping/cap`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", Cookie: c },
+    body: JSON.stringify({ capChf: value }),
+  });
+
+ test("shopping settings require auth", async () => {
+  const r = await fetch(`${BASE}/api/account/shopping`);
+  assert.equal(r.status, 401);
+});
+
+ test("health advertises the shopping feature marker", async () => {
+  const j = await (await fetch(`${BASE}/api/health`)).json();
+  assert.deepEqual(j.shopping, { spendCap: true, whitelist: true, cardVault: true });
+});
+
+ test("shopping settings default to unrestricted", async () => {
+  const reg = await post("/api/auth/register", { email: "carol@example.com", password: "correct horse battery", name: "Carol" });
+  assert.equal(reg.status, 201);
+  cookieC = cookieOf(reg);
+  const j = await (await fetch(`${BASE}/api/account/shopping`, { headers: { Cookie: cookieC } })).json();
+  assert.equal(j.ok, true);
+  assert.equal(j.spendCapChf, null);
+  assert.deepEqual(j.whitelist, []);
+  assert.deepEqual(j.methods, []);
+  assert.equal(j.unrestricted.cap, true);
+  assert.equal(j.unrestricted.whitelist, true);
+});
+
+ test("spend cap: set, refuse junk, clear", async () => {
+  let r = await capPut(cookieC, 50);
+  assert.equal(r.status, 200);
+  let j = await r.json();
+  assert.equal(j.spendCapChf, 50);
+
+  r = await capPut(cookieC, -3);
+  assert.equal(r.status, 400);
+
+  r = await capPut(cookieC, "lots");
+  assert.equal(r.status, 400);
+
+  r = await capPut(cookieC, null);
+  assert.equal(r.status, 200);
+  j = await r.json();
+  assert.equal(j.spendCapChf, null);
+});
+
+ test("whitelist: normalize, add, dedupe covered subdomain, refuse junk, remove", async () => {
+  let r = await post("/api/account/shopping/whitelist", { domain: "https://www.ubereats.com/ch/en/" }, { Cookie: cookieC });
+  assert.equal(r.status, 201);
+  let j = await r.json();
+  assert.deepEqual(j.whitelist, ["ubereats.com"]);
+
+  r = await post("/api/account/shopping/whitelist", { domain: "food.ubereats.com" }, { Cookie: cookieC });
+  assert.equal(r.status, 200); // already covered by ubereats.com
+  j = await r.json();
+  assert.equal(j.already, true);
+  assert.deepEqual(j.whitelist, ["ubereats.com"]);
+
+  r = await post("/api/account/shopping/whitelist", { domain: "not a domain" }, { Cookie: cookieC });
+  assert.equal(r.status, 400);
+
+  r = await post("/api/account/shopping/whitelist/remove", { domain: "ubereats.com" }, { Cookie: cookieC });
+  assert.equal(r.status, 200);
+  j = await r.json();
+  assert.deepEqual(j.whitelist, []);
+});
+
+ test("site search finds catalog entries without network", async () => {
+  const r = await fetch(`${BASE}/api/account/shopping/sites?q=ubereats`, { headers: { Cookie: cookieC } });
+  assert.equal(r.status, 200);
+  const j = await r.json();
+  assert.ok(j.results.some((x) => x.domain === "ubereats.com"));
+});
+
+ test("card vault: holder, luhn, brand, expiry and duplicate rules; stores masked only", async () => {
+  const send = (body) => post("/api/account/shopping/methods", body, { Cookie: cookieC });
+
+  assert.equal((await send({ holder: "C", number: "4242424242424242", exp: "09/28", cvc: "123" })).status, 400);
+  assert.equal((await send({ holder: "Carol Muster", number: "4242424242424241", exp: "09/28", cvc: "123" })).status, 400); // luhn fail
+  assert.equal((await send({ holder: "Carol Muster", number: "378282246310005", exp: "09/28", cvc: "1234" })).status, 400); // amex not allowed
+  assert.equal((await send({ holder: "Carol Muster", number: "4242424242424242", exp: "01/20", cvc: "123" })).status, 400); // expired
+  assert.equal((await send({ holder: "Carol Muster", number: "4242424242424242", exp: "09/28", cvc: "12" })).status, 400); // cvc short
+
+  const ok = await send({ holder: "Carol Muster", number: "4242 4242 4242 4242", exp: "09/28", cvc: "123" });
+  assert.equal(ok.status, 201);
+  const j = await ok.json();
+  assert.equal(j.method.brand, "visa");
+  assert.equal(j.method.last4, "4242");
+  assert.equal(j.method.number, undefined, "full PAN never returned");
+  assert.equal(j.method.cvc, undefined, "CVC never returned");
+
+  assert.equal((await send({ holder: "Carol Muster", number: "4242424242424242", exp: "09/28", cvc: "123" })).status, 409); // duplicate
+
+  const list = await (await fetch(`${BASE}/api/account/shopping`, { headers: { Cookie: cookieC } })).json();
+  assert.equal(list.methods.length, 1);
+  assert.equal(list.methods[0].isDefault, true);
+  assert.equal(list.methods[0].number, undefined);
+});
+
+ test("sign refuses a budget over the spend cap (violations, not missing)", async () => {
+  await capPut(cookieC, 20);
+  const policy = fullPolicy("capv1"); // budget 24 > cap 20
+  const r = await post("/api/policy/sign", { policy }, { Cookie: cookieC });
+  assert.equal(r.status, 422);
+  const j = await r.json();
+  assert.ok(Array.isArray(j.violations) && j.violations.length, "violations list present");
+  assert.match(j.violations[0], /spending cap/);
+  await capPut(cookieC, null);
+});
+
+ test("sign requires whitelisted merchant domains once the whitelist is active", async () => {
+  await post("/api/account/shopping/whitelist", { domain: "ubereats.com" }, { Cookie: cookieC });
+
+  const other = fullPolicy("wlro1", { merchant: { allowed_domains: ["migros.ch"], blocked_domains: [], require_impressum: true } });
+  let r = await post("/api/policy/sign", { policy: other }, { Cookie: cookieC });
+  assert.equal(r.status, 422);
+  let j = await r.json();
+  assert.match(j.violations.join(" "), /migros\.ch/);
+
+  const noDomain = fullPolicy("wldm1", { merchant: { allowed_domains: [], blocked_domains: [], require_impressum: true } });
+  r = await post("/api/policy/sign", { policy: noDomain }, { Cookie: cookieC });
+  assert.equal(r.status, 422);
+  j = await r.json();
+  assert.match(j.violations.join(" "), /merchant\.allowed_domains/);
+
+  const sub = fullPolicy("wlsub1", { merchant: { allowed_domains: ["food.ubereats.com"], blocked_domains: [], require_impressum: true } });
+  r = await post("/api/policy/sign", { policy: sub }, { Cookie: cookieC });
+  assert.equal(r.status, 200); // subdomain of a whitelisted entry is fine
+  await post("/api/account/shopping/whitelist/remove", { domain: "ubereats.com" }, { Cookie: cookieC });
+});
+
+ test("sign files the payment card for the policy and masks it in listings", async () => {
+  await post("/api/account/shopping/whitelist", { domain: "ubereats.com" }, { Cookie: cookieC });
+  const policy = fullPolicy("payf1");
+  const r = await post("/api/policy/sign", { policy }, { Cookie: cookieC });
+  assert.equal(r.status, 200);
+  const j = await r.json();
+  assert.equal(j.payment.card_on_file, true);
+  assert.equal(j.payment.brand, "visa");
+  assert.equal(j.payment.last4, "4242");
+  assert.equal(j.payment.number, undefined);
+
+  const payFile = JSON.parse(fs.readFileSync(path.join(policyDir, `${policy.policy_id}.payment.json`), "utf8"));
+  assert.equal(payFile.policy_id, policy.policy_id);
+  assert.equal(payFile.card.brand, "visa");
+  assert.equal(payFile.card.last4, "4242");
+  assert.ok(payFile.card.number, "agent needs the full number at checkout");
+  assert.ok(payFile.card.cvc, "agent needs the CVC at checkout");
+
+  const list = await (await fetch(`${BASE}/api/policies`, { headers: { Cookie: cookieC } })).json();
+  const mine = list.policies.find((p) => p.policy_id === policy.policy_id);
+  assert.equal(mine.payment.card_on_file, true);
+  assert.equal(mine.payment.last4, "4242");
+  assert.equal(mine.payment.number, undefined);
+});
+
+ test("signing without a card files a no-card note; adding one backfills unpaid policies", async () => {
+  const reg = await post("/api/auth/register", { email: "dave@example.com", password: "correct horse battery", name: "Dave" });
+  assert.equal(reg.status, 201);
+  cookieD = cookieOf(reg);
+  await post("/api/account/shopping/whitelist", { domain: "ubereats.com" }, { Cookie: cookieD });
+
+  const policy = fullPolicy("nocd1");
+  const r = await post("/api/policy/sign", { policy }, { Cookie: cookieD });
+  assert.equal(r.status, 200);
+  const j = await r.json();
+  assert.equal(j.payment.card_on_file, false);
+
+  const payPath = path.join(policyDir, `${policy.policy_id}.payment.json`);
+  let payFile = JSON.parse(fs.readFileSync(payPath, "utf8"));
+  assert.equal(payFile.card, null);
+  assert.match(payFile.instruction, /no card on file/i);
+
+  // Dave saves a card → the bridge re-files the instrument for the unpaid policy
+  const card = await post("/api/account/shopping/methods", { holder: "Dave Muster", number: "5555 5555 5555 4444", exp: "11/29", cvc: "456" }, { Cookie: cookieD });
+  assert.equal(card.status, 201);
+  assert.equal((await card.json()).method.brand, "mastercard");
+
+  payFile = JSON.parse(fs.readFileSync(payPath, "utf8"));
+  assert.equal(payFile.card.brand, "mastercard");
+  assert.equal(payFile.card.last4, "4444");
+});
+
+ test("deleting and re-defaulting cards behaves", async () => {
+  const second = await post("/api/account/shopping/methods", { holder: "Carol Muster", number: "5105 1051 0510 5100", exp: "10/29", cvc: "789" }, { Cookie: cookieC });
+  assert.equal(second.status, 201);
+  const sj = await second.json();
+  assert.equal(sj.method.brand, "mastercard");
+  assert.equal(sj.method.isDefault, false, "first card stays default");
+
+  const def = await post("/api/account/shopping/methods/default", { id: sj.method.id }, { Cookie: cookieC });
+  assert.equal(def.status, 200);
+  let list = await (await fetch(`${BASE}/api/account/shopping`, { headers: { Cookie: cookieC } })).json();
+  assert.equal(list.methods.find((m) => m.id === sj.method.id).isDefault, true);
+  assert.equal(list.methods.filter((m) => m.isDefault).length, 1);
+
+  const del = await post("/api/account/shopping/methods/delete", { id: sj.method.id }, { Cookie: cookieC });
+  assert.equal(del.status, 200);
+  list = await (await fetch(`${BASE}/api/account/shopping`, { headers: { Cookie: cookieC } })).json();
+  assert.equal(list.methods.length, 1);
+  assert.equal(list.methods[0].isDefault, true, "remaining card is re-defaulted");
+
+  const ghost = await post("/api/account/shopping/methods/delete", { id: "pm_nope" }, { Cookie: cookieC });
+  assert.equal(ghost.status, 404);
 });

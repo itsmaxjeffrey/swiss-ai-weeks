@@ -858,3 +858,68 @@ body::after {
 /* `hidden` must always win over author display rules (overlay is display:flex;
    without this the login sheet never closes). Applies app-wide. */
 [hidden] { display: none !important; }
+
+/* ---------- shopping settings (cap / whitelist / card vault) ---------- */
+
+.shop-block { border-top: 1px dashed var(--hairline, #d8d2c2); padding: 10px 0 4px; margin-top: 10px; }
+.shop-block:first-of-type { border-top: 0; margin-top: 4px; }
+.shop-label { display: block; font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--red); margin-bottom: 6px; }
+
+.shop-cap-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.shop-cap-row input[type="number"] {
+  width: 110px; border: 1px solid var(--ink); background: var(--paper);
+  padding: 8px 10px; font: inherit; font-size: 14px;
+}
+.shop-cap-chf { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); }
+.shop-cap-row .acct-btn { flex: 0 0 auto; }
+
+.wl-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.wl-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid var(--ink); background: var(--paper);
+  padding: 4px 6px 4px 9px; font-size: 12.5px;
+}
+.wl-chip code { font-family: var(--mono); font-size: 11.5px; }
+.wl-chip button {
+  border: 0; background: transparent; color: var(--red);
+  font-size: 14px; line-height: 1; cursor: pointer; padding: 0 3px;
+}
+.wl-chip button:hover { color: var(--red-deep); }
+
+.wl-add-row, .wl-search-row { display: flex; gap: 8px; margin-bottom: 6px; }
+.wl-add-row input, .wl-search-row input {
+  flex: 1; border: 1px solid var(--ink); background: var(--paper);
+  padding: 8px 10px; font: inherit; font-size: 13.5px; min-width: 0;
+}
+
+.wl-results { border: 1px solid var(--ink); background: var(--paper-deep); margin-bottom: 6px; max-height: 220px; overflow: auto; }
+.wl-result { display: flex; align-items: center; gap: 8px; padding: 7px 9px; border-bottom: 1px dashed var(--hairline, #d8d2c2); }
+.wl-result:last-child { border-bottom: 0; }
+.wl-result-name { font-size: 13px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wl-result-domain { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); }
+.wl-result-cat { margin-left: auto; font-size: 10px; color: var(--ink-soft); }
+.wl-result .acct-btn { flex: 0 0 auto; }
+
+.pm-row { display: flex; align-items: center; gap: 9px; padding: 7px 0; border-bottom: 1px dashed var(--hairline, #d8d2c2); font-size: 13.5px; }
+.pm-row:last-child { border-bottom: 0; }
+.pm-num { font-family: var(--mono); font-size: 12.5px; }
+.pm-exp { font-size: 11px; color: var(--ink-soft); }
+.pm-default { color: #1c7c33; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+.pm-row .acct-btn { margin-left: auto; }
+.pm-row .pm-default { margin-left: auto; }
+.pm-row .pm-del { margin-left: 0; }
+
+.pm-brand-badge {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em;
+  padding: 3px 7px; border: 1px solid var(--ink); background: var(--paper);
+}
+.pm-brand--visa { color: #1a1f71; }
+.pm-brand--mastercard { color: #eb001b; }
+
+.pm-form { margin-top: 8px; }
+.pm-form .field input { border: 1px solid var(--ink); background: var(--paper); padding: 8px 10px; font: inherit; font-size: 14px; width: 100%; }
+.pm-brand { color: var(--red); font-size: 10px; letter-spacing: 0.1em; }
+.pm-split { display: flex; gap: 10px; }
+.pm-split .field { flex: 1; }
+
+.acct-btn--mini { padding: 4px 8px; font-size: 11px; }

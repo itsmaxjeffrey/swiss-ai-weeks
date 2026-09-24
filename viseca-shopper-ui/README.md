@@ -38,6 +38,7 @@ Requires the `openclaw` CLI on `PATH`, logged into a Gateway that has the
 | `OPENCLAW_AGENT`      | `viseca-shopper` | Any OpenClaw agent id works               |
 | `OPENCLAW_SESSION`    | `webui`          | Base session-key suffix — each account gets `<base>-u<id>` |
 | `OPENCLAW_BIN`        | `openclaw`       | CLI binary                                |
+| `OPENCLAW_MODEL`      | *(agent default)* | Model override passed as `--model` to every agent turn (e.g. `swissai/apertus-70b`) |
 | `OPENCLAW_TIMEOUT_MS` | `600000`         | Max agent turn duration                   |
 | `AGENT_MAX_CONCURRENT`| `2`              | Global agent-turn slots across all users  |
 | `PUBLIC_BASE_URL`     | derived          | Base URL in plugin manifest/OpenAPI (falls back to `x-forwarded-*`) |
@@ -75,6 +76,14 @@ OPENCLAW_AGENT=my-agent OPENCLAW_SESSION=dashboard PORT=8800 node server.js
 | `/openapi.json`               | GET    | —             | OpenAPI 3.0.3 spec for GPT Action import                                    |
 | `/api/policy/pubkey`          | GET    | —             | order-policy verification key                                               |
 | `/api/policy/sign`            | POST   | **cookie only** | signs/freeses an order policy (signed-in customers only)                  |
+| `/api/account/shopping`       | GET    | cookie/key    | spend cap, whitelist, masked payment methods                                 |
+| `/api/account/shopping/cap`   | PUT    | cookie/key    | `{ capChf: number\|null }` — max budget the agent may sign per order         |
+| `/api/account/shopping/whitelist` | POST | cookie/key  | `{ domain }` — whitelist a website (normalizes URLs → bare domain)           |
+| `/api/account/shopping/whitelist/remove` | POST | cookie/key | `{ domain }` — remove a whitelist entry                               |
+| `/api/account/shopping/sites` | GET    | cookie/key    | `?q=` — search shops for the whitelist (curated catalog + optional web)      |
+| `/api/account/shopping/methods` | POST | cookie/key    | `{ holder, number, exp, cvc }` — save a Visa/Mastercard (Luhn-checked)       |
+| `/api/account/shopping/methods/default` | POST | cookie/key | `{ id }` — set the default card                                       |
+| `/api/account/shopping/methods/delete` | POST | cookie/key | `{ id }` — remove a card                                              |
 
 ## Accounts & subscription plans
 
@@ -173,6 +182,30 @@ Every purchase runs under a fixed, signed, time-bound **order policy**:
 Bridge config (env): `POLICY_AGENT_WS`, `POLICY_SCRIPT`, `POLICY_DIR`,
 `POLICY_KEYS_DIR`, `POLICY_PUB_OUT`. `GET /api/policy/pubkey` exposes the
 verification key; `POST /api/policy/sign {policy}` is the only signing path.
+
+## Shopping controls (spend cap · website whitelist · card vault)
+
+Every account has three purchase controls under **Account → Shopping settings**:
+
+1. **Maximum spend per order** — a signed policy's `budget.max_total` may never
+   exceed this cap. `null` (default) = unrestricted.
+2. **Whitelisted websites** — search real shops (`/api/account/shopping/sites?q=`,
+   curated Swiss catalog with optional web enrichment, `SHOPPING_WEB_SEARCH=0`
+   disables it), click to whitelist. Once the whitelist is non-empty, a policy
+   must declare `merchant.allowed_domains` and every domain must sit inside the
+   whitelist (subdomains included). Empty whitelist = unrestricted.
+3. **Payment method (Visa / Mastercard)** — cards are Luhn-checked, brand-locked
+   (Visa/Mastercard only), and stored in `data/vault.json` (chmod 0600,
+   gitignored). The API never returns full numbers — only brand + last4.
+
+**How the agent pays:** cap and whitelist are enforced at `POST /api/policy/sign`
+(refusal → HTTP 422 with a `violations` list the UI renders). On success the
+bridge files the customer's card as `policies/<policy_id>.payment.json` in the
+agent workspace (gitignored) — the agent reads it at the payment phase and
+checks out with that card. Card data never passes through the model context,
+and the agent is instructed to reference it only as "<brand> ••<last4>".
+Signing before saving a card files a `card: null` note; saving a card later
+backfills all still-unpaid policies so they don't need re-signing.
 
 ## Conversation history & Purchases view
 
