@@ -17,6 +17,8 @@
 // Unknown categories fall back to `finite` (conservative: flag and ask
 // rather than silently allow an unclassifiable bulk order).
 
+import { statThreshold } from './evstats.js';
+
 export const CATEGORY_CLASS = {
   bulk: ['groceries', 'household', 'home_improvement'],
   gift: ['gift_card', 'subscriptions', 'membership'],
@@ -48,4 +50,19 @@ export function qtyCap(category, qtyMaxByCategory) {
   return observed * 3 > base
     ? { cap: observed * 3, adaptive: true }
     : { cap: base, adaptive: false };
+}
+
+/** Statistically-informed cap for one line item: fits the customer's own
+ *  per-category quantity sample (GEV / GPD-POT / robust MAD — lib/evstats.js)
+ *  and clamps the result between the deterministic floor and a hard ceiling.
+ *  Returns null when the sample is too small for any method (caller falls
+ *  back to `qtyCap`). Engine-side enforcement only — the trained feature 14
+ *  and the Python trainer stay on the stable `qtyCap` heuristic above. */
+export function statCap(category, samples, qtyMaxByCategory) {
+  const base = baseCap(category);
+  const observed = Math.max(0, Number(qtyMaxByCategory?.[category]) || 0);
+  const incumbent = qtyCap(category, qtyMaxByCategory).cap;
+  const st = statThreshold(samples, { floor: base, observedMax: observed, heuristicFloor: incumbent });
+  if (!st || !st.used.length) return null; // no fit spoke → caller keeps qtyCap
+  return { cap: st.value, adaptive: true, method: st.used, n: st.n, detail: st.detail };
 }

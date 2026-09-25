@@ -291,6 +291,12 @@ def extract_examples(history):
             # approved-order line items can fill it (keyed by item_category)
             # and the engine's quantity caps + feature 14 adapt automatically.
             "qty_max_by_category": {},
+            # Per-category quantity SAMPLE (last ≤64 line quantities, oldest
+            # first) for the engine's statistical tail fits — GEV / GPD-POT /
+            # robust MAD in wallet-control/lib/evstats.js. Same seam as above:
+            # empty until a deployment records approved-order line items; the
+            # engine uses it only when a category has enough samples.
+            "qty_hist_by_category": {},
         }
         mu = profiles[cust]["log_mean"]
         n = len(st["log_amounts"])

@@ -153,3 +153,37 @@ cp models/behavior/behavior-model.json ../../wallet-control/lib/  # refresh depl
 cd ../../wallet-control && npm test               # parity anchors the deployed copy
 python3 models/behavior/experiment.py             # feature-search harness (LOCO)
 ```
+
+## v3.1 (2026-09-25): statistical quantity baselines — GEV / GPD-POT / MAD
+
+Owner request: "also implement gev and laya and even improve or choose better one
+if possible" — read as extreme-value methods for the self-adjusting quantity
+baseline. "LAYA" has no standard statistics meaning, so the statistically correct
+companion to GEV — GPD peaks-over-threshold (POT) — was implemented alongside a
+robust MAD baseline. `wallet-control/lib/evstats.js` (pure JS, zero deps): GEV
+block-maxima L-moment fit (Hosking), GPD L-moment fit + POT return levels,
+median + k·(1.4826·MAD). `lib/item-classes.js statCap()` combines the methods
+with the incumbent heuristic (max(base, 3×observed max)) as an unbreakable
+floor; engine §6c routes through it when the profile carries
+`qty_hist_by_category` (new trainer seam, per-method sample floors 4/10/12).
+
+Benchmark (`wallet-control/tools/evstats-bench.js`, 400 synthetic customers ×
+3 category classes, fit on 60% / held-out 40%, seed 20260925):
+
+| method | FP% (finite) | detect% | verdict |
+|---|---|---|---|
+| heuristic (incumbent) | 4.0 | 99.8 | strong at n≈24 |
+| MAD alone | 23.8 | 100.0 | too tight — disqualified |
+| GPD alone | 20.8 | 100.0 | too tight — disqualified |
+| GEV alone | 5.3 | 93.8 | under-estimates small-sample tails |
+| **blend (shipped)** | **2.3** | 98.3 | FP halved at n=24 (6.3→2.8 in sweep) |
+
+Sweep across n ∈ {12,24,48,64}: blend cuts false positives 2-3.5 pp at every n
+with ≤1 pp detection cost in the forced-step-up band (ordinary ask unchanged).
+Design rule chosen by the benchmark: statistics may only LOOSEN a cap when the
+customer's history justifies it, never tighten below the deterministic rule.
+Pitfall fixed en route: `Math.LN3` does not exist in JavaScript (NaN'd the GEV
+shape estimate; use `Math.log(3)`). The pack's history still carries no item
+lines, so the statistical path stays inert until real quantity samples
+accumulate in `qty_hist_by_category` — replay regression: decision lines
+byte-identical (verified 2026-09-25).

@@ -68,6 +68,12 @@ export function getBehaviorModel() {
   return cached; // null when artifact is absent -> engine skips this layer
 }
 
+/** Test-only: swap the cached model (engine integration tests inject profiles
+ *  with quantity history through this; product code never calls it). */
+export function setBehaviorModelForTest(m) {
+  cached = m;
+}
+
 /** Resolve a merchant-scoped field from either the flat attempt CSV shape or
  *  the live event's nested merchant object. */
 function merchantField(auth, field) {

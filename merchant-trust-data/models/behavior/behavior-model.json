@@ -1,7 +1,7 @@
 {
  "schema": "openclaw.behavior-model/1",
  "version": "behavior-model-v3",
- "trained_at": "2026-09-25T04:36:43+00:00",
+ "trained_at": "2026-09-25T05:40:42+00:00",
  "semantics": "advisory-only: may add evidence/uncertainty and escalate to the customer; never approves, declines, or loosens",
  "label_caveat": "trained on historical authorization outcomes, which are not fraud labels and not an answer key for attempts",
  "features": [
@@ -185,6 +185,7 @@
    ],
    "total_approved": 205,
    "qty_max_by_category": {},
+   "qty_hist_by_category": {},
    "n_amount_samples": 205
   },
   "CU0003": {
@@ -283,6 +284,7 @@
    ],
    "total_approved": 204,
    "qty_max_by_category": {},
+   "qty_hist_by_category": {},
    "n_amount_samples": 204
   },
   "CU0002": {
@@ -376,6 +378,7 @@
    ],
    "total_approved": 235,
    "qty_max_by_category": {},
+   "qty_hist_by_category": {},
    "n_amount_samples": 235
   },
   "CU0007": {
@@ -473,6 +476,7 @@
    ],
    "total_approved": 219,
    "qty_max_by_category": {},
+   "qty_hist_by_category": {},
    "n_amount_samples": 219
   },
   "CU0014": {
@@ -573,6 +577,7 @@
    ],
    "total_approved": 245,
    "qty_max_by_category": {},
+   "qty_hist_by_category": {},
    "n_amount_samples": 245
   },
   "CU0017": {
@@ -669,6 +674,7 @@
    ],
    "total_approved": 200,
    "qty_max_by_category": {},
+   "qty_hist_by_category": {},
    "n_amount_samples": 200
   },
   "CU0018": {
@@ -763,6 +769,7 @@
    ],
    "total_approved": 251,
    "qty_max_by_category": {},
+   "qty_hist_by_category": {},
    "n_amount_samples": 251
   },
   "CU0010": {
@@ -862,6 +869,7 @@
    ],
    "total_approved": 207,
    "qty_max_by_category": {},
+   "qty_hist_by_category": {},
    "n_amount_samples": 207
   },
   "CU0005": {
@@ -954,6 +962,7 @@
    ],
    "total_approved": 186,
    "qty_max_by_category": {},
+   "qty_hist_by_category": {},
    "n_amount_samples": 186
   },
   "CU0016": {
@@ -1037,6 +1046,7 @@
    ],
    "total_approved": 207,
    "qty_max_by_category": {},
+   "qty_hist_by_category": {},
    "n_amount_samples": 207
   },
   "CU0008": {
@@ -1129,6 +1139,7 @@
    ],
    "total_approved": 223,
    "qty_max_by_category": {},
+   "qty_hist_by_category": {},
    "n_amount_samples": 223
   },
   "CU0001": {
@@ -1230,6 +1241,7 @@
    ],
    "total_approved": 229,
    "qty_max_by_category": {},
+   "qty_hist_by_category": {},
    "n_amount_samples": 229
   },
   "CU0013": {
@@ -1319,6 +1331,7 @@
    ],
    "total_approved": 177,
    "qty_max_by_category": {},
+   "qty_hist_by_category": {},
    "n_amount_samples": 177
   },
   "CU0020": {
@@ -1414,6 +1427,7 @@
    ],
    "total_approved": 222,
    "qty_max_by_category": {},
+   "qty_hist_by_category": {},
    "n_amount_samples": 222
   },
   "CU0004": {
@@ -1506,6 +1520,7 @@
    ],
    "total_approved": 260,
    "qty_max_by_category": {},
+   "qty_hist_by_category": {},
    "n_amount_samples": 260
   },
   "CU0011": {
@@ -1593,6 +1608,7 @@
    ],
    "total_approved": 203,
    "qty_max_by_category": {},
+   "qty_hist_by_category": {},
    "n_amount_samples": 203
   },
   "CU0015": {
@@ -1681,6 +1697,7 @@
    ],
    "total_approved": 176,
    "qty_max_by_category": {},
+   "qty_hist_by_category": {},
    "n_amount_samples": 176
   },
   "CU0006": {
@@ -1773,6 +1790,7 @@
    ],
    "total_approved": 212,
    "qty_max_by_category": {},
+   "qty_hist_by_category": {},
    "n_amount_samples": 212
   },
   "CU0019": {
@@ -1870,6 +1888,7 @@
    ],
    "total_approved": 201,
    "qty_max_by_category": {},
+   "qty_hist_by_category": {},
    "n_amount_samples": 201
   },
   "CU0012": {
@@ -1964,6 +1983,7 @@
    ],
    "total_approved": 245,
    "qty_max_by_category": {},
+   "qty_hist_by_category": {},
    "n_amount_samples": 245
   }
  },
@@ -2223,7 +2243,7 @@
    "scenario_catalogue.csv": "82834634111cc1183ede31c48d4890a68fcdcd8efc61eee361a34fbd6c4bc3a4"
   },
   "python": "3.14.4",
-  "numpy": "2.5.2",
+  "numpy": "2.5.3",
   "seed": 20260924,
   "trainer": "merchant-trust-data/models/behavior/train_behavior.py"
  }

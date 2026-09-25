@@ -22,7 +22,7 @@ import {
 import { requestedItemSpec } from './policy-compiler.js';
 import { scanInjectionModel, getInjectionModel } from './injection-model.js';
 import { scoreBehavior, getBehaviorModel } from './behavior-model.js';
-import { qtyCap } from './item-classes.js';
+import { qtyCap, statCap } from './item-classes.js';
 import { describeResult, normalizeDomain } from './trustedshops.js';
 
 const INTEGRITY_SIGNAL_CODES = new Set(['DEVICE_NOVELTY', 'VELOCITY_BURST', 'UNUSUAL_HOUR']);
@@ -418,20 +418,27 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
   // a whitelisted merchant and even under uncertainty_policy "approve" (only a
   // "decline" policy suppresses it). Inert when the attempt has no item lines.
   if (F.lines.length) {
-    const qtyMax = getBehaviorModel()?.profiles?.[customerId]?.qty_max_by_category || {};
+    const profile = getBehaviorModel()?.profiles?.[customerId] || {};
+    const qtyMax = profile.qty_max_by_category || {};
+    const qtyHist = profile.qty_hist_by_category || {};
     let worst = null;
     for (const l of F.lines) {
       const qty = Math.max(1, Number(l.raw.quantity) || 1);
       const cat = l.raw.item_category ?? l.raw.category ?? null;
-      const { cap, adaptive } = qtyCap(cat, qtyMax);
+      // Statistical cap when this customer's own per-category quantity sample
+      // supports a fit (GEV/GPD/MAD — lib/evstats.js); heuristic otherwise.
+      const st = qtyHist[cat] ? statCap(cat, qtyHist[cat], qtyMax) : null;
+      const { cap, adaptive } = st ?? qtyCap(cat, qtyMax);
       if (qty > cap && (!worst || qty / cap > worst.qty / worst.cap)) {
-        worst = { name: l.raw.item_name || cat || 'an item', cat, qty, cap, adaptive };
+        worst = { name: l.raw.item_name || cat || 'an item', cat, qty, cap, adaptive, method: st?.method };
       }
     }
     if (worst) {
       const severe = worst.qty > worst.cap * 3;
       const limitTxt = worst.adaptive
-        ? `${worst.cap} — you have bought up to ${Math.round(worst.cap / 3)} of these before`
+        ? (worst.method?.length
+          ? `${worst.cap} — statistical fit from your own history (${worst.method.join('+')}, ${worst.n} samples)`
+          : `${worst.cap} — you have bought up to ${Math.round(worst.cap / 3)} of these before`)
         : `${worst.cap} (plausible maximum for ${worst.cat || 'this category'})`;
       addUnc('ITEM_QTY_ANOMALY', `basket line “${worst.name}” × ${worst.qty} exceeds a plausible quantity — limit ${limitTxt}; confirm this is intentional`);
       ev('Basket quantity', `✗ ${worst.name} × ${worst.qty} (cap ${worst.cap}${worst.cat ? `, ${worst.cat}` : ''})${severe ? ' — severe' : ''}`);
