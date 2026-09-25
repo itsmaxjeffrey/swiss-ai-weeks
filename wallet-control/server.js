@@ -269,8 +269,28 @@ const server = http.createServer(async (req, res) => {
         return json(res, 400, { error: 'provide a merchant: POST {merchant: url-or-domain, product_url?} or GET ?merchant=<domain>&product_url=<url>' });
       }
       const out = await dossierService.check(inputs);
-      for (const r of out.results) r.sustainability = lookupSustainability(r.domain, sustainabilityIndex);
+      for (const r of out.results) {
+        r.sustainability = lookupSustainability(r.domain, sustainabilityIndex);
+        r.trusted = r.domain ? Boolean(store.isTrustedDomain(r.domain)) : null;
+      }
       return json(res, 200, { took_ms: out.tookMs, cache: dossierService.stats, results: out.results });
+    }
+
+    if (p === '/api/merchant/trust' && req.method === 'POST') {
+      // Customer-initiated: trust a merchant the wallet surfaced (yellow-listed
+      // → resolved) straight from its dossier — no paused purchase required.
+      // Persists to the trusted list, mirrors to the shopper-bridge whitelist
+      // (sign-time enforcement there), and records a feed event.
+      const body = await readBody(req);
+      const domain = store.addTrustedDomain(body.domain || body.merchant, 'customer trusted this merchant from its dossier');
+      if (!domain) return json(res, 400, { error: 'provide a merchant domain or URL' });
+      const bridge = await worker.syncBridgeWhitelist(domain).catch((e) => ({ ok: false, error: e?.message || String(e) }));
+      const outcome = bridge.skipped ? 'shopper-bridge sync skipped (not configured)'
+        : bridge.ok ? (bridge.already ? 'already on the shopper-bridge whitelist' : 'also whitelisted in the shopper bridge')
+        : `shopper-bridge sync failed: ${bridge.error}`;
+      worker.pushFeed({ kind: 'trust', text: `🤝 ${domain} added to your trusted merchants — future purchases there skip the yellow-list review.`, bridge_sync: outcome });
+      console.log(`[trust] ${domain} trusted by customer (${outcome})`);
+      return json(res, 200, { ok: true, domain, trusted: true, bridge_sync: outcome });
     }
 
     if (p === '/api/settings/sustainability' && req.method === 'POST') {

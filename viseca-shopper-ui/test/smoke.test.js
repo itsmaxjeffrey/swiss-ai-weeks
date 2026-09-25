@@ -193,6 +193,17 @@ test("onboarding: fresh accounts start un-onboarded; endpoint marks done (auth +
   assert.equal((await me.json()).user.onboarded, true);
 });
 
+test("merchant directory: 40 curated shops served for onboarding chips", async () => {
+  const r = await fetch(`${BASE}/api/merchants`);
+  assert.equal(r.status, 200);
+  const j = await r.json();
+  assert.equal(j.ok, true);
+  assert.equal(j.count, 40);
+  assert.ok(Array.isArray(j.merchants) && j.merchants.length === 40);
+  assert.ok(j.merchants.every((m) => m.domain && m.name && !m.domain.includes("/")));
+  assert.ok(j.merchants.some((m) => m.evidence), "weekly evidence pass has stamped at least some merchants");
+});
+
 test("chat works over SSE with a cookie and gets a per-user session", async () => {
   const r = await post("/api/chat", { message: "find me a gift" }, { Cookie: cookie });
   assert.equal(r.status, 200);

@@ -1126,6 +1126,22 @@ const server = http.createServer((req, res) => {
   });
 });
 
+/* Merchant directory (data/merchants.json): curated CH shops + weekly
+ * evidence refresh (scripts/refresh-merchants.mjs). Served to the onboarding
+ * wizard and shop pickers; 60 s cache so a refresh shows without a restart. */
+const MERCHANTS_FILE = path.join(__dirname, "data", "merchants.json");
+let merchantsCache = { at: 0, data: null };
+function merchantsData() {
+  if (!merchantsCache.data || Date.now() - merchantsCache.at > 60_000) {
+    try {
+      merchantsCache = { at: Date.now(), data: JSON.parse(fs.readFileSync(MERCHANTS_FILE, "utf8")) };
+    } catch (e) {
+      console.error(`[merchants] read failed: ${e.message}`); // keep last good data
+    }
+  }
+  return merchantsCache.data;
+}
+
 async function handle(req, res) {
   const pathname = new URL(req.url, "http://x").pathname;
 
@@ -1137,7 +1153,7 @@ async function handle(req, res) {
       agent: AGENT,
       session: SESSION,
       bridge: "openclaw-cli",
-      build: "per-user-data-1",
+      build: "merchants-1",
       busy: activeTurns >= MAX_CONCURRENT,
       activeTurns,
       maxConcurrent: MAX_CONCURRENT,
@@ -1151,6 +1167,12 @@ async function handle(req, res) {
       shopping: { spendCap: true, whitelist: true, cardVault: true },
       family: { parentalControls: true, maxChildren: accounts.MAX_CHILDREN },
     });
+  }
+
+  if (req.method === "GET" && pathname === "/api/merchants") {
+    const data = merchantsData();
+    const list = Array.isArray(data?.merchants) ? data.merchants : [];
+    return sendJson(res, 200, { ok: true, updated_at: data?.updated_at || null, count: list.length, merchants: list });
   }
 
   if (req.method === "GET" && pathname === "/.well-known/ai-plugin.json") {

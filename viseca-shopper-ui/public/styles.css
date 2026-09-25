@@ -1264,6 +1264,15 @@ body::after {
 }
 
 .onb-chips { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0 12px; }
+.onb-shops-head { display: flex; justify-content: flex-end; margin-top: 10px; }
+.onb-selectall {
+  background: none;
+  border: 1px solid var(--ink);
+  padding: 5px 10px;
+  cursor: pointer;
+  color: var(--ink);
+}
+.onb-selectall:hover { border-color: var(--red); color: var(--red); }
 .onb-chip {
   font-family: var(--mono);
   font-size: 12px;

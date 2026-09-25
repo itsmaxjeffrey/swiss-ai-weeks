@@ -88,6 +88,7 @@
   const onbCapChips = document.getElementById("onbCapChips");
   const onbCapCustom = document.getElementById("onbCapCustom");
   const onbShopChips = document.getElementById("onbShopChips");
+  const btnOnbSelectAll = document.getElementById("onbSelectAll");
   const onbShopCount = document.getElementById("onbShopCount");
   const onbRecap = document.getElementById("onbRecap");
   const onbStarters = document.getElementById("onbStarters");
@@ -1485,7 +1486,7 @@
 
   /* ---------- first-run onboarding wizard ---------- */
 
-  const ONB_SHOPS = [
+  const ONB_FALLBACK_SHOPS = [
     { domain: "migros.ch", name: "Migros" },
     { domain: "coop.ch", name: "Coop" },
     { domain: "digitec.ch", name: "Digitec" },
@@ -1498,6 +1499,7 @@
     { domain: "exlibris.ch", name: "Ex Libris" },
   ];
   const ONB_KICKERS = { 1: "01 — Budget", 2: "02 — Trusted shops", 3: "03 — Ready" };
+  let onbShopList = ONB_FALLBACK_SHOPS; // replaced by /api/merchants (up to 40) when it answers
   let onbStep = 1;
   let onbCap = "50"; // selected preset or "none" (a filled custom input wins)
   let onbShops = new Set();
@@ -1540,7 +1542,7 @@
 
   function onbRenderShops() {
     onbShopChips.innerHTML = "";
-    ONB_SHOPS.forEach(({ domain, name }) => {
+    onbShopList.forEach(({ domain, name }) => {
       const b = document.createElement("button");
       b.type = "button";
       b.className = "onb-chip" + (onbShops.has(domain) ? " onb-chip--on" : "");
@@ -1556,6 +1558,22 @@
       });
       onbShopChips.appendChild(b);
     });
+    onbShopCount.textContent = onbShops.size
+      ? `${onbShops.size} shop${onbShops.size > 1 ? "s" : ""} selected — checkouts stay limited to these.`
+      : "No shops selected — every website is allowed.";
+    btnOnbSelectAll.textContent = `select all (${onbShopList.length})`;
+  }
+
+  /** One-tap: trust every merchant in the directory. Adds persist via the
+   *  same per-domain endpoint the chips use, chunked to stay gentle. */
+  function onbSelectAll() {
+    onbShops = new Set(onbShopList.map((s) => s.domain));
+    onbShopChips.querySelectorAll(".onb-chip").forEach((c) => c.classList.add("onb-chip--on"));
+    onbShopCount.textContent = `${onbShops.size} shops selected — checkouts stay limited to these.`;
+    const domains = [...onbShops];
+    for (let i = 0; i < domains.length; i += 8) {
+      Promise.all(domains.slice(i, i + 8).map((d) => onbToggleShop(d, true))).catch(() => {});
+    }
   }
 
   function onbRenderRecap() {
@@ -1606,9 +1624,30 @@
     if (!authOverlay.hidden || busy) return; // never fight another sheet or a running turn
     const first = String(user.name || "").split("@")[0].split(" ")[0];
     onbTitle.textContent = (first ? `Grüezi, ${first}! ` : "Grüezi! ") + "How much may I spend per order?";
-    onbRenderShops();
-    onbGoto(1);
-    onboardingOverlay.hidden = false;
+    onbLoadShops().finally(() => {
+      if (onboardingDone) return; // closed while the directory was loading
+      onbRenderShops();
+      onbGoto(1);
+      onboardingOverlay.hidden = false;
+    });
+  }
+
+  /** Load the merchant directory for the shop chips (40 curated CH shops with
+   *  weekly-refreshed evidence). Falls back to the embedded ten offline. */
+  async function onbLoadShops() {
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 2500);
+      const r = await fetch("/api/merchants", { signal: ctrl.signal });
+      clearTimeout(t);
+      if (!r.ok) return;
+      const j = await r.json();
+      const list = (Array.isArray(j.merchants) ? j.merchants : [])
+        .slice(0, 40)
+        .map((m) => ({ domain: m.domain, name: m.name }))
+        .filter((m) => m.domain && m.name);
+      if (list.length) onbShopList = list;
+    } catch { /* offline or slow → embedded fallback */ }
   }
 
   onbCapChips.addEventListener("click", (e) => {
@@ -1624,6 +1663,7 @@
     }
   });
   onbCapCustom.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); onbNext.click(); } });
+  btnOnbSelectAll.addEventListener("click", onbSelectAll);
   onbBack.addEventListener("click", () => onbGoto(onbStep - 1));
   onbNext.addEventListener("click", async () => {
     if (onbStep === 1) { await onbApplyCap(); onbGoto(2); }

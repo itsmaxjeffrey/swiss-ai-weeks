@@ -226,3 +226,17 @@ footer { margin-top: 34px; border-top: 1px solid var(--line); padding-top: 14px;
 .band.sus.poor { color: var(--red); border-color: var(--red); background: #f9ecea; }
 .band.sus.unknown { color: var(--ink-soft); }
 .pick { font-family: var(--mono); font-size: 11px; color: var(--green); font-weight: 700; white-space: nowrap; }
+
+/* "Trust this merchant" on yellow-list dossiers */
+.dz-trust {
+  border: 1px solid var(--ink);
+  background: #fff;
+  color: var(--ink);
+  font-size: 12px;
+  padding: 4px 10px;
+  cursor: pointer;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.dz-trust:hover { border-color: #1a7f37; color: #1a7f37; }
+.dz-trust.trusted { border-color: #1a7f37; color: #1a7f37; background: #f0fff4; cursor: default; }

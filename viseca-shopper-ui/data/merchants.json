@@ -1,0 +1,1457 @@
+{
+  "version": 1,
+  "updated_at": "2026-09-25T04:56:17.222Z",
+  "source": "seeded from shopping.js CATALOG (curated CH shops) on 2026-09-25; evidence refreshed 2026-09-25T04:56:17.222Z by scripts/refresh-merchants.mjs (Zefix + Impressum + Trusted Shops via wallet-control MerchantDossier)",
+  "merchants": [
+    {
+      "domain": "migros.ch",
+      "name": "Migros Online",
+      "category": "Groceries",
+      "evidence": {
+        "registry": {
+          "status": "skipped",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "blocked",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": true,
+          "rating": 4.5,
+          "review_count": 11488
+        },
+        "payments": [],
+        "country": {
+          "merchant": "CH",
+          "same_as_customer": true
+        },
+        "summary": {
+          "positives": 2,
+          "negatives": 0,
+          "unknowns": 5
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.221Z",
+      "tier": "listed"
+    },
+    {
+      "domain": "coop.ch",
+      "name": "Coop.ch",
+      "category": "Groceries",
+      "evidence": {
+        "registry": {
+          "status": "skipped",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "blocked",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": true,
+          "rating": null,
+          "review_count": null
+        },
+        "payments": [],
+        "country": {
+          "merchant": "CH",
+          "same_as_customer": true
+        },
+        "summary": {
+          "positives": 2,
+          "negatives": 0,
+          "unknowns": 5
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.221Z",
+      "tier": "listed"
+    },
+    {
+      "domain": "aldi-suisse.ch",
+      "name": "Aldi Suisse",
+      "category": "Groceries",
+      "evidence": {
+        "registry": {
+          "status": "skipped",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "blocked",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": false,
+          "rating": null,
+          "review_count": null
+        },
+        "payments": [],
+        "country": {
+          "merchant": "CH",
+          "same_as_customer": true
+        },
+        "summary": {
+          "positives": 1,
+          "negatives": 0,
+          "unknowns": 6
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.221Z",
+      "tier": "reviewed"
+    },
+    {
+      "domain": "lidl.ch",
+      "name": "Lidl Switzerland",
+      "category": "Groceries",
+      "evidence": {
+        "registry": {
+          "status": "found",
+          "company": "Lidl Schweiz DL AG",
+          "uid": "CHE-405.486.209",
+          "active": null,
+          "age_years": 13,
+          "imprint_match": "strong"
+        },
+        "imprint": {
+          "status": "found",
+          "company": "Lidl Schweiz DL AG"
+        },
+        "trusted_shops": {
+          "listed": false,
+          "rating": null,
+          "review_count": null
+        },
+        "payments": [],
+        "country": {
+          "merchant": "CH",
+          "same_as_customer": true
+        },
+        "summary": {
+          "positives": 7,
+          "negatives": 0,
+          "unknowns": 2
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.221Z",
+      "tier": "reviewed"
+    },
+    {
+      "domain": "volg.ch",
+      "name": "Volg Online",
+      "category": "Groceries",
+      "evidence": {
+        "registry": {
+          "status": "found",
+          "company": "Volg Konsumwaren AG",
+          "uid": "CHE-105.854.263",
+          "active": null,
+          "age_years": null,
+          "imprint_match": "strong"
+        },
+        "imprint": {
+          "status": "found",
+          "company": "Volg Konsumwaren AG"
+        },
+        "trusted_shops": {
+          "listed": false,
+          "rating": null,
+          "review_count": null
+        },
+        "payments": [],
+        "country": {
+          "merchant": "CH",
+          "same_as_customer": true
+        },
+        "summary": {
+          "positives": 6,
+          "negatives": 0,
+          "unknowns": 3
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.221Z",
+      "tier": "reviewed"
+    },
+    {
+      "domain": "farmy.ch",
+      "name": "Farmy",
+      "category": "Groceries",
+      "evidence": {
+        "registry": {
+          "status": "skipped",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "not_found",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": true,
+          "rating": 4.57,
+          "review_count": 8417
+        },
+        "payments": [],
+        "country": {
+          "merchant": "CH",
+          "same_as_customer": true
+        },
+        "summary": {
+          "positives": 2,
+          "negatives": 1,
+          "unknowns": 4
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.221Z",
+      "tier": "listed"
+    },
+    {
+      "domain": "digitec.ch",
+      "name": "Digitec",
+      "category": "Electronics",
+      "evidence": {
+        "registry": {
+          "status": "skipped",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "blocked",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": true,
+          "rating": null,
+          "review_count": null
+        },
+        "payments": [],
+        "country": {
+          "merchant": "CH",
+          "same_as_customer": true
+        },
+        "summary": {
+          "positives": 2,
+          "negatives": 0,
+          "unknowns": 5
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.221Z",
+      "tier": "listed"
+    },
+    {
+      "domain": "galaxus.ch",
+      "name": "Galaxus",
+      "category": "Marketplace",
+      "evidence": {
+        "registry": {
+          "status": "skipped",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "blocked",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": true,
+          "rating": 1,
+          "review_count": 1
+        },
+        "payments": [],
+        "country": {
+          "merchant": "CH",
+          "same_as_customer": true
+        },
+        "summary": {
+          "positives": 2,
+          "negatives": 0,
+          "unknowns": 5
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.221Z",
+      "tier": "listed"
+    },
+    {
+      "domain": "brack.ch",
+      "name": "Brack.ch",
+      "category": "Electronics",
+      "evidence": {
+        "registry": {
+          "status": "skipped",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "blocked",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": true,
+          "rating": 1,
+          "review_count": 17419
+        },
+        "payments": [],
+        "country": {
+          "merchant": "CH",
+          "same_as_customer": true
+        },
+        "summary": {
+          "positives": 2,
+          "negatives": 0,
+          "unknowns": 5
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.221Z",
+      "tier": "listed"
+    },
+    {
+      "domain": "interdiscount.ch",
+      "name": "Interdiscount",
+      "category": "Electronics",
+      "evidence": {
+        "registry": {
+          "status": "skipped",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "blocked",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": true,
+          "rating": 1.9,
+          "review_count": 12
+        },
+        "payments": [],
+        "country": {
+          "merchant": "CH",
+          "same_as_customer": true
+        },
+        "summary": {
+          "positives": 2,
+          "negatives": 0,
+          "unknowns": 5
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.221Z",
+      "tier": "listed"
+    },
+    {
+      "domain": "microspot.ch",
+      "name": "Microspot",
+      "category": "Electronics",
+      "evidence": {
+        "registry": {
+          "status": "skipped",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "blocked",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": true,
+          "rating": null,
+          "review_count": null
+        },
+        "payments": [],
+        "country": {
+          "merchant": "CH",
+          "same_as_customer": true
+        },
+        "summary": {
+          "positives": 2,
+          "negatives": 0,
+          "unknowns": 5
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.221Z",
+      "tier": "listed"
+    },
+    {
+      "domain": "fust.ch",
+      "name": "Fust",
+      "category": "Electronics",
+      "evidence": {
+        "registry": {
+          "status": "skipped",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "blocked",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": true,
+          "rating": 0,
+          "review_count": 2
+        },
+        "payments": [],
+        "country": {
+          "merchant": "CH",
+          "same_as_customer": true
+        },
+        "summary": {
+          "positives": 2,
+          "negatives": 0,
+          "unknowns": 5
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.221Z",
+      "tier": "listed"
+    },
+    {
+      "domain": "melectronics.ch",
+      "name": "melectronics",
+      "category": "Electronics",
+      "evidence": {
+        "registry": {
+          "status": "skipped",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "blocked",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": true,
+          "rating": null,
+          "review_count": null
+        },
+        "payments": [],
+        "country": {
+          "merchant": "CH",
+          "same_as_customer": true
+        },
+        "summary": {
+          "positives": 2,
+          "negatives": 0,
+          "unknowns": 5
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.221Z",
+      "tier": "listed"
+    },
+    {
+      "domain": "zalando.ch",
+      "name": "Zalando CH",
+      "category": "Fashion",
+      "evidence": {
+        "registry": {
+          "status": "skipped",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "blocked",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": true,
+          "rating": null,
+          "review_count": null
+        },
+        "payments": [],
+        "country": {
+          "merchant": "CH",
+          "same_as_customer": true
+        },
+        "summary": {
+          "positives": 2,
+          "negatives": 0,
+          "unknowns": 5
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.221Z",
+      "tier": "listed"
+    },
+    {
+      "domain": "aboutyou.ch",
+      "name": "About You",
+      "category": "Fashion",
+      "evidence": {
+        "registry": {
+          "status": "skipped",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "not_found",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": true,
+          "rating": 4.36,
+          "review_count": 37220
+        },
+        "payments": [
+          "Invoice (Rechnung)"
+        ],
+        "country": {
+          "merchant": "CH",
+          "same_as_customer": true
+        },
+        "summary": {
+          "positives": 4,
+          "negatives": 1,
+          "unknowns": 2
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.221Z",
+      "tier": "listed"
+    },
+    {
+      "domain": "hm.com",
+      "name": "H&M",
+      "category": "Fashion",
+      "evidence": {
+        "registry": {
+          "status": "skipped",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "blocked",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": true,
+          "rating": 4.74,
+          "review_count": 5144
+        },
+        "payments": [],
+        "country": {
+          "merchant": null,
+          "same_as_customer": null
+        },
+        "summary": {
+          "positives": 1,
+          "negatives": 0,
+          "unknowns": 6
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.221Z",
+      "tier": "listed"
+    },
+    {
+      "domain": "zara.com",
+      "name": "Zara",
+      "category": "Fashion",
+      "evidence": {
+        "registry": {
+          "status": "not_found",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "blocked",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": false,
+          "rating": null,
+          "review_count": null
+        },
+        "payments": [],
+        "country": {
+          "merchant": null,
+          "same_as_customer": null
+        },
+        "summary": {
+          "positives": 0,
+          "negatives": 1,
+          "unknowns": 6
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.221Z",
+      "tier": "reviewed"
+    },
+    {
+      "domain": "uniqlo.com",
+      "name": "Uniqlo",
+      "category": "Fashion",
+      "evidence": {
+        "registry": {
+          "status": "skipped",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "not_found",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": false,
+          "rating": null,
+          "review_count": null
+        },
+        "payments": [],
+        "country": {
+          "merchant": null,
+          "same_as_customer": null
+        },
+        "summary": {
+          "positives": 0,
+          "negatives": 1,
+          "unknowns": 6
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.221Z",
+      "tier": "reviewed"
+    },
+    {
+      "domain": "snoooze.ch",
+      "name": "Snoooze",
+      "category": "Fashion",
+      "evidence": {
+        "registry": {
+          "status": "skipped",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "not_found",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": false,
+          "rating": null,
+          "review_count": null
+        },
+        "payments": [],
+        "country": {
+          "merchant": "CH",
+          "same_as_customer": true
+        },
+        "summary": {
+          "positives": 1,
+          "negatives": 1,
+          "unknowns": 5
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.221Z",
+      "tier": "reviewed"
+    },
+    {
+      "domain": "ricardo.ch",
+      "name": "Ricardo",
+      "category": "Marketplace",
+      "evidence": {
+        "registry": {
+          "status": "skipped",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "blocked",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": true,
+          "rating": 2,
+          "review_count": 2
+        },
+        "payments": [],
+        "country": {
+          "merchant": "CH",
+          "same_as_customer": true
+        },
+        "summary": {
+          "positives": 2,
+          "negatives": 0,
+          "unknowns": 5
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.221Z",
+      "tier": "listed"
+    },
+    {
+      "domain": "ebay.ch",
+      "name": "eBay.ch",
+      "category": "Marketplace",
+      "evidence": {
+        "registry": {
+          "status": "skipped",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "blocked",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": false,
+          "rating": null,
+          "review_count": null
+        },
+        "payments": [],
+        "country": {
+          "merchant": "CH",
+          "same_as_customer": true
+        },
+        "summary": {
+          "positives": 1,
+          "negatives": 0,
+          "unknowns": 6
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.221Z",
+      "tier": "reviewed"
+    },
+    {
+      "domain": "amazon.de",
+      "name": "Amazon.de",
+      "category": "Marketplace",
+      "evidence": {
+        "registry": {
+          "status": "skipped",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "not_found",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": true,
+          "rating": 1.21,
+          "review_count": 401
+        },
+        "payments": [],
+        "country": {
+          "merchant": "DE",
+          "same_as_customer": false
+        },
+        "summary": {
+          "positives": 1,
+          "negatives": 2,
+          "unknowns": 4
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.221Z",
+      "tier": "listed"
+    },
+    {
+      "domain": "etsy.com",
+      "name": "Etsy",
+      "category": "Marketplace",
+      "evidence": {
+        "registry": {
+          "status": "skipped",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "blocked",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": true,
+          "rating": 0,
+          "review_count": 0
+        },
+        "payments": [],
+        "country": {
+          "merchant": null,
+          "same_as_customer": null
+        },
+        "summary": {
+          "positives": 1,
+          "negatives": 0,
+          "unknowns": 6
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.221Z",
+      "tier": "listed"
+    },
+    {
+      "domain": "shein.com",
+      "name": "SHEIN",
+      "category": "Fashion",
+      "evidence": {
+        "registry": {
+          "status": "not_found",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "blocked",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": true,
+          "rating": 1,
+          "review_count": 90
+        },
+        "payments": [],
+        "country": {
+          "merchant": null,
+          "same_as_customer": null
+        },
+        "summary": {
+          "positives": 2,
+          "negatives": 1,
+          "unknowns": 4
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.222Z",
+      "tier": "listed"
+    },
+    {
+      "domain": "temu.com",
+      "name": "Temu",
+      "category": "Marketplace",
+      "evidence": {
+        "registry": {
+          "status": "skipped",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "not_found",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": true,
+          "rating": 1.25,
+          "review_count": 205
+        },
+        "payments": [],
+        "country": {
+          "merchant": null,
+          "same_as_customer": null
+        },
+        "summary": {
+          "positives": 1,
+          "negatives": 1,
+          "unknowns": 5
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.222Z",
+      "tier": "listed"
+    },
+    {
+      "domain": "ubereats.com",
+      "name": "Uber Eats",
+      "category": "Food delivery",
+      "evidence": {
+        "registry": {
+          "status": "skipped",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "blocked",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": false,
+          "rating": null,
+          "review_count": null
+        },
+        "payments": [],
+        "country": {
+          "merchant": null,
+          "same_as_customer": null
+        },
+        "summary": {
+          "positives": 0,
+          "negatives": 0,
+          "unknowns": 7
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.222Z",
+      "tier": "reviewed"
+    },
+    {
+      "domain": "justeat.ch",
+      "name": "Just Eat Switzerland",
+      "category": "Food delivery",
+      "evidence": {
+        "registry": {
+          "status": "skipped",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "blocked",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": false,
+          "rating": null,
+          "review_count": null
+        },
+        "payments": [],
+        "country": {
+          "merchant": "CH",
+          "same_as_customer": true
+        },
+        "summary": {
+          "positives": 1,
+          "negatives": 0,
+          "unknowns": 6
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.222Z",
+      "tier": "reviewed"
+    },
+    {
+      "domain": "smood.ch",
+      "name": "Smood",
+      "category": "Food delivery",
+      "evidence": {
+        "registry": {
+          "status": "skipped",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "blocked",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": false,
+          "rating": null,
+          "review_count": null
+        },
+        "payments": [],
+        "country": {
+          "merchant": "CH",
+          "same_as_customer": true
+        },
+        "summary": {
+          "positives": 1,
+          "negatives": 0,
+          "unknowns": 6
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.222Z",
+      "tier": "reviewed"
+    },
+    {
+      "domain": "deliveroo.ch",
+      "name": "Deliveroo",
+      "category": "Food delivery",
+      "evidence": {
+        "registry": {
+          "status": "skipped",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "not_found",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": false,
+          "rating": null,
+          "review_count": null
+        },
+        "payments": [],
+        "country": {
+          "merchant": "CH",
+          "same_as_customer": true
+        },
+        "summary": {
+          "positives": 1,
+          "negatives": 1,
+          "unknowns": 5
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.222Z",
+      "tier": "reviewed"
+    },
+    {
+      "domain": "lieferando.ch",
+      "name": "Lieferando",
+      "category": "Food delivery",
+      "evidence": {
+        "registry": {
+          "status": "skipped",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "blocked",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": false,
+          "rating": null,
+          "review_count": null
+        },
+        "payments": [],
+        "country": {
+          "merchant": "CH",
+          "same_as_customer": true
+        },
+        "summary": {
+          "positives": 1,
+          "negatives": 0,
+          "unknowns": 6
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.222Z",
+      "tier": "reviewed"
+    },
+    {
+      "domain": "manor.ch",
+      "name": "Manor",
+      "category": "Department store",
+      "evidence": {
+        "registry": {
+          "status": "found",
+          "company": "Manor AG",
+          "uid": "CHE-105.901.193",
+          "active": null,
+          "age_years": null,
+          "imprint_match": "strong"
+        },
+        "imprint": {
+          "status": "found",
+          "company": "Manor AG"
+        },
+        "trusted_shops": {
+          "listed": true,
+          "rating": 1,
+          "review_count": 2
+        },
+        "payments": [
+          "Mastercard"
+        ],
+        "country": {
+          "merchant": "CH",
+          "same_as_customer": true
+        },
+        "summary": {
+          "positives": 7,
+          "negatives": 0,
+          "unknowns": 2
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.222Z",
+      "tier": "listed"
+    },
+    {
+      "domain": "jumbo.ch",
+      "name": "Jumbo",
+      "category": "DIY",
+      "evidence": {
+        "registry": {
+          "status": "skipped",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "blocked",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": true,
+          "rating": null,
+          "review_count": null
+        },
+        "payments": [],
+        "country": {
+          "merchant": "CH",
+          "same_as_customer": true
+        },
+        "summary": {
+          "positives": 2,
+          "negatives": 0,
+          "unknowns": 5
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.222Z",
+      "tier": "listed"
+    },
+    {
+      "domain": "hornbach.ch",
+      "name": "Hornbach",
+      "category": "DIY",
+      "evidence": {
+        "registry": {
+          "status": "not_found",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "blocked",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": true,
+          "rating": 0,
+          "review_count": 19153
+        },
+        "payments": [],
+        "country": {
+          "merchant": "CH",
+          "same_as_customer": true
+        },
+        "summary": {
+          "positives": 2,
+          "negatives": 1,
+          "unknowns": 4
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.222Z",
+      "tier": "listed"
+    },
+    {
+      "domain": "oto.ch",
+      "name": "Oto.ch (Sconto)",
+      "category": "DIY",
+      "evidence": {
+        "registry": {
+          "status": "not_found",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "not_found",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": true,
+          "rating": 4.66,
+          "review_count": 19726
+        },
+        "payments": [],
+        "country": {
+          "merchant": "CH",
+          "same_as_customer": true
+        },
+        "summary": {
+          "positives": 2,
+          "negatives": 2,
+          "unknowns": 3
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.222Z",
+      "tier": "listed"
+    },
+    {
+      "domain": "zurrose.ch",
+      "name": "Zur Rose",
+      "category": "Pharmacy",
+      "evidence": {
+        "registry": {
+          "status": "found",
+          "company": "Zur Rose Suisse AG",
+          "uid": "CHE-101.583.964",
+          "active": null,
+          "age_years": null,
+          "imprint_match": "strong"
+        },
+        "imprint": {
+          "status": "found",
+          "company": "Zur Rose Suisse AG"
+        },
+        "trusted_shops": {
+          "listed": true,
+          "rating": null,
+          "review_count": null
+        },
+        "payments": [],
+        "country": {
+          "merchant": "CH",
+          "same_as_customer": true
+        },
+        "summary": {
+          "positives": 5,
+          "negatives": 0,
+          "unknowns": 4
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.222Z",
+      "tier": "listed"
+    },
+    {
+      "domain": "shop-apotheke.ch",
+      "name": "Shop Apotheke CH",
+      "category": "Pharmacy",
+      "evidence": {
+        "registry": {
+          "status": "not_found",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "not_found",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": false,
+          "rating": null,
+          "review_count": null
+        },
+        "payments": [
+          "PostFinance",
+          "PayPal",
+          "Invoice (Rechnung)"
+        ],
+        "country": {
+          "merchant": "CH",
+          "same_as_customer": true
+        },
+        "summary": {
+          "positives": 2,
+          "negatives": 2,
+          "unknowns": 3
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.222Z",
+      "tier": "reviewed"
+    },
+    {
+      "domain": "dm.ch",
+      "name": "dm drogerie",
+      "category": "Drugstore",
+      "evidence": {
+        "registry": {
+          "status": "skipped",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "not_found",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": false,
+          "rating": null,
+          "review_count": null
+        },
+        "payments": [],
+        "country": {
+          "merchant": "CH",
+          "same_as_customer": true
+        },
+        "summary": {
+          "positives": 1,
+          "negatives": 1,
+          "unknowns": 5
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.222Z",
+      "tier": "reviewed"
+    },
+    {
+      "domain": "exlibris.ch",
+      "name": "Ex Libris",
+      "category": "Books",
+      "evidence": {
+        "registry": {
+          "status": "found",
+          "company": "Ex Libris AG",
+          "uid": "CHE-105.925.354",
+          "active": null,
+          "age_years": null,
+          "imprint_match": "strong"
+        },
+        "imprint": {
+          "status": "found",
+          "company": "Ex Libris AG"
+        },
+        "trusted_shops": {
+          "listed": true,
+          "rating": null,
+          "review_count": null
+        },
+        "payments": [
+          "Invoice (Rechnung)"
+        ],
+        "country": {
+          "merchant": "CH",
+          "same_as_customer": true
+        },
+        "summary": {
+          "positives": 7,
+          "negatives": 0,
+          "unknowns": 2
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.222Z",
+      "tier": "listed"
+    },
+    {
+      "domain": "orellfuessli.ch",
+      "name": "Orell Füssli",
+      "category": "Books",
+      "evidence": {
+        "registry": {
+          "status": "skipped",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "blocked",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": true,
+          "rating": 4.71,
+          "review_count": 315460
+        },
+        "payments": [],
+        "country": {
+          "merchant": "CH",
+          "same_as_customer": true
+        },
+        "summary": {
+          "positives": 2,
+          "negatives": 0,
+          "unknowns": 5
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.222Z",
+      "tier": "listed"
+    },
+    {
+      "domain": "dds.ch",
+      "name": "DDS (Deutscher Buchdienst)",
+      "category": "Books",
+      "evidence": {
+        "registry": {
+          "status": "skipped",
+          "company": null,
+          "uid": null,
+          "active": null,
+          "age_years": null,
+          "imprint_match": null
+        },
+        "imprint": {
+          "status": "not_found",
+          "company": null
+        },
+        "trusted_shops": {
+          "listed": false,
+          "rating": null,
+          "review_count": null
+        },
+        "payments": [],
+        "country": {
+          "merchant": "CH",
+          "same_as_customer": true
+        },
+        "summary": {
+          "positives": 1,
+          "negatives": 1,
+          "unknowns": 5
+        }
+      },
+      "checked_at": "2026-09-25T04:56:17.222Z",
+      "tier": "reviewed"
+    }
+  ]
+}

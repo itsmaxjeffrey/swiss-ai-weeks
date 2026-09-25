@@ -218,6 +218,7 @@ function renderDossier(d) {
     <div style="font-size:13px">Merchant: <b>${esc(d.domain)}</b>
       <span class="dz-verdict ${esc(verdict)}">${esc(vLabel)}</span>
       ${c.same_country === true ? '<span class="dz-verdict strong">same country ✓</span>' : c.same_country === false ? `<span class="dz-verdict mismatch">${esc(c.merchant_country)} ≠ your ${esc(c.customer_country)}</span>` : ''}
+      ${d.trusted ? '<span class="dz-verdict strong">trusted ✓</span>' : (d.domain ? `<button class="btn dz-trust" data-trust-domain="${esc(d.domain)}" type="button">🤝 trust this merchant</button>` : '')}
     </div>
     <div class="dz-sum">
       ${sum(d.summary?.positives || [], 'pos', '✓')}
@@ -236,6 +237,29 @@ function renderDossier(d) {
     ${d.product_url ? `<div class="dz-url">Product URL the agent wants to buy from: <a href="${esc(d.product_url)}" target="_blank" rel="noreferrer">${esc(d.product_url)}</a></div>` : `<div class="dz-url">Shop URL: <a href="https://${esc(d.domain)}" target="_blank" rel="noreferrer">https://${esc(d.domain)}</a></div>`}
   `;
 }
+
+// "Trust this merchant" on yellow-list dossiers: one click adds the domain to
+// the persisted trusted list (and mirrors it to the shopper bridge) — a
+// yellow-listed merchant becomes a resolved one without a paused purchase.
+// Event delegation because approval cards re-render every poll tick.
+document.addEventListener('click', async (e) => {
+  const btn = e.target.closest('[data-trust-domain]');
+  if (!btn) return;
+  const domain = btn.dataset.trustDomain;
+  btn.disabled = true;
+  btn.textContent = 'trusting…';
+  try {
+    const out = await api('/api/merchant/trust', 'POST', { domain });
+    btn.textContent = 'trusted ✓';
+    btn.classList.add('trusted');
+    const entry = dossierCache.get(out.domain);
+    if (entry?.data) entry.data.trusted = true; // next poll renders the badge
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = '🤝 trust this merchant';
+    console.error('trust failed:', err.message);
+  }
+});
 
 async function hydrateDossiers(root) {
   const slots = [...root.querySelectorAll('.ap-dossier[data-site]')];
