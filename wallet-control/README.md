@@ -27,7 +27,7 @@ Agent ──proposed purchase──▶ [2] Decision engine ──approve/decline
 | `lib/policy-compiler.js` | Natural-language instruction → `hard_rules` + uncertainty policy + plain-language "what we understood" + open questions. Deterministic grammar: amounts, rolling periods, categories, quantities, requested-item specs (size / terrain / inches), merchant familiarity & specialist requirements, return windows, no-add-on clauses, session-integrity clauses, uncertainty phrasing. |
 | `lib/engine.js` | The decision pipeline: manipulation scan → fact extraction → hard-rule evaluation → behavioural signals → aggregation → explanation. |
 | `lib/signals.js` | Untrusted-text mining: injection-pattern scan, return-window / size / product-attribute extraction, lookalike-merchant fuzzy matching (Jaro-Winkler), LEASH trust-dataset lookup. |
-| `lib/trustedshops.js` | Trusted Shops merchant verification (concurrent, TTL-cached, **advisory**): is the merchant's website listed on the global TS registry behind the .com/.de/.ch/… sites — with tsId, target market and rating/review evidence. Presence is positive evidence only; absence is neutral (digitec/brack are legitimate and not members). Exposed to the agent at `POST /api/trustedshops/check`; the worker also pre-fetches it ahead of every decision with a 1.2 s cap. |
+| `lib/trustedshops.js` | Trusted Shops merchant verification (concurrent, TTL-cached, **advisory**): checks the merchant website against the member registry AND the shop search of all 12 country sites (`.ch .de .at .co.uk .fr .it .es .nl .be .pt .pl .eu`), catching non-member profiles (digitec!) that the registry alone hides. Returns `listed`, `found_on` (which country sites show it), member entries + ratings, profile entries. Presence is positive evidence only; absence is neutral. Exposed to the agent at `POST /api/trustedshops/check`; the worker also pre-fetches it ahead of every decision with a 2.5 s cap. |
 | `lib/history.js` | Per-customer profiles from `authorization_history.csv`: merchant familiarity, known devices, hour-of-day purchase envelope. |
 | `lib/behavior-model.js` | Trained user-behavior deviation scorer (advisory): 12 chronology-safe features vs the customer's learned profile, calibrated normal/suspect/escalate bands. Evidence on every decision; a strong anomaly becomes an uncertainty for the customer's own policy. Trained by `merchant-trust-data/models/behavior/`; inert without the artifact or for unknown customers. |
 | `lib/store.js` | Run ledger: decisions (idempotent per live `authorization_id`), rolling-spend windows on simulated timestamps, pending step-ups, duplicate/signature index. |
@@ -35,7 +35,7 @@ Agent ──proposed purchase──▶ [2] Decision engine ──approve/decline
 | `sim/local-api.js` | Offline implementation of the challenge API (mandates, runs, long-poll, decision, resolve, reset) backed by the data pack — full end-to-end demo with **no team key**. |
 | `web/` | Customer UI (Swiss editorial): policy review & confirm, tighten/revoke, live decision feed with evidence, step-up inbox with 120 s countdown. |
 | `cli.js` | Offline replay: `node cli.js [SCENxxxx] [--resolve=approve|decline|auto]` prints the full decision table. |
-| `test/` | 55 invariant/parity tests (engine+compiler 25, injection model 5, behavior model 11, Trusted Shops checker+engine-integration 14). Run: `npm test`. |
+| `test/` | 90 invariant/parity tests (engine+compiler 25, injection battery 29, injection model 5, behavior model 11, Trusted Shops checker+engine-integration 20). Run: `npm test`. |
 
 ## Decision pipeline (per purchase)
 
@@ -76,7 +76,7 @@ node cli.js SCEN0002 --resolve=approve
 
 ### Agent-facing merchant verification (Trusted Shops)
 
-The agent verifies every merchant website it considers **before** proposing a purchase — one call, all candidates concurrently:
+The agent verifies every merchant website it considers **before** proposing a purchase — one call, all candidates concurrently, each checked against ALL Trusted Shops country sites:
 
 ```bash
 curl -X POST http://127.0.0.1:8790/api/trustedshops/check \
@@ -85,7 +85,11 @@ curl -X POST http://127.0.0.1:8790/api/trustedshops/check \
 # or single: GET /api/trustedshops/check?merchant=m-s-v.eu
 ```
 
-Measured: 5 merchants in ~305 ms (8-way parallel, 4 s per-request timeout, 6 h TTL cache, in-flight de-duplication — repeat checks are instant). Per result: `listed` true/false/null, `shops[]` (tsId, registered URL, target market), `primary.rating` (mark, description, total/active review counts, counted-since). Trusted Shops runs **one global registry** behind all its country sites; the `targetMarket`/`market` field tells which market (.ch/.de/…) each registration is certified for. Name-only merchants are answered honestly (`no domain supplied`) — the checker never invents domains. Same evidence flows into decisions automatically: the worker pre-fetches the check for any merchant that carries a website (1.2 s deadline cap) and the engine cites it in the decision grid.
+Two layers per merchant, run in parallel (request-level semaphore, 4 s deadline per request, 6 h TTL cache, in-flight de-duplication):
+1. **Member registry** (`api.trustedshops.com` REST): buyer-protection members with target market + rating/review evidence (`shops[]`, `member`).
+2. **Country-site shop search** — all 12 domains (`trustedshops.ch .de .at .co.uk .fr .it .es .nl .be .pt .pl .eu`) server-render their search for `/shops/?q=<domain>`; results parsed from the page's embedded JSON. This catches **non-member profiles** the registry hides: digitec.ch is found on `trustedshops.ch` ("Digitec Galaxus AG", non-member), brack.ch shows its (1/5, 17 419 reviews) profile, etc. Only exact domain matches count — the country searches are fuzzy and near-misses (e.g. "sodapop.ch" when asked for "brack.ch") never count.
+
+Measured: 5 merchants across all 12 country sites in ~4.6 s cold (65 requests), **0 ms** cached; single merchant ~1–2 s cold. Per result: `listed` true/false/null, `found_on` (which `trustedshops.*` sites show it), `shops[]` (member entries), `profiles[]` (country-site profiles with `profileType`, rating, `profileUrl`), `primary` (always member-shaped: tsId, name, rating). Name-only merchants are answered honestly (`no domain supplied`) — the checker never invents domains. Same evidence flows into decisions automatically: the worker pre-fetches the check for any merchant that carries a website (2.5 s deadline cap) and the engine cites it in the decision grid.
 
 ## Demo script (maps to the three required demonstrations)
 

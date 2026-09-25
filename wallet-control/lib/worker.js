@@ -81,9 +81,9 @@ export class Worker {
       return;
     }
 
-    // Trusted Shops verification (advisory evidence; capped at 1.2 s so the 8 s
-    // decision deadline is never at risk — the engine itself stays sub-ms). If the
-    // platform event carries no merchant website the check is skipped; a check
+    // Trusted Shops verification (advisory evidence; capped at 2.5 s so the 8 s
+    // decision deadline is never at risk — the engine itself stays sub-ms). A cold
+    // check spans the member registry + 12 country-site searches (~1–2 s); a check
     // that misses the budget keeps running and lands in the checker cache, so
     // later events for the same merchant get the evidence instantly.
     const merchantSite = a.merchant?.merchant_url || a.merchant?.website_url || a.merchant?.merchant_domain || a.merchant?.url || null;
@@ -91,7 +91,7 @@ export class Worker {
     if (this.trustedShops && merchantSite) {
       extras.trustedShops = await Promise.race([
         this.trustedShops.checkOne(merchantSite),
-        new Promise(r => setTimeout(() => r(null), 1200)),
+        new Promise(r => setTimeout(() => r(null), 2500)),
       ]);
     }
 

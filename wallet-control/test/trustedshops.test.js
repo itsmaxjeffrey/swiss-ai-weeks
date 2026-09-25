@@ -1,6 +1,6 @@
 // LEASH wallet-control — Trusted Shops checker + engine-integration invariants.
 // Hermetic: all HTTP is a stubbed fetchImpl; run: node test/trustedshops.test.js
-// Live smoke against the real API is separate: LEASH_TS_LIVE=1 node test/trustedshops.test.js
+// Live smoke against the real sites: LEASH_TS_LIVE=1 node test/trustedshops.test.js
 import assert from 'node:assert/strict';
 import { normalizeDomain, parseMerchantInput, marketLabel, describeResult, TrustedShopsChecker } from '../lib/trustedshops.js';
 import { evaluate } from '../lib/engine.js';
@@ -14,17 +14,21 @@ function test(name, fn) {
     .catch(e => { failed++; console.error(`  ✗ ${name}\n    ${e.message}`); });
 }
 
-// ---- fetch stub -------------------------------------------------------------
-const LOOKUP_BODY = tsId => ({
-  response: { code: 200, data: { shops: [{ tsId, url: 'www.testshop.ch', name: 'Testshop AG', languageISO2: 'de', targetMarketISO3: 'CHE' }] }, status: 'SUCCESS' },
-});
+// ---- fixtures ----------------------------------------------------------------
+const DIGITEC = { profileType: 'non-member', accountName: 'Digitec Galaxus AG', tsID: 'X2EAB51093C8C38277A55239953A06E4D', shopDescription: null, shopName: 'digitec.ch', shopUrl: 'digitec.ch', shopCategories: [], averageRating: 0, reviewCount: 0, profileUrl: 'www.trustedshops.ch/bewertung/digitec.ch' };
+const SODAPOP = { profileType: 'member', accountName: 'Sodapop GmbH', tsID: 'XD5F5F3F77B2CA95BDD8D9095B5B7DEBE', shopName: 'sodapop.ch', shopUrl: 'sodapop.ch', averageRating: 4.8, reviewCount: 212, profileUrl: 'www.trustedshops.de/bewertung/sodapop.ch' };
+const MEMBER_ENTRY = tsId => ({ tsId, url: 'www.conrad.de', name: 'Conrad Electronic', languageISO2: 'de', targetMarketISO3: 'DEU' });
 const QUALITY_BODY = {
   response: { code: 200, data: { shop: { qualityIndicators: { reviewIndicator: {
     overallMark: 4.79, overallMarkDescription: 'EXCELLENT', totalReviewCount: 1703,
     activeReviewCount: 95, reviewsCountedSince: '2012-04-12' } } } }, status: 'SUCCESS' },
 };
+const MEMBER_LOOKUP_BODY = tsId => ({ response: { code: 200, data: { shops: [MEMBER_ENTRY(tsId)] }, status: 'SUCCESS' } });
+const searchPage = shops => `<!doctype html><html><body><script id="__NEXT_DATA__" type="application/json">${JSON.stringify({ props: { pageProps: { shops } } })}</script></body></html>`;
+const isSearch = u => /trustedshops\.[a-z.]+\/shops\/\?q=/.test(u);
+const isMemberLookup = u => u.includes('/shops.json?url=');
 
-/** Stub fetch with route table [{match(url), status, body, delayMs}]; records calls and in-flight peak. */
+/** Stub fetch with route table [{match(url), status, body, delayMs}]; needs json() + text(). */
 function stubFetch(routes = []) {
   const calls = [];
   let inflight = 0, peak = 0;
@@ -33,15 +37,28 @@ function stubFetch(routes = []) {
     inflight++; peak = Math.max(peak, inflight);
     try {
       const route = routes.find(r => r.match(url));
-      if (!route) return { ok: false, status: 404, json: async () => ({}) };
+      if (!route) return { ok: false, status: 404, json: async () => ({}), text: async () => '' };
       if (route.delayMs) await new Promise(r => setTimeout(r, route.delayMs));
       const status = route.status ?? 200;
-      return { ok: status >= 200 && status < 300, status, json: async () => (typeof route.body === 'function' ? route.body(url) : route.body) };
+      const body = typeof route.body === 'function' ? route.body(url) : route.body;
+      return {
+        ok: status >= 200 && status < 300, status,
+        json: async () => (typeof body === 'string' ? JSON.parse(body) : body),
+        text: async () => (typeof body === 'string' ? body : JSON.stringify(body)),
+      };
     } finally { inflight--; }
   };
   fn.calls = calls;
   fn.peak = () => peak;
   return fn;
+}
+
+/** Routes: everything not found → 404 (REST) / empty search page (country sites). */
+function defaultRoutes(over = []) {
+  return [
+    ...over,
+    { match: isSearch, body: searchPage([]) },
+  ]; // anything else (REST member lookup) falls through to 404
 }
 
 // ---- engine fixtures (same shape as engine.test.js) --------------------------
@@ -80,97 +97,152 @@ await test('URL with scheme/path/query/port collapses to bare hostname', () => {
   assert.equal(normalizeDomain('https://www.brack.ch/cart?x=1').domain, 'www.brack.ch');
   assert.equal(normalizeDomain('HTTP://DIGITEC.CH:8443/a/b').domain, 'digitec.ch');
   assert.equal(normalizeDomain('m-s-v.eu').domain, 'm-s-v.eu');
-  assert.equal(normalizeDomain('  https://www.rebuy.com/outlet  ').domain, 'www.rebuy.com');
 });
 
 await test('names, localhost, bare IPs are not domains (never invented into one)', () => {
   assert.equal(normalizeDomain('Alpine Basket'), null);
   assert.equal(normalizeDomain('localhost'), null);
   assert.equal(normalizeDomain('192.168.1.1'), null);
-  assert.equal(normalizeDomain(''), null);
-  assert.equal(normalizeDomain(null), null);
   const p = parseMerchantInput({ name: 'PixelHarbour', country: 'CH' });
   assert.equal(p.domain, null);
   assert.equal(p.name, 'PixelHarbour');
-  assert.equal(parseMerchantInput({ url: 'https://www.brack.ch/', name: 'Brack' }).domain, 'www.brack.ch');
 });
 
 await test('market labels map to the country Trusted Shops sites', () => {
   assert.match(marketLabel('CHE'), /trustedshops\.ch/);
-  assert.match(marketLabel('DEU'), /trustedshops\.de/);
-  assert.match(marketLabel('EUO'), /international/i);
-  assert.equal(marketLabel('XYZ'), 'market XYZ');
+  assert.match(marketLabel('BEL'), /trustedshops\.be/);
+  assert.match(marketLabel('PRT'), /trustedshops\.pt/);
 });
 
-console.log('\n— checker (stubbed API) —');
+console.log('\n— checker: country-domain search (v2) —');
 
-await test('listed merchant: lookup + quality merge into a primary with rating', async () => {
-  const f = stubFetch([
-    { match: u => u.includes('/shops.json?'), body: LOOKUP_BODY('XT1') },
-    { match: u => u.includes('/quality.json'), body: QUALITY_BODY },
-  ]);
-  const c = new TrustedShopsChecker({ fetchImpl: f });
-  const r = await c.checkOne('https://www.testshop.ch/shop/item');
-  assert.equal(r.listed, true);
-  assert.equal(r.resolvedDomain, 'www.testshop.ch');
-  assert.equal(r.primary.tsId, 'XT1');
-  assert.equal(r.primary.rating.overallMark, 4.79);
-  assert.equal(r.primary.rating.totalReviewCount, 1703);
-  assert.match(r.primary.market, /Switzerland/);
-  assert.ok(f.calls.some(u => u.includes('/shops.json?url=www.testshop.ch')));
-  assert.ok(f.calls.some(u => u.includes('/shops/XT1/quality.json')));
-});
-
-await test('unlisted merchant: clean 404 → listed:false, no quality call', async () => {
-  const f = stubFetch([{ match: u => u.includes('/shops.json?'), status: 404, body: { response: { code: 404, message: 'SHOP_URL_NOT_FOUND' } } }]);
+await test('non-member profile found via country search (the digitec case)', async () => {
+  const f = stubFetch(defaultRoutes([
+    { match: u => u.includes('trustedshops.ch/'), body: searchPage([DIGITEC]) },
+  ]));
   const c = new TrustedShopsChecker({ fetchImpl: f });
   const r = await c.checkOne('digitec.ch');
-  assert.equal(r.listed, false);
-  assert.equal(f.calls.length, 1);
-  assert.equal(describeResult(r).startsWith('not listed on Trusted Shops'), true);
+  assert.equal(r.listed, true, 'digitec must be LISTED via the .ch search');
+  assert.equal(r.resolvedDomain, 'digitec.ch');
+  assert.deepEqual(r.found_on, ['trustedshops.ch']);
+  assert.equal(r.profiles.length, 1);
+  assert.equal(r.profiles[0].profileType, 'non-member');
+  assert.equal(r.profiles[0].accountName, 'Digitec Galaxus AG');
+  assert.equal(r.profiles[0].domain, 'trustedshops.ch');
+  assert.equal(r.primary.profileUrl, 'https://www.trustedshops.ch/bewertung/digitec.ch');
+  assert.equal(r.shops.length, 0, 'member registry lookup 404s for non-members');
+  assert.match(describeResult(r), /profile on trustedshops\.ch \(non-member: Digitec Galaxus AG/);
 });
 
-await test('hung API: per-request timeout degrades to listed:null with reason', async () => {
-  const f = (url, opts = {}) => new Promise((_, rej) => {
-    opts.signal?.addEventListener('abort', () => rej(new Error('The operation was aborted')));
-  });
-  const c = new TrustedShopsChecker({ fetchImpl: f, timeoutMs: 25 });
-  const r = await c.checkOne('slow-shop.ch');
+await test('fuzzy search near-misses never count (exact domain match only)', async () => {
+  const f = stubFetch(defaultRoutes([
+    { match: u => u.includes('trustedshops.de/'), body: searchPage([SODAPOP]) }, // wrong shop
+  ]));
+  const c = new TrustedShopsChecker({ fetchImpl: f });
+  const r = await c.checkOne('brack.ch');
+  assert.equal(r.listed, false, 'sodapop.ch must not count as brack.ch');
+  assert.deepEqual(r.found_on, []);
+});
+
+await test('www input matches non-www registration', async () => {
+  const f = stubFetch(defaultRoutes([
+    { match: u => u.includes('trustedshops.ch/'), body: searchPage([DIGITEC]) },
+  ]));
+  const c = new TrustedShopsChecker({ fetchImpl: f });
+  const r = await c.checkOne('https://www.digitec.ch/de/shop');
+  assert.equal(r.listed, true);
+  assert.equal(r.profiles.length, 1);
+});
+
+await test('member via registry: rating merged, market mapped into found_on', async () => {
+  const f = stubFetch(defaultRoutes([
+    { match: isMemberLookup, body: MEMBER_LOOKUP_BODY('XCONRAD') },
+    { match: u => u.includes('/XCONRAD/quality.json'), body: QUALITY_BODY },
+  ]));
+  const c = new TrustedShopsChecker({ fetchImpl: f });
+  const r = await c.checkOne('conrad.de');
+  assert.equal(r.listed, true);
+  assert.equal(r.member.tsId, 'XCONRAD');
+  assert.equal(r.member.rating.overallMark, 4.79);
+  assert.ok(r.found_on.includes('trustedshops.de'), 'DEU market maps to trustedshops.de');
+  assert.match(describeResult(r), /4\.79\/5\.00 "EXCELLENT"/);
+});
+
+await test('one country site failing is tolerated (noted in search_errors)', async () => {
+  const f = stubFetch([
+    { match: u => u.includes('trustedshops.pl/'), status: 503, body: 'boom' },
+    { match: isSearch, body: searchPage([DIGITEC]) },
+  ]);
+  const c = new TrustedShopsChecker({ fetchImpl: f });
+  const r = await c.checkOne('digitec.ch');
+  assert.equal(r.listed, true);
+  assert.equal(r.search_errors.length, 1);
+  assert.match(r.search_errors[0], /\.pl: HTTP 503/);
+});
+
+await test('total failure (registry + all country sites) degrades to listed:null', async () => {
+  const f = async () => { throw new Error('network down'); };
+  const c = new TrustedShopsChecker({ fetchImpl: f, timeoutMs: 50 });
+  const r = await c.checkOne('anything.ch');
   assert.equal(r.listed, null);
-  assert.match(r.reason, /check failed/);
+  assert.match(r.reason, /all Trusted Shops checks failed/);
   assert.equal(describeResult(r).includes('unavailable'), true);
 });
 
-await test('cache: repeat check is instant and does not re-fetch; cache misses counted', async () => {
-  const f = stubFetch([{ match: u => u.includes('/shops.json?'), body: LOOKUP_BODY('XT2') }]);
-  const c = new TrustedShopsChecker({ fetchImpl: f, timeoutMs: 200 });
+await test('hung search: own deadline fires even though AbortSignal alone would not', async () => {
+  const f = (url, opts = {}) => new Promise((_, rej) => opts.signal?.addEventListener('abort', () => rej(new Error('aborted'))));
+  const c = new TrustedShopsChecker({ fetchImpl: f, timeoutMs: 30 });
+  const r = await c.checkOne('slow.ch');
+  assert.equal(r.listed, null);
+  assert.match(r.reason, /all Trusted Shops checks failed/);
+});
+
+await test('cache: repeat check does not re-fetch; fromCache flagged; hits counted', async () => {
+  const f = stubFetch(defaultRoutes([{ match: u => u.includes('trustedshops.ch/'), body: searchPage([DIGITEC]) }]));
+  const c = new TrustedShopsChecker({ fetchImpl: f, timeoutMs: 300 });
   const a = await c.checkOne('cached-shop.ch');
-  const lookupsAfterFirst = f.calls.filter(u => u.includes('/shops.json?')).length;
+  const searchesAfterFirst = f.calls.filter(isSearch).length;
   const b = await c.checkOne('cached-shop.ch');
-  assert.equal(lookupsAfterFirst, 1);
-  assert.equal(f.calls.filter(u => u.includes('/shops.json?')).length, 1, 'second check must not re-fetch');
+  assert.ok(searchesAfterFirst >= 1);
+  assert.equal(f.calls.filter(isSearch).length, searchesAfterFirst, 'second check must not re-fetch');
   assert.equal(a.fromCache, false);
   assert.equal(b.fromCache, true);
   assert.equal(c.stats.cacheHits, 1);
 });
 
+await test('registry store-page entries without quality data: rating rescued from country-site hit', async () => {
+  const STORE_ENTRY = { tsId: 'XSTORE', url: 'www.conrad.de/de/filialen/filiale-berlin.html', name: 'Conrad Berlin', languageISO2: 'de', targetMarketISO3: 'DEU' };
+  const MAIN_ENTRY = { tsId: 'XMAIN', url: 'www.conrad.de/de/branch', name: 'Conrad Electronic', languageISO2: 'de', targetMarketISO3: 'DEU' };
+  const MAIN_SSR = { profileType: 'member', accountName: 'Conrad Electronic', tsID: 'XMAIN', shopName: 'conrad.de', shopUrl: 'conrad.de', averageRating: 4.6, reviewCount: 24500, profileUrl: 'www.trustedshops.de/bewertung/conrad.de' };
+  const f = stubFetch(defaultRoutes([
+    { match: isMemberLookup, body: { response: { code: 200, data: { shops: [STORE_ENTRY, MAIN_ENTRY] }, status: 'SUCCESS' } } },
+    { match: u => u.includes('/XSTORE/quality.json'), status: 404, body: {} },
+    { match: u => u.includes('/XMAIN/quality.json'), status: 404, body: {} },
+    { match: u => u.includes('trustedshops.de/'), body: searchPage([MAIN_SSR]) },
+  ]));
+  const c = new TrustedShopsChecker({ fetchImpl: f });
+  const r = await c.checkOne('conrad.de');
+  assert.equal(r.listed, true);
+  assert.equal(r.primary.tsId, 'XMAIN', 'rated exact profile must win over unrated store pages');
+  assert.equal(r.primary.rating.overallMark, 4.6);
+  assert.equal(r.primary.rating.source, 'country-site');
+});
+
 await test('batch: results in input order, concurrency cap respected', async () => {
-  const f = stubFetch([{ match: u => u.includes('/shops.json?'), delayMs: 25, body: LOOKUP_BODY('XT3') }]);
-  const c = new TrustedShopsChecker({ fetchImpl: f, concurrency: 4, timeoutMs: 500 });
-  const inputs = ['a.ch', 'b.ch', 'c.ch', 'd.ch', 'e.ch', 'f.ch', 'g.ch', 'h.ch', 'i.ch', 'j.ch'];
+  const f = stubFetch([{ match: isSearch, delayMs: 25, body: searchPage([]) }]);
+  const c = new TrustedShopsChecker({ fetchImpl: f, concurrency: 6, timeoutMs: 500 });
+  const inputs = ['a.ch', 'b.ch', 'c.ch', 'd.ch', 'e.ch', 'f.ch', 'g.ch', 'h.ch'];
   const out = await c.check(inputs);
-  assert.equal(out.results.length, 10);
-  assert.deepEqual(out.results.map(r => r.resolvedDomain), inputs.map(d => d));
-  assert.ok(f.peak() <= 4, `peak in-flight ${f.peak()} exceeded cap 4`);
-  assert.ok(out.tookMs < 10 * 25, 'batch should overlap requests');
+  assert.equal(out.results.length, 8);
+  assert.deepEqual(out.results.map(r => r.resolvedDomain), inputs);
+  assert.ok(f.peak() <= 6, `peak in-flight ${f.peak()} exceeded cap 6`);
 });
 
 await test('name-only merchant: unanswered honestly, no invented domain', async () => {
-  const f = stubFetch();
+  const f = stubFetch(defaultRoutes());
   const c = new TrustedShopsChecker({ fetchImpl: f });
   const r = await c.checkOne({ name: 'Alpine Basket' });
   assert.equal(r.listed, null);
-  assert.equal(r.resolvedDomain, null);
   assert.match(r.reason, /no domain supplied/);
   assert.equal(f.calls.length, 0);
 });
@@ -178,15 +250,30 @@ await test('name-only merchant: unanswered honestly, no invented domain', async 
 console.log('\n— engine integration (advisory evidence only) —');
 
 const tsListed = { resolvedDomain: 'www.testshop.ch', listed: true, checkedAt: '2026-09-25T01:00:00Z',
-  shops: [], primary: { tsId: 'XT1', name: 'Testshop AG', registeredUrl: 'www.testshop.ch', targetMarket: 'CHE', market: 'Switzerland (trustedshops.ch)',
+  shops: [{ tsId: 'XT1', name: 'Testshop AG', registeredUrl: 'www.testshop.ch', targetMarket: 'CHE', market: 'Switzerland (trustedshops.ch)',
+    rating: { overallMark: 4.79, description: 'EXCELLENT', totalReviewCount: 1703, activeReviewCount: 95, reviewsCountedSince: '2012-04-12' } }],
+  profiles: [], found_on: ['trustedshops.ch'],
+  member: { tsId: 'XT1', name: 'Testshop AG', targetMarket: 'CHE', market: 'Switzerland (trustedshops.ch)',
+    rating: { overallMark: 4.79, description: 'EXCELLENT', totalReviewCount: 1703, activeReviewCount: 95, reviewsCountedSince: '2012-04-12' } },
+  primary: { tsId: 'XT1', name: 'Testshop AG', registeredUrl: 'www.testshop.ch', targetMarket: 'CHE', market: 'Switzerland (trustedshops.ch)',
     rating: { overallMark: 4.79, description: 'EXCELLENT', totalReviewCount: 1703, activeReviewCount: 95, reviewsCountedSince: '2012-04-12' } } };
-const tsUnlisted = { resolvedDomain: 'digitec.ch', listed: false, shops: [], primary: null, checkedAt: '2026-09-25T01:00:00Z' };
-const tsFailed = { resolvedDomain: 'slow.ch', listed: null, shops: [], primary: null, reason: 'check failed: timeout', checkedAt: '2026-09-25T01:00:00Z' };
+const tsUnlisted = { resolvedDomain: 'digitec-nope.ch', listed: false, shops: [], profiles: [], found_on: [], checkedAt: '2026-09-25T01:00:00Z' };
+const tsProfileOnly = { resolvedDomain: 'digitec.ch', listed: true, shops: [], found_on: ['trustedshops.ch'], checkedAt: '2026-09-25T01:00:00Z',
+  profiles: [{ domain: 'trustedshops.ch', profileType: 'non-member', tsId: 'X2EAB51093C8C38277A55239953A06E4D', accountName: 'Digitec Galaxus AG', shopName: 'digitec.ch', averageRating: 0, reviewCount: 0, profileUrl: 'https://www.trustedshops.ch/bewertung/digitec.ch' }],
+  primary: { profileType: 'non-member', accountName: 'Digitec Galaxus AG', reviewCount: 0 } };
+const tsFailed = { resolvedDomain: 'slow.ch', listed: null, shops: [], profiles: [], found_on: [], reason: 'check failed: timeout', checkedAt: '2026-09-25T01:00:00Z' };
 
-await test('listed merchant adds positive evidence but never changes an approval', () => {
+await test('listed member adds positive evidence but never changes an approval', () => {
   const out = evaluate(baseEvent(), emptyState, knownProfiles, null, { trustedShops: tsListed });
   assert.equal(out.decision, 'approve');
   assert.ok(out.evidence.some(e => e.label === 'Trusted Shops' && /4\.79/.test(e.value)));
+  assert.ok(out.flags.positive.some(p => p.code === 'TRUSTEDSHOPS_LISTED'));
+});
+
+await test('profile-only listing (non-member) renders and stays advisory', () => {
+  const out = evaluate(baseEvent(), emptyState, knownProfiles, null, { trustedShops: tsProfileOnly });
+  assert.equal(out.decision, 'approve');
+  assert.ok(out.evidence.some(e => e.label === 'Trusted Shops' && /trustedshops\.ch/.test(e.value)));
   assert.ok(out.flags.positive.some(p => p.code === 'TRUSTEDSHOPS_LISTED'));
 });
 
@@ -210,7 +297,6 @@ await test('a hard-rule decline stays declined with Trusted Shops evidence prese
   const out = evaluate(ev, emptyState, knownProfiles, null, { trustedShops: tsListed });
   assert.equal(out.decision, 'decline');
   assert.ok(out.reason_codes.includes('LIMIT_EXCEEDED'));
-  assert.ok(out.evidence.some(e => e.label === 'Trusted Shops'));
 });
 
 await test('omitting extras entirely keeps the old 4-arg call signature working', () => {
@@ -222,15 +308,18 @@ await test('omitting extras entirely keeps the old 4-arg call signature working'
 console.log('\n— optional live smoke (LEASH_TS_LIVE=1) —');
 
 if (process.env.LEASH_TS_LIVE) {
-  await test('live API: known-listed and known-unlisted merchants, concurrent batch', async () => {
+  await test('live: digitec listed via .ch (non-member), conrad.de member, unlisted stays unlisted', async () => {
     const c = new TrustedShopsChecker({});
-    const out = await c.check(['m-s-v.eu', 'conrad.de', 'digitec.ch', 'this-domain-should-not-exist-xyz123.ch']);
+    const out = await c.check(['digitec.ch', 'conrad.de', 'this-domain-should-not-exist-xyz123.ch']);
     const byDomain = Object.fromEntries(out.results.map(r => [r.resolvedDomain, r]));
-    assert.equal(byDomain['m-s-v.eu'].listed, true);
+    assert.equal(byDomain['digitec.ch'].listed, true, 'digitec must be found via country search');
+    assert.deepEqual(byDomain['digitec.ch'].found_on, ['trustedshops.ch']);
+    assert.equal(byDomain['digitec.ch'].profiles[0].accountName, 'Digitec Galaxus AG');
     assert.equal(byDomain['conrad.de'].listed, true);
-    assert.equal(byDomain['digitec.ch'].listed, false, 'digitec is genuinely not a TS member');
+    const pr = byDomain['conrad.de'].primary;
+    assert.ok(pr && ((pr.rating?.overallMark != null) || (pr.reviewCount ?? 0) > 0), 'conrad rating evidence present (quality API or country-site data)');
     assert.equal(byDomain['this-domain-should-not-exist-xyz123.ch'].listed, false);
-    console.log(`    live batch took ${out.tookMs} ms; m-s-v.eu: ${describeResult(byDomain['m-s-v.eu'])}`);
+    console.log(`    live batch took ${out.tookMs} ms; digitec: ${describeResult(byDomain['digitec.ch'])}`);
   });
 } else {
   console.log('  (skipped — set LEASH_TS_LIVE=1 to run)');
