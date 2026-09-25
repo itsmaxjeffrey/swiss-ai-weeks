@@ -415,7 +415,7 @@ function checkPolicyAgainstSettings(uid, policy) {
     const domains = ((policy && policy.merchant) || {}).allowed_domains;
     if (!Array.isArray(domains) || domains.length === 0) {
       violations.push(
-        "merchant.allowed_domains is required: your website whitelist is active, so the policy must name the shop domain(s) it will buy from."
+        "merchant.allowed_domains is required: your website whitelist is active and already on file — the agent must re-propose (new policy) with merchant.allowed_domains set to whitelisted shop domain(s). No settings change is needed."
       );
     } else {
       const bad = domains.filter((d) => {
@@ -423,7 +423,7 @@ function checkPolicyAgainstSettings(uid, policy) {
       });
       if (bad.length) {
         violations.push(
-          `merchant.allowed_domains not whitelisted: ${bad.join(", ")}. Add ${bad.length === 1 ? "it" : "them"} under Account → Shopping → Whitelisted websites first.`
+          `merchant.allowed_domains not whitelisted: ${bad.join(", ")}. The agent must re-propose buying only from whitelisted domain(s) — add ${bad.length === 1 ? "it" : "them"} under Account → Shopping → Whitelisted websites only if you actually want ${bad.length === 1 ? "that shop" : "those shops"} allowed.`
         );
       }
     }

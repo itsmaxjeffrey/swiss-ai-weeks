@@ -493,6 +493,29 @@ function customerBlock(user) {
   };
 }
 
+/* Per-customer shopping controls, self-served by the agent: the website
+ * whitelist and spend cap are already on file (onboarding / Account →
+ * Shopping), so every draft policy carries merchant.allowed_domains and a
+ * budget within the cap — the customer is never asked about either. With no
+ * whitelist the agent picks and evaluates shops itself instead of bouncing
+ * the choice back. */
+function shoppingControlsNote(user) {
+  const wl = shopping.getWhitelist(user.id);
+  const cap = shopping.getSpendCap(user.id);
+  const parts = [];
+  if (cap != null) parts.push(`spend cap ${cap} CHF is a hard max for budget.max_total`);
+  if (wl.length) {
+    parts.push(
+      `website whitelist ACTIVE (${wl.join(", ")}; subdomains of these count as whitelisted): search ONLY these shops and ALWAYS set merchant.allowed_domains to the whitelisted domain(s) you will buy from — the whitelist is already on file, never ask the customer about it`
+    );
+  } else {
+    parts.push(
+      "no website whitelist on file: pick the shops yourself — search the web for reputable Swiss shops, evaluate each candidate (merchant directory GET /api/merchants, scripts/impressum-check.js, Trusted Shops evidence), and set merchant.allowed_domains to the evaluated domain(s) you chose — never ask the customer to whitelist or name domains"
+    );
+  }
+  return `(System: shopping controls — ${parts.join("; ")}. A policy without valid merchant.allowed_domains is refused at sign time.)`;
+}
+
 /** Per-customer context prepended to every shopper turn so the agent uses
  *  THIS web customer's data, never a stored default. */
 function customerContextNote(user) {
@@ -500,7 +523,7 @@ function customerContextNote(user) {
   if (!cust) {
     return "\n\n(System: this customer has NO delivery address on file. If this request could end in a purchase, tell them to add their address under Account → Shopping → Delivery address in the web UI — the authority refuses to sign without it. Never guess or default an address or email.)";
   }
-  return `\n\n(System: customer on file — email ${cust.email}, name ${cust.name || "unknown"}, delivery address: ${cust.delivery_address}. Use exactly this identity and address for order policies, merchant checkouts and deliveries — never a different or historical default.)`;
+  return `\n\n(System: customer on file — email ${cust.email}, name ${cust.name || "unknown"}, delivery address: ${cust.delivery_address}. Use exactly this identity and address for order policies, merchant checkouts and deliveries — never a different or historical default.)\n\n${shoppingControlsNote(user)}`;
 }
 
 function signPolicy(policy, res, user) {
@@ -1153,7 +1176,7 @@ async function handle(req, res) {
       agent: AGENT,
       session: SESSION,
       bridge: "openclaw-cli",
-      build: "live-trail-1",
+      build: "auto-whitelist-1",
       busy: activeTurns >= MAX_CONCURRENT,
       activeTurns,
       maxConcurrent: MAX_CONCURRENT,
