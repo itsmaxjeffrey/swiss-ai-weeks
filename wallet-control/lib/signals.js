@@ -169,3 +169,71 @@ export function buildTrustIndex(trust) {
   trust.legitCompanyIndex = idx;
   return trust;
 }
+
+// ---------------------------------------------------------------------------
+// Market intel (built by tools/build-datasets.mjs from merchant-trust-data
+// exports): web-popularity ranks (Tranco ∪ Majestic), sanctions name index
+// (SECO/OFAC/UN), and MCC fraud priors (TabFormer). Same degrades-silently
+// contract as the trust dataset: every lookup is null when the dataset is
+// absent, and nothing here can ever approve or loosen a decision.
+// ---------------------------------------------------------------------------
+
+/** Attach built dataset indexes onto the (already trust-indexed) object. */
+export function hydrateMarketIntel(trust, { popularity, sanctions, mccRisk } = {}) {
+  if (!trust) return trust;
+  if (popularity?.domains) trust.popularityIndex = new Map(Object.entries(popularity.domains));
+  if (sanctions?.names) trust.sanctionsIndex = new Map(Object.entries(sanctions.names));
+  if (mccRisk?.mccs) trust.mccRisk = mccRisk;
+  return trust;
+}
+
+/**
+ * Global popularity rank for a merchant domain. Tries the exact host, then the
+ * registrable-ish base (last two labels) so shop.example.co.uk still finds
+ * example.co.uk. Returns {domain, rank, source} or null.
+ */
+export function popularityLookup(domain, trust) {
+  if (!trust?.popularityIndex || !domain) return null;
+  const d = String(domain).toLowerCase().trim().replace(/^www\./, '');
+  const labels = d.split('.');
+  // Candidate bases: exact host, then registrable-ish suffixes. Multi-part
+  // public suffixes (co.uk, com.au, …) are skipped so shop.example.co.uk
+  // resolves to example.co.uk, never to the bare suffix.
+  const TWO_PART = /^(co|org|net|ac|gov|com)\.(uk|au|jp|za|br|nz|sg|in|my|hk)$/;
+  const bases = [d];
+  const last2 = labels.slice(-2).join('.');
+  if (labels.length > 2 && !TWO_PART.test(last2)) bases.push(last2);
+  if (labels.length > 3) bases.push(labels.slice(-3).join('.'));
+  for (const b of bases) {
+    const hit = trust.popularityIndex.get(b);
+    if (hit) return { domain: b, rank: Number(hit.r ?? hit.rank), source: hit.s || hit.source || 'top-1M' };
+  }
+  return null;
+}
+
+/**
+ * Exact normalized-name match against SECO/OFAC/UN sanctions lists. No fuzzy
+ * matching on purpose: a sanctions hit is a hard decline, so only equality
+ * (util.normalizeName) qualifies. Returns {source, name} or null.
+ */
+export function sanctionsLookup(name, trust) {
+  if (!trust?.sanctionsIndex || !name) return null;
+  const hit = trust.sanctionsIndex.get(normalizeName(name));
+  return hit ? { source: hit.s, name: hit.n } : null;
+}
+
+/**
+ * MCC fraud prior from the TabFormer corpus. Only entries flagged `high`
+ * (see tools/build-datasets.mjs for the enrichment-robust relative rule)
+ * are surfaced. Returns {mcc, rate, n, baseRate, median} or null.
+ */
+export function mccRiskLookup(mcc, trust) {
+  if (!trust?.mccRisk?.mccs || mcc == null || mcc === '') return null;
+  const e = trust.mccRisk.mccs[String(mcc)];
+  if (!e?.high) return null;
+  return {
+    mcc: String(mcc), rate: e.rate, n: e.n,
+    baseRate: trust.mccRisk.base_rate,
+    median: trust.mccRisk.sample_median_mcc_rate,
+  };
+}

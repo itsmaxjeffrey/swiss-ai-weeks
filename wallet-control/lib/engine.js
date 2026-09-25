@@ -17,7 +17,7 @@
 import { round2, toChf, fmtChf, clip, FX } from './util.js';
 import {
   scanInjection, extractReturnWindow, extractItemAttributes, basketLineSumChf,
-  lookalikeMatch, trustLookup,
+  lookalikeMatch, trustLookup, popularityLookup, sanctionsLookup, mccRiskLookup,
 } from './signals.js';
 import { requestedItemSpec } from './policy-compiler.js';
 import { scanInjectionModel, getInjectionModel } from './injection-model.js';
@@ -463,6 +463,48 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
     ev('Merchant trust', 'name found in Swiss company registry dataset (LEASH/GLEIF)');
   }
 
+  // -- 8a. Sanctions screening (deterministic list hit, same class as TRUSTLIST_HIT) --
+  // Exact normalized-name match against SECO/OFAC/UN entries (no fuzzy matching —
+  // a decline must not fire on a guess). Inert when the sanctions dataset is absent.
+  if (trust?.sanctionsIndex) cv(); // sanctions screen ran over readable data
+  const san = sanctionsLookup(a.merchant?.merchant_name, trust);
+  if (san) {
+    addFail('SANCTIONS_MATCH', `merchant name “${a.merchant?.merchant_name}” matches sanctioned party “${san.name}” on the ${san.source.toUpperCase()} list — payments to listed parties cannot be authorized`);
+  }
+
+  // -- 8a'. Known-malicious infrastructure IPs (FeodoTracker + AbuseIPDB ≥80) --------
+  const mIp = a.merchant?.merchant_ip || a.merchant?.ip || null;
+  if (trust?.malicious_ips && mIp) {
+    cv(); // merchant IP screened against the threat-intel IP set
+    if (trust.malicious_ips[mIp]) {
+      addFail('TRUSTLIST_HIT', `merchant IP ${mIp} is known-malicious infrastructure (${trust.malicious_ips[mIp]} in the LEASH threat-intel dataset)`);
+    }
+  }
+
+  // -- 8b'. Web popularity (Tranco ∪ Majestic top-1M) — evidence only -----------------
+  // A top-ranked domain is positive context, nothing more: popularity is easy to
+  // fake with lookalike domains and its absence is normal for small honest shops.
+  // It never suppresses an uncertainty and never changes a decision.
+  const pop = merchantDomain ? popularityLookup(merchantDomain, trust) : null;
+  if (trust?.popularityIndex && merchantDomain) cv(); // popularity screen ran over a readable domain
+  if (pop) {
+    ev('Merchant popularity', `#${pop.rank} most-visited site globally (${pop.source} top-1M)`);
+    if (pop.rank <= 50000) {
+      flags.positive.push({ code: 'POPULAR_DOMAIN', detail: `${merchantDomain} ranks #${pop.rank} in the global top-1M (${pop.source})` });
+    }
+  }
+
+  // -- 8b''. MCC fraud prior (TabFormer 24.4M transactions) — escalation-only --------
+  // Fires ONLY for merchants that are neither familiar nor customer-trusted: a
+  // *new* shop in a historically fraud-heavy category is the risky combination.
+  // Pure escalation pressure — it can ask, never approve/decline on its own.
+  const mccHit = mccRiskLookup(a.merchant?.merchant_mcc, trust);
+  if (trust?.mccRisk && a.merchant?.merchant_mcc != null && a.merchant?.merchant_mcc !== '') cv(); // category risk screen ran
+  if (mccHit && !histFam.familiar && !trustedMeta) {
+    const ratio = mccHit.median ? (mccHit.rate / mccHit.median).toFixed(1) : '?';
+    addUnc('MCC_FRAUD_PATTERN', `merchant category ${mccHit.mcc} (first purchase at this shop) shows ~${ratio}× the typical fraud rate across ${mccHit.n} historical card transactions (TabFormer corpus) — extra check before first payment in an elevated-risk category`);
+  }
+
   // -- 8b. Trusted Shops verification (advisory evidence, pre-fetched by the worker) ---
   // Presence of the merchant's website on Trusted Shops is positive evidence only;
   // absence is neutral — many legitimate shops (digitec, brack) are not members.
@@ -494,7 +536,7 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
   // permission — it is uncertainty. The customer decides, with the merchant
   // dossier (Zefix registry, imprint comparison, socials, payment methods,
   // country, reviews) rendered on the step-up card by the UI.
-  const blacklistedMerchant = fails.some(f => f.code === 'TRUSTLIST_HIT' || f.code === 'TRUSTEDSHOPS_FAKE_SHOP');
+  const blacklistedMerchant = fails.some(f => f.code === 'TRUSTLIST_HIT' || f.code === 'TRUSTEDSHOPS_FAKE_SHOP' || f.code === 'SANCTIONS_MATCH');
   if (merchantDomain && trustedMeta) {
     cv(); // verdict from your own trusted-merchant list
     ev('Merchant trust status', `${merchantDomain} — on your trusted list since ${new Date(trustedMeta.addedAt).toISOString().slice(0, 10)}`);

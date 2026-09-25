@@ -6,7 +6,7 @@
 //   node cli.js SCEN0002        -> one scenario
 import { HistoryProfiles } from './lib/history.js';
 import { evaluate } from './lib/engine.js';
-import { buildTrustIndex } from './lib/signals.js';
+import { buildTrustIndex, hydrateMarketIntel } from './lib/signals.js';
 import { compilePolicy } from './lib/policy-compiler.js';
 import { PackData } from './sim/events.js';
 import { readJsonIfExists } from './lib/util.js';
@@ -22,6 +22,11 @@ const scenarios = args.filter(a => !a.startsWith('--'));
 const pack = new PackData(PACK_DIR);
 const profiles = HistoryProfiles.load(path.join(PACK_DIR, 'authorization_history.csv'));
 const trust = buildTrustIndex(readJsonIfExists(path.join(ROOT, 'data/leash_trust.json')));
+hydrateMarketIntel(trust, {
+  popularity: readJsonIfExists(path.join(ROOT, 'data/popularity.json')),
+  sanctions: readJsonIfExists(path.join(ROOT, 'data/sanctions_names.json')),
+  mccRisk: readJsonIfExists(path.join(ROOT, 'data/mcc_risk.json')),
+});
 
 // Auto-resolution policy for the simulated customer:
 // approve pauses whose uncertainties are "human-judgment" items (substitution,

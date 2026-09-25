@@ -11,7 +11,7 @@ import { HistoryProfiles } from './lib/history.js';
 import { makeClient } from './lib/api.js';
 import { Worker } from './lib/worker.js';
 import { compilePolicy } from './lib/policy-compiler.js';
-import { buildTrustIndex, trustLookup } from './lib/signals.js';
+import { buildTrustIndex, hydrateMarketIntel, trustLookup } from './lib/signals.js';
 import { TrustedShopsChecker, normalizeDomain } from './lib/trustedshops.js';
 import { MerchantDossier } from './lib/yellowlist.js';
 import { readJsonIfExists, loadCsv } from './lib/util.js';
@@ -27,10 +27,17 @@ const store = new Store(path.join(ROOT, 'data/state.json'));
 const profiles = HistoryProfiles.load(path.join(PACK_DIR, 'authorization_history.csv'));
 const trustRaw = readJsonIfExists(path.join(ROOT, 'data/leash_trust.json'));
 const trust = buildTrustIndex(trustRaw);
+// Market-intel datasets (tools/build-datasets.mjs): web popularity (Tranco ∪
+// Majestic), sanctions names (SECO/OFAC/UN), MCC fraud priors (TabFormer).
+hydrateMarketIntel(trust, {
+  popularity: readJsonIfExists(path.join(ROOT, 'data/popularity.json')),
+  sanctions: readJsonIfExists(path.join(ROOT, 'data/sanctions_names.json')),
+  mccRisk: readJsonIfExists(path.join(ROOT, 'data/mcc_risk.json')),
+});
 const client = makeClient(store);
 const trustedShops = new TrustedShopsChecker();
 const gleifAges = readJsonIfExists(path.join(ROOT, 'data', 'gleif_ch_ages.json'));
-const dossierService = new MerchantDossier({ trustedShops, gleifAges });
+const dossierService = new MerchantDossier({ trustedShops, gleifAges, trust });
 // Sustainability scores (demo-grade static dataset, data/sustainability.json)
 // + persisted UI preferences (data/preferences.json). Advisory only: they
 // inform the offer comparison; they never change engine decisions.

@@ -36,6 +36,7 @@
 //    module enforces itself, 6 h TTL cache, in-flight de-duplication.
 
 import { normalizeDomain } from './trustedshops.js';
+import { popularityLookup, sanctionsLookup } from './signals.js';
 import { jaroWinkler, normalizeName } from './util.js';
 import { checkImpressum, fetchText, htmlToText } from './impressum.js';
 
@@ -74,9 +75,10 @@ const DEFAULTS = {
 };
 
 export class MerchantDossier {
-  constructor({ trustedShops = null, customerCountry = null, gleifAges = null, ...overrides } = {}) {
+  constructor({ trustedShops = null, customerCountry = null, gleifAges = null, trust = null, ...overrides } = {}) {
     this.o = { ...DEFAULTS, ...overrides };
     this.trustedShops = trustedShops; // TrustedShopsChecker instance (shared)
+    this.trust = trust; // market-intel indexes (popularity/sanctions) — optional
     this.gleifAges = gleifAges instanceof Map ? gleifAges : (gleifAges ? new Map(Object.entries(gleifAges)) : null); // UID(CHE…) -> {name, creationDate}
     this.customerCountry = (customerCountry || process.env.LEASH_CUSTOMER_COUNTRY || 'CH').toUpperCase();
     this.cache = new Map();   // domain -> {at, dossier}
@@ -146,6 +148,20 @@ export class MerchantDossier {
       })),
     ]);
     dossier.imprint = { status: impressum.status, url: impressum.impressum_url, company_name: impressum.company_name, legal_form: impressum.legal_form, address: impressum.address, uid: impressum.uid, registry_number: impressum.registry_number, evidence_snippet: impressum.evidence_snippet, notes: impressum.notes };
+
+    // 1b) Local market intel (datasets built by tools/build-datasets.mjs):
+    // global web-popularity rank (Tranco ∪ Majestic top-1M) and sanctions
+    // screening of the imprint company name (SECO/OFAC/UN — exact normalized
+    // match only, so a hit is strong evidence, never a guess).
+    dossier.popularity = this.trust ? popularityLookup(domain, this.trust) : null;
+    dossier.sanctions = (this.trust && impressum.company_name)
+      ? sanctionsLookup(impressum.company_name, this.trust)
+      : null;
+    if (dossier.sanctions) {
+      dossier.summary.negatives.push(`imprint company name matches sanctioned party "${dossier.sanctions.name}" (${dossier.sanctions.source.toUpperCase()} list)`);
+    } else if (dossier.popularity) {
+      dossier.summary.positives.push(`#${dossier.popularity.rank} most-visited site globally (${dossier.popularity.source} top-1M)`);
+    }
 
     if (home.html) {
       dossier.social = extractSocials(home.html);
