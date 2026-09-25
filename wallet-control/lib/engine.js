@@ -124,11 +124,19 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
   const addFail = (code, detail) => fails.push({ code, detail });
   const addUnc = (code, detail) => uncert.push({ code, detail });
   const ev = (label, value) => evidence.push({ label, value: String(value) });
+  // Confidence accounting for evidence-based user feedback: `verified` counts
+  // deterministic checks that completed with readable data; `open` counts facts
+  // the engine could not verify. Uncertainties surfaced to the customer count
+  // as open points too, so the percentage always matches what the user is told.
+  const conf = { verified: 0, open: 0 };
+  const cv = () => { conf.verified += 1; };
+  const co = () => { conf.open += 1; };
 
   // -- 0. Mandate state -------------------------------------------------------
   if (mandate.status && mandate.status !== 'active') {
     addFail('MANDATE_INACTIVE', `wallet policy is ${mandate.status} — no spending is permitted`);
   }
+  cv(); // mandate state read — always a verifiable fact
 
   // -- 1. Untrusted-text manipulation scan (never changes policy, only escalates)
   const untrusted = [
@@ -137,6 +145,7 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
     { field: 'merchant_name', text: a.merchant?.merchant_name },
   ];
   const inj = scanInjection(untrusted);
+  cv(); // manipulation scan completed over all untrusted text fields
   if (inj.length) {
     flags.manipulation = inj;
     // Injection attempts never become hard fails on their own: the merchant text
@@ -152,6 +161,7 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
   const modelScan = scanInjectionModel(untrusted);
   if (modelScan?.best) {
     const { best, threshold, suspect } = modelScan;
+    cv(); // trained detector produced a scored verdict for this text
     if (best.score >= threshold) {
       flags.manipulation.push({
         code: 'INJ_MODEL', source: 'model', field: best.field,
@@ -167,14 +177,18 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
 
   // -- 2. Basic facts ----------------------------------------------------------
   ev('Amount', `${fmtChf(F.billing ?? NaN)}${a.currency && a.currency !== 'CHF' ? ` (${a.amount} ${a.currency} incl. delivery)` : ' incl. delivery'}`);
-  if (F.billing == null) addUnc('AMOUNT_MISSING', 'billing amount missing or malformed');
+  if (F.billing == null) { addUnc('AMOUNT_MISSING', 'billing amount missing or malformed'); co(); }
+  else cv();
   // price sanity: cart lines are priced in the row currency; items_subtotal uses the
   // row currency too; billing_amount_chf must equal (items + delivery) × fixed FX rate.
   if (a.items_subtotal != null && Math.abs(F.lineSumRaw - a.items_subtotal) > 0.05) {
     addUnc('PRICE_SANITY', `cart lines sum to ${round2(F.lineSumRaw).toFixed(2)} ${a.currency || ''} but items_subtotal says ${round2(a.items_subtotal).toFixed(2)} ${a.currency || ''}`);
   }
-  if (F.billing != null && a.amount != null && Math.abs(round2(a.amount * (FX[a.currency] ?? 1)) - F.billing) > 0.05) {
-    addUnc('PRICE_SANITY', `billed ${fmtChf(F.billing)} does not match ${a.amount} ${a.currency} at the fixed FX rate (${fmtChf(round2(a.amount * (FX[a.currency] ?? 1)))})`);
+  if (F.billing != null && a.amount != null) {
+    cv(); // billed total cross-checked against amount × fixed FX rate
+    if (Math.abs(round2(a.amount * (FX[a.currency] ?? 1)) - F.billing) > 0.05) {
+      addUnc('PRICE_SANITY', `billed ${fmtChf(F.billing)} does not match ${a.amount} ${a.currency} at the fixed FX rate (${fmtChf(round2(a.amount * (FX[a.currency] ?? 1)))})`);
+    }
   }
 
   // -- 3. Duplicate / retry recognition -----------------------------------------
@@ -184,6 +198,7 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
     addFail('RETRY_OF_DECLINED', 'this is a retry of a purchase you (or the wallet) already declined — declined purchases stay declined');
   }
   const dup = state.findDuplicate({ signature, authId: a.authorization_id, simTs: F.simTs, billing: F.billing, merchantId: a.merchant?.merchant_id });
+  cv(); // duplicate/retry scan completed against window + run history
   if (dup) {
     if (dup.kind === 'approved-similar') {
       addUnc('DUPLICATE_SUSPECT', `near-identical order at ${a.merchant?.merchant_name} (${fmtChf(dup.billing)}) was already approved ${dup.minutesAgo} min ago — possible duplicate submission`);
@@ -201,6 +216,7 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
   // the trusted list NOR a known-bad list is an open question for the customer
   // (see 8c) — never silent permission.
   const merchantDomain = normalizeDomain(a.merchant?.merchant_url || a.merchant?.website_url || a.merchant?.merchant_domain || a.merchant?.url || null)?.domain?.replace(/^www\./, '') || null;
+  if (merchantDomain) cv(); else co(); // merchant website identity anchor
   const trustedMeta = merchantDomain && state.trustedDomainCheck ? state.trustedDomainCheck(merchantDomain) : null;
 
   // -- 4. Hard rules ------------------------------------------------------------
@@ -334,6 +350,7 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
       addUnc('RULE_UNVERIFIED', `a permission (“${f} ${op} ${JSON.stringify(rule.value)}”) could not be checked by this engine`);
     }
     ruleResults.push(res);
+    if (res.status !== 'uncertain') cv(); // rule resolved over readable facts (uncertain cases count via their uncertainty)
   }
 
   // -- 5. Extra lines beyond a single requested item ------------------------------
@@ -351,12 +368,14 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
 
   // -- 6. Session-integrity & behavioural signals ---------------------------------
   const dev = profiles.deviceKnown(customerId, a.customer_device_id);
+  cv(); // device-history lookup returned a definitive answer
   ev('Device', dev.known ? `${a.customer_device_id} — known from your history` : `${a.customer_device_id} — never seen in your history`);
   if (!dev.known) {
     const d = { code: 'DEVICE_NOVELTY', detail: `purchase initiated from device ${a.customer_device_id}, which appears nowhere in your history` };
     integrityMonitoring ? flags.integrity.push(d) : addUnc(d.code, d.detail);
   }
   const vel = a.recent_attempt_count_10m ?? 0;
+  if (a.recent_attempt_count_10m != null) cv(); else co(); // velocity counter present?
   ev('Recent attempts (10 min)', String(vel));
   if (vel >= 2) {
     const d = { code: 'VELOCITY_BURST', detail: `${vel} attempts in the last 10 minutes — burst pattern` };
@@ -365,6 +384,7 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
     addUnc('SPLIT_ORDER', 'another attempt was made minutes ago at the same merchant for a similar amount — possible order splitting');
   }
   const hour = profiles.hourUnusual(customerId, F.simTs ?? Date.now());
+  cv(); // hour-of-day baseline computed from your history
   if (hour.unusual) {
     const d = { code: 'UNUSUAL_HOUR', detail: `attempted at ${String(hour.hour).padStart(2, '0')}:00 UTC — an hour you have never bought at` };
     integrityMonitoring ? flags.integrity.push(d) : addUnc(d.code, d.detail);
@@ -403,6 +423,7 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
 
   // -- 8. LEASH merchant-trust dataset (optional, degrades silently) -----------------
   const tl = trustLookup(a.merchant || {}, trust);
+  if (tl) cv(); // merchant screened against the trust dataset
   if (tl?.malicious) {
     addFail('TRUSTLIST_HIT', `merchant matches known-malicious infrastructure: ${tl.evidence}`);
   } else if (tl?.legitimate) {
@@ -416,6 +437,7 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
   // A failed/timed-out check degrades silently. Nothing here can fail, add an
   // uncertainty, or change the outcome on its own.
   const tsResult = extras?.trustedShops || null;
+  if (tsResult) cv(); // third-party consumer-protection check ran
   const fakeFlagged = Boolean(tsResult?.fake_shop?.flagged);
   if (tsResult && !fakeFlagged && (tsResult.listed === true || tsResult.listed === false)) {
     ev('Trusted Shops', describeResult(tsResult));
@@ -442,6 +464,7 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
   // country, reviews) rendered on the step-up card by the UI.
   const blacklistedMerchant = fails.some(f => f.code === 'TRUSTLIST_HIT' || f.code === 'TRUSTEDSHOPS_FAKE_SHOP');
   if (merchantDomain && trustedMeta) {
+    cv(); // verdict from your own trusted-merchant list
     ev('Merchant trust status', `${merchantDomain} — on your trusted list since ${new Date(trustedMeta.addedAt).toISOString().slice(0, 10)}`);
     flags.positive.push({ code: 'MERCHANT_TRUSTED', detail: `${merchantDomain} is on your trusted merchant list (added ${new Date(trustedMeta.addedAt).toISOString().slice(0, 10)})` });
   } else if (merchantDomain && !histFam.familiar && !blacklistedMerchant) {
@@ -460,6 +483,7 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
       break;
     }
   }
+  cv(); // description-vs-basket consistency scan completed
 
   // -- 10. Aggregate -------------------------------------------------------------------
   fails.sort((x, y) => codeRank(x.code) - codeRank(y.code));
@@ -473,13 +497,29 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
   else if (uncert.length) decision = policy === 'ask' ? 'step_up' : policy;
   else decision = 'approve';
 
+  // -- 10b. Confidence: share of decision-relevant facts verified by deterministic
+  // checks. Every uncertainty surfaced to the customer is an open point, as is any
+  // fact the engine could not verify. Capped at 99% — never claim certainty.
+  const openPoints = uncert.length + conf.open;
+  const factTotal = conf.verified + openPoints;
+  const confidence = {
+    percent: factTotal > 0 ? Math.min(99, Math.round((100 * conf.verified) / factTotal)) : 0,
+    verified_facts: conf.verified,
+    open_points: openPoints,
+    method: 'share of decision-relevant facts verified by deterministic checks',
+  };
+  const confStr = `${confidence.percent}% confidence (${conf.verified}/${factTotal} decision facts verified, ${openPoints} open)`;
+  const basisStr = evidence.slice(0, 5).map(e => e.label).join(' · ');
+
   // -- 11. Compose message ---------------------------------------------------------------
+  // Every user-facing message states its confidence percentage and cites the
+  // evidence it rests on — approvals, declines, and step-ups alike.
   const merchantName = a.merchant?.merchant_name || 'unknown merchant';
   const amountStr = F.billing != null ? fmtChf(F.billing) : 'an unreadable amount';
   let message;
   if (decision === 'decline') {
     const reasons = fails.map(f => sentence(f.detail)).join(' ');
-    message = `Declined ${amountStr} at ${merchantName}. ${reasons}`;
+    message = `Declined ${amountStr} at ${merchantName} — ${confStr}. ${reasons} Verified basis: ${basisStr}.`;
     if (manipulationPresent) message += ` Note: ${merchantName}'s product text also attempted to manipulate the wallet (“${clip(flags.manipulation[0].snippet)}”) — it was ignored and did not influence this decision.`;
   } else if (decision === 'step_up') {
     const lead = manipulationPresent
@@ -489,10 +529,11 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
         : uncert.some(u => u.code === 'MERCHANT_UNREVIEWED')
           ? `Paused for your review — ${merchantName}, ${amountStr}. This shop is on neither your trusted list nor a known-bad list; its merchant dossier (registry, imprint, reviews) is shown below so you can decide whether to trust it.`
           : `Paused for your review — ${merchantName}, ${amountStr}.`;
-    message = `${lead} ${uncert.length ? 'Open points: ' + uncert.map(u => u.detail).join(' ') : ''}`.trim();
+    const lead2 = /[.!?…]/.test(lead.trim().slice(-1)) ? lead.trim().replace(/[.!?…]+$/, '') : lead.trim();
+    message = `${lead2} — ${confStr}. ${uncert.length ? 'Open points: ' + uncert.map(u => sentence(u.detail)).join(' ') : ''} Verified basis: ${basisStr}.`.trim();
   } else {
     const notes = [...flags.integrity.map(i => i.detail)];
-    message = `Approved ${amountStr} at ${merchantName} — within your policy.${notes.length ? ` Notes: ${notes.join('; ')}.` : ''}`;
+    message = `Approved ${amountStr} at ${merchantName} — within your policy, ${confStr}. Verified basis: ${basisStr}.${notes.length ? ` Notes: ${notes.join('; ')}.` : ''}`;
   }
 
   const reasonCodes = [
@@ -508,13 +549,14 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
     decision,
     reason_codes: uniqueCodes,
     customer_message: message,
+    confidence,
     evidence,
     uncertainties: uncert.map(u => ({ code: u.code, detail: u.detail })),
     rule_results: ruleResults,
     flags,
     signature,
     evaluation_ms: Math.round(ms * 100) / 100,
-    engine_version: 'leash-engine 1.2.0',
+    engine_version: 'leash-engine 1.3.0',
   };
 }
 

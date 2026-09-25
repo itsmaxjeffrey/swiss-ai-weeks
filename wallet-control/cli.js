@@ -110,7 +110,7 @@ function runScenario(id) {
     const ms = String(ev.evaluation_ms).padStart(5);
     console.log(`  ${row.authorization_id} ${row.timestamp.slice(5, 16)}  ${String(row.merchant_id)}  ${String(row.billing_amount_chf).padStart(6)} ${row.currency.padEnd(4)} ${badge} ${codes} ${ms}ms`);
     if (ev.decision !== 'approve') {
-      console.log(`      ${ev.customer_message.replace(/\n/g, ' ').slice(0, 220)}`);
+      console.log(`      ${ev.customer_message.replace(/\n/g, ' ').slice(0, 320)}`);
     }
     const beh = (ev.evidence || []).find(e => e.label === 'Behavior model');
     if (beh && !/normal/.test(beh.value)) {
