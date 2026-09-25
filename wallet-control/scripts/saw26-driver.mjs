@@ -121,7 +121,7 @@ const state = {
 const seen = new Set();
 let empty = 0;
 const rows = [];
-while (empty < 3) {
+while (empty < 4) {
   let evt;
   try { evt = api('GET', '/v1/decision-requests/next?wait=25'); }
   catch (e) { console.error(`  poll error: ${e.message}`); break; }
@@ -156,12 +156,10 @@ while (empty < 3) {
   if (out.decision === 'step_up') {
     final = RESOLVE === 'auto' ? resolveAuto(out.reason_codes)
       : RESOLVE === 'approve' ? 'approved' : 'declined';
+    const resolution = final === 'approved' ? 'approve' : 'decline';
     try {
-      api('POST', `/v1/authorizations/${authId}/resolve`, { resolution: final });
-    } catch (e) {
-      try { api('POST', `/v1/authorizations/${authId}/resolve`, { decision: final }); }
-      catch (e2) { console.error(`  resolve POST failed for ${authId}: ${e2.message}`); }
-    }
+      api('POST', `/v1/authorizations/${authId}/resolve`, { decision: resolution });
+    } catch (e) { console.error(`  resolve POST failed for ${authId}: ${e.message}`); }
   } else {
     final = out.decision === 'approve' ? 'approved' : 'declined';
   }
@@ -181,3 +179,7 @@ while (empty < 3) {
 
 const counts = rows.reduce((m, r) => { const k = r.final || r.decision; m[k] = (m[k] || 0) + 1; return m; }, {});
 console.log(`  done: ${rows.length} authorizations -> ` + Object.entries(counts).map(([k, v]) => `${v} ${k}`).join(', '));
+try {
+  const st = api('GET', `/v1/scenario-runs/${runId}`);
+  console.log(`  run status: ${JSON.stringify({ status: st.status, generated: st.generated_event_count, delivered: st.delivered_event_count, finalized: st.finalized_event_count, processed: st.processed_event_count, pending: st.pending_event_count, rejected: st.platform_rejected_count })}`);
+} catch (e) { console.log(`  run status unavailable: ${e.message}`); }
