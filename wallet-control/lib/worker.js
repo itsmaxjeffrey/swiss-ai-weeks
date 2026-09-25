@@ -6,11 +6,12 @@
 import { evaluate } from './engine.js';
 
 export class Worker {
-  constructor({ client, store, profiles, trust, log = console }) {
+  constructor({ client, store, profiles, trust, trustedShops = null, log = console }) {
     this.client = client;       // HttpApiClient | LocalApi
     this.store = store;
     this.profiles = profiles;
     this.trust = trust;
+    this.trustedShops = trustedShops;  // TrustedShopsChecker (optional, advisory evidence)
     this.log = log;
     this.activeRuns = new Map(); // run_id -> {stop}
     this.feed = [];              // UI event feed (bounded)
@@ -80,8 +81,22 @@ export class Worker {
       return;
     }
 
+    // Trusted Shops verification (advisory evidence; capped at 1.2 s so the 8 s
+    // decision deadline is never at risk — the engine itself stays sub-ms). If the
+    // platform event carries no merchant website the check is skipped; a check
+    // that misses the budget keeps running and lands in the checker cache, so
+    // later events for the same merchant get the evidence instantly.
+    const merchantSite = a.merchant?.merchant_url || a.merchant?.website_url || a.merchant?.merchant_domain || a.merchant?.url || null;
+    let extras = {};
+    if (this.trustedShops && merchantSite) {
+      extras.trustedShops = await Promise.race([
+        this.trustedShops.checkOne(merchantSite),
+        new Promise(r => setTimeout(() => r(null), 1200)),
+      ]);
+    }
+
     // Evaluate (deadline-aware: engine is sub-ms; guard anyway).
-    const evaluation = evaluate(event, this.store.runState(run), this.profiles, this.trust);
+    const evaluation = evaluate(event, this.store.runState(run), this.profiles, this.trust, extras);
     const record = {
       authorizationId: liveId,
       sourceAuthorizationId: a.source_authorization_id || null,

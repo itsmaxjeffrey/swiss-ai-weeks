@@ -22,6 +22,7 @@ import {
 import { requestedItemSpec } from './policy-compiler.js';
 import { scanInjectionModel, getInjectionModel } from './injection-model.js';
 import { scoreBehavior } from './behavior-model.js';
+import { describeResult } from './trustedshops.js';
 
 const INTEGRITY_SIGNAL_CODES = new Set(['DEVICE_NOVELTY', 'VELOCITY_BURST', 'UNUSUAL_HOUR']);
 
@@ -105,8 +106,11 @@ const DESCRIPTION_FAMILY_TOKENS = [
  * @param state   run state: {approvedSpendInWindow(days, beforeTs), inRunApprovedMerchants(), priorDecisions(), hasRule helper}
  * @param profiles HistoryProfiles
  * @param trust   LEASH trust dataset (optional)
+ * @param extras  network-provided enrichment (optional): {trustedShops} — Trusted Shops
+ *                verification result for the merchant website, fetched by the worker
+ *                ahead of evaluation and always advisory.
  */
-export function evaluate(event, state, profiles, trust) {
+export function evaluate(event, state, profiles, trust, extras = {}) {
   const t0 = process.hrtime.bigint();
   const a = event.authorization;
   const mandate = event.mandate || {};
@@ -394,6 +398,19 @@ export function evaluate(event, state, profiles, trust) {
     ev('Merchant trust', 'name found in Swiss company registry dataset (LEASH/GLEIF)');
   }
 
+  // -- 8b. Trusted Shops verification (advisory evidence, pre-fetched by the worker) ---
+  // Presence of the merchant's website on Trusted Shops is positive evidence only;
+  // absence is neutral — many legitimate shops (digitec, brack) are not members.
+  // A failed/timed-out check degrades silently. Nothing here can fail, add an
+  // uncertainty, or change the outcome on its own.
+  const tsResult = extras?.trustedShops || null;
+  if (tsResult && (tsResult.listed === true || tsResult.listed === false)) {
+    ev('Trusted Shops', describeResult(tsResult));
+    if (tsResult.listed === true) {
+      flags.positive.push({ code: 'TRUSTEDSHOPS_LISTED', detail: `merchant website is listed on Trusted Shops: ${describeResult(tsResult)}` });
+    }
+  }
+
   // -- 9. Description-vs-basket contradiction -----------------------------------------
   const desc = a.purchase_description || '';
   const basketText = F.lines.map(l => `${l.raw.item_name} ${l.raw.item_category}`).join(' ').toLowerCase();
@@ -457,7 +474,7 @@ export function evaluate(event, state, profiles, trust) {
     flags,
     signature,
     evaluation_ms: Math.round(ms * 100) / 100,
-    engine_version: 'leash-engine 1.1.0',
+    engine_version: 'leash-engine 1.2.0',
   };
 }
 

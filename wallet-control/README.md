@@ -27,6 +27,7 @@ Agent ──proposed purchase──▶ [2] Decision engine ──approve/decline
 | `lib/policy-compiler.js` | Natural-language instruction → `hard_rules` + uncertainty policy + plain-language "what we understood" + open questions. Deterministic grammar: amounts, rolling periods, categories, quantities, requested-item specs (size / terrain / inches), merchant familiarity & specialist requirements, return windows, no-add-on clauses, session-integrity clauses, uncertainty phrasing. |
 | `lib/engine.js` | The decision pipeline: manipulation scan → fact extraction → hard-rule evaluation → behavioural signals → aggregation → explanation. |
 | `lib/signals.js` | Untrusted-text mining: injection-pattern scan, return-window / size / product-attribute extraction, lookalike-merchant fuzzy matching (Jaro-Winkler), LEASH trust-dataset lookup. |
+| `lib/trustedshops.js` | Trusted Shops merchant verification (concurrent, TTL-cached, **advisory**): is the merchant's website listed on the global TS registry behind the .com/.de/.ch/… sites — with tsId, target market and rating/review evidence. Presence is positive evidence only; absence is neutral (digitec/brack are legitimate and not members). Exposed to the agent at `POST /api/trustedshops/check`; the worker also pre-fetches it ahead of every decision with a 1.2 s cap. |
 | `lib/history.js` | Per-customer profiles from `authorization_history.csv`: merchant familiarity, known devices, hour-of-day purchase envelope. |
 | `lib/behavior-model.js` | Trained user-behavior deviation scorer (advisory): 12 chronology-safe features vs the customer's learned profile, calibrated normal/suspect/escalate bands. Evidence on every decision; a strong anomaly becomes an uncertainty for the customer's own policy. Trained by `merchant-trust-data/models/behavior/`; inert without the artifact or for unknown customers. |
 | `lib/store.js` | Run ledger: decisions (idempotent per live `authorization_id`), rolling-spend windows on simulated timestamps, pending step-ups, duplicate/signature index. |
@@ -34,7 +35,7 @@ Agent ──proposed purchase──▶ [2] Decision engine ──approve/decline
 | `sim/local-api.js` | Offline implementation of the challenge API (mandates, runs, long-poll, decision, resolve, reset) backed by the data pack — full end-to-end demo with **no team key**. |
 | `web/` | Customer UI (Swiss editorial): policy review & confirm, tighten/revoke, live decision feed with evidence, step-up inbox with 120 s countdown. |
 | `cli.js` | Offline replay: `node cli.js [SCENxxxx] [--resolve=approve|decline|auto]` prints the full decision table. |
-| `test/` | 41 invariant/parity tests (engine+compiler 25, injection model 5, behavior model 11). Run: `npm test`. |
+| `test/` | 55 invariant/parity tests (engine+compiler 25, injection model 5, behavior model 11, Trusted Shops checker+engine-integration 14). Run: `npm test`. |
 
 ## Decision pipeline (per purchase)
 
@@ -57,7 +58,7 @@ Agent ──proposed purchase──▶ [2] Decision engine ──approve/decline
 | `session.integrity_monitoring` | Unfamiliar device, purchase bursts (`recent_attempt_count_10m ≥ 2`), never-observed purchase hours → force pause while active; recover automatically when signals clear. |
 | *(unknown field)* | → uncertain. The engine never silently passes a rule it cannot evaluate. |
 
-4. **Behavioural signals** — near-identical duplicate of an already-approved order (same signature ≤ 4 h) → *possible duplicate* → ask; same-merchant similar-amount order ≤ 15 min after an approval → *split order* → ask; retry of a declined purchase (`related_authorization_status=declined` or identical declined signature) → **decline**; lookalike merchant name vs shops the customer actually uses (e.g. "PixelHarbour" vs "PixelHarbor", 98 % match) → impersonation evidence; LEASH threat-intel / registry corroboration when the dataset is loaded; trained user-behavior model scores every attempt against the customer's own spending history — evidence always, and an escalate-band anomaly becomes an uncertainty (asked under the customer's uncertainty policy, never auto-declined).
+4. **Behavioural signals** — near-identical duplicate of an already-approved order (same signature ≤ 4 h) → *possible duplicate* → ask; same-merchant similar-amount order ≤ 15 min after an approval → *split order* → ask; retry of a declined purchase (`related_authorization_status=declined` or identical declined signature) → **decline**; lookalike merchant name vs shops the customer actually uses (e.g. "PixelHarbour" vs "PixelHarbor", 98 % match) → impersonation evidence; Trusted Shops verification of the merchant website when one is known — listed shops add positive evidence, absence stays neutral; LEASH threat-intel / registry corroboration when the dataset is loaded; trained user-behavior model scores every attempt against the customer's own spending history — evidence always, and an escalate-band anomaly becomes an uncertainty (asked under the customer's uncertainty policy, never auto-declined).
 5. **Aggregate** — any hard fail → `decline` (all reasons, plain language). Else manipulation or integrity breach → `step_up` regardless of uncertainty policy. Else any uncertainty → customer's policy (`ask` → `step_up`). Else `approve` with evidence.
 
 Every decision carries `reason_codes`, a plain-language `customer_message`, and an `evidence` grid (amount vs cap, rolling spend, merchant familiarity counts, return-window basis, device, velocity, injection snippet).
@@ -72,6 +73,19 @@ node cli.js SCEN0002 --resolve=approve
 ```
 
 **Live platform** (hackathon day): set `LEASH_BASE_URL` + `TEAM_API_KEY` and restart — the same worker, engine, and UI hit the hosted API. `POST /api/reset` clears dev state (disabled during judging).
+
+### Agent-facing merchant verification (Trusted Shops)
+
+The agent verifies every merchant website it considers **before** proposing a purchase — one call, all candidates concurrently:
+
+```bash
+curl -X POST http://127.0.0.1:8790/api/trustedshops/check \
+  -H 'content-type: application/json' \
+  -d '{"merchants":["digitec.ch","brack.ch","https://www.rebuy.com/outlet","conrad.de"]}'
+# or single: GET /api/trustedshops/check?merchant=m-s-v.eu
+```
+
+Measured: 5 merchants in ~305 ms (8-way parallel, 4 s per-request timeout, 6 h TTL cache, in-flight de-duplication — repeat checks are instant). Per result: `listed` true/false/null, `shops[]` (tsId, registered URL, target market), `primary.rating` (mark, description, total/active review counts, counted-since). Trusted Shops runs **one global registry** behind all its country sites; the `targetMarket`/`market` field tells which market (.ch/.de/…) each registration is certified for. Name-only merchants are answered honestly (`no domain supplied`) — the checker never invents domains. Same evidence flows into decisions automatically: the worker pre-fetches the check for any merchant that carries a website (1.2 s deadline cap) and the engine cites it in the decision grid.
 
 ## Demo script (maps to the three required demonstrations)
 

@@ -12,6 +12,7 @@ import { makeClient } from './lib/api.js';
 import { Worker } from './lib/worker.js';
 import { compilePolicy } from './lib/policy-compiler.js';
 import { buildTrustIndex } from './lib/signals.js';
+import { TrustedShopsChecker } from './lib/trustedshops.js';
 import { readJsonIfExists, loadCsv } from './lib/util.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -25,7 +26,8 @@ const profiles = HistoryProfiles.load(path.join(PACK_DIR, 'authorization_history
 const trustRaw = readJsonIfExists(path.join(ROOT, 'data/leash_trust.json'));
 const trust = buildTrustIndex(trustRaw);
 const client = makeClient(store);
-const worker = new Worker({ client, store, profiles, trust });
+const trustedShops = new TrustedShopsChecker();
+const worker = new Worker({ client, store, profiles, trust, trustedShops });
 const pack = {
   scenarios: loadCsv(path.join(PACK_DIR, 'scenario_catalogue.csv')),
 };
@@ -200,6 +202,24 @@ const server = http.createServer(async (req, res) => {
       activeRunId = null;
       worker.feed.length = 0;
       return json(res, 200, { reset: true });
+    }
+
+    if (p === '/api/trustedshops/check' && (req.method === 'POST' || req.method === 'GET')) {
+      // Agent-facing concurrent merchant verification: is the suggested website
+      // listed on Trusted Shops (global registry behind the .com/.de/.ch/… sites)?
+      // POST {merchants: ["digitec.ch", "https://www.brack.ch/", …]} or GET ?merchant=
+      let merchants = null;
+      if (req.method === 'POST') {
+        const body = await readBody(req);
+        merchants = body.merchants || body.domains || body.merchant || body.domain || null;
+      } else {
+        merchants = url.searchParams.get('merchant') || url.searchParams.get('domain') || url.searchParams.get('q');
+      }
+      if (!merchants || (Array.isArray(merchants) && !merchants.length)) {
+        return json(res, 400, { error: 'provide merchants to check: POST {merchants: [url-or-domain, …]} or GET ?merchant=' });
+      }
+      const out = await trustedShops.check(merchants);
+      return json(res, 200, { count: out.results.length, took_ms: out.tookMs, cache: trustedShops.stats, results: out.results });
     }
 
     if (p.startsWith('/api/')) return json(res, 404, { error: 'unknown api path' });
