@@ -464,10 +464,14 @@ function pickBestRow(rows, wantName) {
   return best;
 }
 
-/** Basic-auth header for the Zefix REST API from the environment. Accepts the
- *  combined LEASH_ZEFIX_TOKEN ("***") or the split
- *  LEASH_ZEFIX_USERNAME + LEASH_ZEFIX_PASSWORD pair. Returns "Basic …" or null. */
+/** Basic-auth header for the Zefix REST API from the environment. Accepts, in
+ *  order: LEASH_ZEFIX_B64 (base64 of "***", passed through VERBATIM so the
+ *  egress proxy can substitute the secret-store sentinel in place), the
+ *  combined LEASH_ZEFIX_TOKEN, or the split LEASH_ZEFIX_USERNAME +
+ *  LEASH_ZEFIX_PASSWORD pair. Returns "Basic …" or null. */
 export function zefixAuthHeader(env = process.env) {
+  const b64 = String(env.LEASH_ZEFIX_B64 || '').trim();
+  if (b64) return `Basic ${b64}`;
   const tok = env.LEASH_ZEFIX_TOKEN;
   if (tok) return 'Basic ' + Buffer.from(String(tok).trim()).toString('base64');
   const user = String(env.LEASH_ZEFIX_USERNAME || '').trim();

@@ -162,6 +162,11 @@ test('summarize flags registry miss and imprint miss as negatives', () => {
   assert.ok(s.negatives.some(p => p.includes('Based in DE')));
 });
 
+test('zefixAuthHeader: B64 passes through verbatim (proxy-substitutable)', () => {
+  assert.equal(zefixAuthHeader({ LEASH_ZEFIX_B64: '  dXNlcjpwYXNz  ' }), 'Basic dXNlcjpwYXNz');
+  assert.equal(zefixAuthHeader({ LEASH_ZEFIX_B64: 'dXNlcjpwYXNz', LEASH_ZEFIX_TOKEN: 'x' }), 'Basic dXNlcjpwYXNz');
+});
+
 test('zefixAuthHeader: split username+password or combined token, else null', () => {
   const split = zefixAuthHeader({ LEASH_ZEFIX_USERNAME: 'me@example.ch', LEASH_ZEFIX_PASSWORD: 'tok123' });
   assert.equal(split, 'Basic ' + Buffer.from('me@example.ch:tok123').toString('base64'));
