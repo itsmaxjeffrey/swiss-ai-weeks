@@ -28,7 +28,7 @@ const INTEGRITY_SIGNAL_CODES = new Set(['DEVICE_NOVELTY', 'VELOCITY_BURST', 'UNU
 
 // Reason codes ranked for message composition (most important first).
 const DECLINE_RANK = [
-  'MANDATE_INACTIVE', 'TRUSTLIST_HIT', 'RETRY_OF_DECLINED', 'INJECTION_ATTEMPT',
+  'MANDATE_INACTIVE', 'TRUSTLIST_HIT', 'TRUSTEDSHOPS_FAKE_SHOP', 'RETRY_OF_DECLINED', 'INJECTION_ATTEMPT',
   'GIFT_CARD_RISK', 'EXTRA_ITEM_BLOCKED', 'REQUESTED_ITEM_MISMATCH', 'SIZE_MISMATCH',
   'LIMIT_EXCEEDED', 'PERIOD_LIMIT_EXCEEDED', 'CATEGORY_MISMATCH', 'MERCHANT_TYPE_MISMATCH',
   'MERCHANT_UNFAMILIAR', 'RETURN_WINDOW_INSUFFICIENT', 'FULFILMENT_MISMATCH', 'LINE_COUNT_EXCEEDED',
@@ -404,11 +404,22 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
   // A failed/timed-out check degrades silently. Nothing here can fail, add an
   // uncertainty, or change the outcome on its own.
   const tsResult = extras?.trustedShops || null;
-  if (tsResult && (tsResult.listed === true || tsResult.listed === false)) {
+  const fakeFlagged = Boolean(tsResult?.fake_shop?.flagged);
+  if (tsResult && !fakeFlagged && (tsResult.listed === true || tsResult.listed === false)) {
     ev('Trusted Shops', describeResult(tsResult));
     if (tsResult.listed === true) {
       flags.positive.push({ code: 'TRUSTEDSHOPS_LISTED', detail: `merchant website is listed on Trusted Shops: ${describeResult(tsResult)}` });
     }
+  }
+  // A public fake-shop warning is the opposite of listing evidence: authoritative
+  // third-party knowledge that the shop is a scam (same class as TRUSTLIST_HIT).
+  // It is a hard fail — the wallet must not send the customer's money to a shop
+  // that a consumer-protection body has flagged.
+  const fsWarn = tsResult?.fake_shop;
+  if (fsWarn?.flagged) {
+    const m = fsWarn.matches[0] || {};
+    addFail('TRUSTEDSHOPS_FAKE_SHOP', `the merchant's website is flagged as a fake shop on ${m.site || 'Trusted Shops'}${m.type ? ` — warning type "${m.type}"` : ''}${m.date ? `, warning dated ${m.date}` : ''}`);
+    ev('Fake-shop check', describeResult(tsResult));
   }
 
   // -- 9. Description-vs-basket contradiction -----------------------------------------

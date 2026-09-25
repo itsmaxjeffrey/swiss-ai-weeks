@@ -69,12 +69,18 @@ export function parseMerchantInput(input) {
 
 const stripWww = s => String(s || '').toLowerCase().trim().replace(/^www\./, '');
 
+// Domains that legitimately appear on fake-shops pages (CMS/CDN chrome) and must
+// never count as warnings. Only LABELED warnings ("Fake <type> <domain> <date>")
+// ever flag a merchant — precision over recall, a flag is a hard decline.
+const FAKE_SHOP_EXCLUDE = /(^|\.)(trustedshops|etrusted|hubspot|hsforms|hubfs|hsstatic|cloudflare|jsdelivr|unpkg|splide|webcomponents|google|gstatic|w3|schema|typekit)\./i;
+
 const DEFAULTS = {
   apiBase: 'https://api.trustedshops.com/rest/public/v2',
   countries: ['ch', 'de', 'at', 'co.uk', 'fr', 'it', 'es', 'nl', 'be', 'pt', 'pl', 'eu'],
   timeoutMs: 4000,      // per HTTP request (REST + search pages)
   concurrency: 12,      // max in-flight requests across a whole batch
   ttlMs: 6 * 60 * 60 * 1000,  // cache entries live 6h; re-checked after that
+  fakeShopTtlMs: 60 * 60 * 1000, // warning lists refresh hourly (they rotate)
   maxQualityLookups: 2, // member rating fetches per merchant
   maxShopsPerMerchant: 5,
 };
@@ -88,7 +94,9 @@ export class TrustedShopsChecker {
     this.fetchImpl = this.o.fetchImpl || globalThis.fetch.bind(globalThis);
     this.cache = new Map();    // domain -> {at, result}
     this.inflight = new Map(); // domain -> Promise (de-dupe parallel checks)
-    this.stats = { lookups: 0, searchCalls: 0, qualityCalls: 0, cacheHits: 0, errors: 0 };
+    this.fakeShopCache = null;   // {at, byDomain: Map<domain, entries[]>, totalWarnings, sitesChecked, errors}
+    this.fakeShopInflight = null;
+    this.stats = { lookups: 0, searchCalls: 0, qualityCalls: 0, fakeShopListFetches: 0, cacheHits: 0, errors: 0 };
   }
 
   /** Check many merchants concurrently. Returns {results, tookMs} — input order
@@ -122,17 +130,81 @@ export class TrustedShopsChecker {
     return { ...(await p), fromCache: false };
   }
 
-  /** Full check: member registry + every country-domain shop search, merged. */
+  /** Fetch + parse every country site's /fake-shops/ warning list (own TTL cache,
+   *  fetched once per TTL and shared by all merchants). */
+  async #fakeShopData() {
+    if (this.fakeShopCache && Date.now() - this.fakeShopCache.at < this.o.fakeShopTtlMs) return this.fakeShopCache;
+    if (this.fakeShopInflight) return this.fakeShopInflight;
+    this.fakeShopInflight = (async () => {
+      const lists = await Promise.all(this.o.countries.map(tld =>
+        this.#gate(() => this.#deadline(
+          this.fetchImpl(`https://www.trustedshops.${tld}/fake-shops/`, { signal: AbortSignal.timeout(this.o.timeoutMs), headers: { accept: 'text/html' } }),
+          this.o.timeoutMs, `fake-shops list .${tld}`,
+        )).then(
+          async res => {
+            this.stats.fakeShopListFetches++;
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return { tld, entries: this.#parseFakeShopWarnings(await res.text(), tld) };
+          },
+          err => ({ tld, error: err.message }),
+        )));
+      const byDomain = new Map();
+      let totalWarnings = 0;
+      const errors = [];
+      let sitesChecked = 0;
+      for (const l of lists) {
+        if (l.entries) {
+          sitesChecked++;
+          totalWarnings += l.entries.length;
+          for (const e of l.entries) {
+            const arr = byDomain.get(e.domain) || [];
+            arr.push({ site: `trustedshops.${l.tld}`, type: e.type, date: e.date });
+            byDomain.set(e.domain, arr);
+          }
+        } else errors.push(`.${l.tld}: ${l.error}`);
+      }
+      this.fakeShopCache = { at: Date.now(), byDomain, totalWarnings, sitesChecked, errors };
+      return this.fakeShopCache;
+    })().finally(() => { this.fakeShopInflight = null; });
+    return this.fakeShopInflight;
+  }
+
+  /** Extract LABELED warning entries ("Fake <type> <domain> <date>") from a
+   *  fake-shops page. Unlabeled domain-like strings never count — a hit here is
+   *  a hard decline, so precision beats recall. */
+  #parseFakeShopWarnings(html, tld) {
+    const text = html
+      .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+      .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+      .replace(/<[^>]+>/g, ' ');
+    const entries = [];
+    const seen = new Set();
+    const re = /Fake\s+([A-Za-zÀ-ÿ]{2,30})[^A-Za-z0-9.\-]{0,40}((?:[a-z0-9-]{2,60}\.)+[a-z]{2,12})(?![\w.-])/gi;
+    for (const m of text.matchAll(re)) {
+      const domain = stripWww(m[2]);
+      if (FAKE_SHOP_EXCLUDE.test(domain) || seen.has(domain)) continue;
+      const after = text.slice(m.index + m[0].length, m.index + m[0].length + 60);
+      const date = (after.match(/\d{2}\.\d{2}\.\d{4}/) || [])[0] || null;
+      const type = m[1] || null;
+      seen.add(domain);
+      entries.push({ domain, type, date });
+    }
+    return entries;
+  }
+
+  /** Full check: member registry + every country-domain shop search + fake-shop
+   *  warning lists, merged. */
   async #checkMerchant(domain, input, at) {
     const t0 = Date.now();
     const queryDomain = stripWww(domain);
-    const [member, searches] = await Promise.all([
+    const [member, searches, fakeShop] = await Promise.all([
       this.#memberLookup(queryDomain).catch(err => ({ error: err.message })),
       Promise.all(this.o.countries.map(tld =>
         this.#searchCountry(queryDomain, tld).then(
           hits => ({ tld, hits }),
           err => ({ tld, error: err.message }),
         ))),
+      this.#fakeShopData().catch(err => ({ error: err.message })),
     ]);
     this.stats.lookups++;
     const profiles = [];
@@ -143,16 +215,39 @@ export class TrustedShopsChecker {
       else searchErrors.push(`.${r.tld}: ${r.error}`);
     }
 
+    // Fake-shop warning match: exact domain or the merchant sits on a flagged
+    // domain's subdomain. Subdomain suffrage is deliberate — scam ops rotate
+    // subdomains under a known-bad domain.
+    const fakeShopUnreachable = Boolean(fakeShop.error) || !fakeShop.sitesChecked;
+    let fakeShopResult;
+    if (fakeShop.error) {
+      fakeShopResult = { flagged: null, matches: [], reason: `fake-shop lists unavailable: ${fakeShop.error}` };
+    } else if (!fakeShop.sitesChecked) {
+      fakeShopResult = { flagged: null, matches: [], reason: `fake-shop lists unavailable: ${fakeShop.errors.slice(0, 3).join('; ') || 'no site reachable'}` };
+    } else {
+      const matches = [];
+      for (const [flaggedDomain, entries] of fakeShop.byDomain) {
+        if (queryDomain === flaggedDomain || queryDomain.endsWith(`.${flaggedDomain}`)) matches.push(...entries);
+      }
+      fakeShopResult = { flagged: matches.length > 0, matches, sites_checked: fakeShop.sitesChecked, warnings_total: fakeShop.totalWarnings, list_errors: fakeShop.errors };
+    }
+
     const memberShops = member.error ? [] : member.shops;
     const totalChecks = 1 + this.o.countries.length;
     const failedChecks = (member.error ? 1 : 0) + searchErrors.length;
-    if (failedChecks === totalChecks) {
-      this.stats.errors++;
-      return {
+    // Everything failed only when the member/search layer is fully down AND the
+    // fake-shop lists were unreachable too (#fakeShopData resolves with per-site
+    // errors instead of rejecting, so sitesChecked is the real signal).
+    const fakeShopFailed = Boolean(fakeShop.error) || !fakeShop.sitesChecked;
+    if (failedChecks === totalChecks && fakeShopFailed) {
+      const result = {
         input, name: domain, resolvedDomain: domain, listed: null, shops: [], profiles: [], found_on: [],
-        primary: null, reason: `all Trusted Shops checks failed (member lookup: ${member.error || 'n/a'}; first search error: ${searchErrors[0] || 'n/a'})`,
+        primary: null, fake_shop: fakeShopResult,
+        reason: `all Trusted Shops checks failed (member lookup: ${member.error || 'n/a'}; first search error: ${searchErrors[0] || 'n/a'}; fake-shop: ${fakeShopResult.reason || 'n/a'})`,
         checkedAt: at, lookupMs: Date.now() - t0,
       };
+      this.stats.errors++;
+      return result;
     }
 
     // Member market → the country site where that membership surfaces.
@@ -208,6 +303,7 @@ export class TrustedShopsChecker {
       profiles,               // country-site shop profiles (member AND non-member)
       found_on: [...foundOn].sort(),
       primary,
+      fake_shop: fakeShopResult,
       search_errors: searchErrors,
       member_lookup_error: member.error || null,
       checkedAt: at,
@@ -334,6 +430,11 @@ export class TrustedShopsChecker {
 /** One-line human summary used in engine evidence and step-up UI. */
 export function describeResult(r) {
   if (!r) return null;
+  // A fake-shop warning dominates everything else — it is the one hard-decline signal.
+  if (r.fake_shop?.flagged) {
+    const m = r.fake_shop.matches[0];
+    return `FAKE SHOP WARNING: ${r.resolvedDomain} appears on ${m.site}'s fake-shop list${m.type ? ` (${m.type})` : ''}${m.date ? `, warning dated ${m.date}` : ''}`;
+  }
   if (r.listed === true) {
     const parts = [];
     const member = Array.isArray(r.shops) ? r.shops.find(s => s.rating?.overallMark != null) || r.shops[0] : null;

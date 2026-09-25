@@ -25,8 +25,10 @@ const QUALITY_BODY = {
 };
 const MEMBER_LOOKUP_BODY = tsId => ({ response: { code: 200, data: { shops: [MEMBER_ENTRY(tsId)] }, status: 'SUCCESS' } });
 const searchPage = shops => `<!doctype html><html><body><script id="__NEXT_DATA__" type="application/json">${JSON.stringify({ props: { pageProps: { shops } } })}</script></body></html>`;
+const warningPage = entries => `<!doctype html><html><body>${entries.map(e => `<div class="warning-card"><p class="save-info">Diese Information hat schon ${e.n || 3} Personen geschützt. War diese Warnung hilfreich?</p> Fake ${e.type} ${e.domain} ${e.date} <p>Diese Information hat schon ${e.n || 3} Personen geschützt.</p></div>`).join('')}</body></html>`;
 const isSearch = u => /trustedshops\.[a-z.]+\/shops\/\?q=/.test(u);
 const isMemberLookup = u => u.includes('/shops.json?url=');
+const isFakeShops = u => u.includes('/fake-shops/');
 
 /** Stub fetch with route table [{match(url), status, body, delayMs}]; needs json() + text(). */
 function stubFetch(routes = []) {
@@ -53,10 +55,11 @@ function stubFetch(routes = []) {
   return fn;
 }
 
-/** Routes: everything not found → 404 (REST) / empty search page (country sites). */
+/** Routes: everything not found → 404 (REST) / empty search + empty fake-shop lists (country sites). */
 function defaultRoutes(over = []) {
   return [
     ...over,
+    { match: isFakeShops, body: warningPage([]) },
     { match: isSearch, body: searchPage([]) },
   ]; // anything else (REST member lookup) falls through to 404
 }
@@ -247,6 +250,56 @@ await test('name-only merchant: unanswered honestly, no invented domain', async 
   assert.equal(f.calls.length, 0);
 });
 
+console.log('\n— checker: fake-shop warning lists —');
+
+await test('domain on a country fake-shops list is flagged with site, type + date', async () => {
+  const f = stubFetch(defaultRoutes([
+    { match: u => u.includes('trustedshops.de/fake-shops/'), body: warningPage([{ type: 'Identity', domain: 'scam-shop.xyz', date: '17.09.2026' }]) },
+  ]));
+  const c = new TrustedShopsChecker({ fetchImpl: f });
+  const r = await c.checkOne('scam-shop.xyz');
+  assert.equal(r.fake_shop.flagged, true);
+  assert.equal(r.fake_shop.matches[0].site, 'trustedshops.de');
+  assert.equal(r.fake_shop.matches[0].type, 'Identity');
+  assert.equal(r.fake_shop.matches[0].date, '17.09.2026');
+  assert.equal(r.listed, false, 'a fake-shop flag does not make the shop TS-listed');
+  assert.match(describeResult(r), /FAKE SHOP WARNING: scam-shop\.xyz appears on trustedshops\.de's fake-shop list \(Identity\), warning dated 17\.09\.2026/);
+});
+
+await test('subdomain of a flagged fake-shop domain is also flagged', async () => {
+  const f = stubFetch(defaultRoutes([
+    { match: u => u.includes('trustedshops.de/fake-shops/'), body: warningPage([{ type: 'Trustmark', domain: 'scam-shop.xyz', date: '01.01.2026' }]) },
+  ]));
+  const c = new TrustedShopsChecker({ fetchImpl: f });
+  const r = await c.checkOne('shop.scam-shop.xyz');
+  assert.equal(r.fake_shop.flagged, true);
+});
+
+await test('warnings for other domains never flag; page chrome (trustedshops/CDNs) is excluded', async () => {
+  const page = warningPage([{ type: 'Identity', domain: 'someone-else.shop', date: '02.02.2026' }])
+    + ' Mehr Informationen über trustedshops.de und cloudflare.com und hubspot.com finden Sie hier.';
+  const f = stubFetch(defaultRoutes([
+    { match: u => u.includes('trustedshops.de/fake-shops/'), body: page },
+  ]));
+  const c = new TrustedShopsChecker({ fetchImpl: f });
+  const r = await c.checkOne('digitec.ch');
+  assert.equal(r.fake_shop.flagged, false);
+  assert.deepEqual(r.fake_shop.matches, []);
+  assert.equal(r.fake_shop.warnings_total, 1, 'chrome domains must not become warnings');
+});
+
+await test('fake-shop lists are fetched once per TTL and shared across merchants', async () => {
+  const f = stubFetch(defaultRoutes([
+    { match: u => u.includes('trustedshops.de/fake-shops/'), body: warningPage([{ type: 'Identity', domain: 'scam-shop.xyz', date: '17.09.2026' }]) },
+  ]));
+  const c = new TrustedShopsChecker({ fetchImpl: f });
+  await c.checkOne('one.ch');
+  const afterFirst = f.calls.filter(isFakeShops).length;
+  assert.ok(afterFirst >= 1);
+  await c.checkOne('two.ch');
+  assert.equal(f.calls.filter(isFakeShops).length, afterFirst, 'second merchant must reuse the cached lists');
+});
+
 console.log('\n— engine integration (advisory evidence only) —');
 
 const tsListed = { resolvedDomain: 'www.testshop.ch', listed: true, checkedAt: '2026-09-25T01:00:00Z',
@@ -262,6 +315,8 @@ const tsProfileOnly = { resolvedDomain: 'digitec.ch', listed: true, shops: [], f
   profiles: [{ domain: 'trustedshops.ch', profileType: 'non-member', tsId: 'X2EAB51093C8C38277A55239953A06E4D', accountName: 'Digitec Galaxus AG', shopName: 'digitec.ch', averageRating: 0, reviewCount: 0, profileUrl: 'https://www.trustedshops.ch/bewertung/digitec.ch' }],
   primary: { profileType: 'non-member', accountName: 'Digitec Galaxus AG', reviewCount: 0 } };
 const tsFailed = { resolvedDomain: 'slow.ch', listed: null, shops: [], profiles: [], found_on: [], reason: 'check failed: timeout', checkedAt: '2026-09-25T01:00:00Z' };
+const tsFakeFlagged = { resolvedDomain: 'scam-shop.xyz', listed: false, shops: [], profiles: [], found_on: [], checkedAt: '2026-09-25T01:00:00Z',
+  fake_shop: { flagged: true, matches: [{ site: 'trustedshops.de', type: 'Identity', date: '17.09.2026' }] } };
 
 await test('listed member adds positive evidence but never changes an approval', () => {
   const out = evaluate(baseEvent(), emptyState, knownProfiles, null, { trustedShops: tsListed });
@@ -283,6 +338,16 @@ await test('absence from Trusted Shops is neutral evidence — never a fail or u
   assert.ok(out.evidence.some(e => e.label === 'Trusted Shops' && /not listed/.test(e.value)));
   assert.equal(out.flags.positive.some(p => p.code === 'TRUSTEDSHOPS_LISTED'), false);
   assert.equal(out.uncertainties.some(u => /trusted shops/i.test(u.detail)), false);
+  assert.equal(out.reason_codes.includes('TRUSTEDSHOPS_FAKE_SHOP'), false);
+});
+
+await test('a fake-shop warning is a hard decline (TRUSTEDSHOPS_FAKE_SHOP)', () => {
+  const out = evaluate(baseEvent(), emptyState, knownProfiles, null, { trustedShops: tsFakeFlagged });
+  assert.equal(out.decision, 'decline');
+  assert.ok(out.reason_codes.includes('TRUSTEDSHOPS_FAKE_SHOP'));
+  assert.ok(out.evidence.some(e => e.label === 'Fake-shop check' && /FAKE SHOP WARNING/.test(e.value)));
+  assert.ok(out.customer_message.includes('fake shop'));
+  assert.equal(out.flags.positive.some(p => p.code === 'TRUSTEDSHOPS_LISTED'), false);
 });
 
 await test('failed check degrades silently — no evidence line, no flag', () => {
@@ -320,6 +385,20 @@ if (process.env.LEASH_TS_LIVE) {
     assert.ok(pr && ((pr.rating?.overallMark != null) || (pr.reviewCount ?? 0) > 0), 'conrad rating evidence present (quality API or country-site data)');
     assert.equal(byDomain['this-domain-should-not-exist-xyz123.ch'].listed, false);
     console.log(`    live batch took ${out.tookMs} ms; digitec: ${describeResult(byDomain['digitec.ch'])}`);
+  });
+
+  await test('live fake-shop lists: parse on country sites, digitec clean, real warnings self-flag', async () => {
+    const c = new TrustedShopsChecker({});
+    const r = await c.checkOne('digitec.ch');
+    assert.equal(r.fake_shop.flagged, false);
+    assert.ok(r.fake_shop.warnings_total >= 1, `expected real warnings on the live lists, got ${r.fake_shop.warnings_total}`);
+    console.log(`    live: ${r.fake_shop.warnings_total} warnings across ${r.fake_shop.sites_checked} sites${r.fake_shop.list_errors.length ? `; errors: ${r.fake_shop.list_errors.join('; ')}` : '; no fetch errors'}`);
+    const first = [...c.fakeShopCache.byDomain.keys()][0];
+    if (first) {
+      const r2 = await c.checkOne(first);
+      assert.equal(r2.fake_shop.flagged, true, 'a domain that is on the list must come back flagged');
+      console.log(`    live: ${first} correctly flagged (${r2.fake_shop.matches[0].type || 'warning'}, dated ${r2.fake_shop.matches[0].date || 'n/a'})`);
+    }
   });
 } else {
   console.log('  (skipped — set LEASH_TS_LIVE=1 to run)');
