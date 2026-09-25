@@ -340,9 +340,6 @@ body::after {
 
 /* typing */
 .typing {
-  display: flex;
-  align-items: center;
-  gap: 6px;
   padding: 4px 34px 18px;
 }
 
@@ -362,7 +359,59 @@ body::after {
   40% { transform: translateY(-5px) scale(1.2); opacity: 1; }
 }
 
-.typing-text { margin-left: 8px; }
+.typing-text { margin: 6px 0 0 22px; }
+
+/* workbench — live step-by-step panel shown while the agent works */
+.workbench {
+  border: 1px solid var(--hairline);
+  border-left: 3px solid var(--ink);
+  background: var(--paper-deep);
+  padding: 10px 14px 9px;
+  max-width: 74%;
+  animation: msgIn 0.5s var(--ease) both;
+}
+
+.wb-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wb-head .typing-cross { font-size: 14px; }
+
+.wb-title {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.wb-meta {
+  margin-left: auto;
+  color: var(--ink-soft);
+}
+
+.wb-plan {
+  margin: 8px 0 0 22px;
+}
+
+.plan-step {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 2px 0;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--ink-soft);
+}
+
+.plan-step--done { color: var(--ink); }
+
+.plan-step--done .trail-mark { color: #1c7c33; font-weight: 700; }
+
+.wb-plan + .activity-trail {
+  border-top: 1px dashed var(--hairline);
+  margin-top: 7px;
+  padding-top: 5px;
+}
 
 /* composer */
 .composer {
@@ -1113,9 +1162,9 @@ body::after {
 /* ---------- live activity trail (agent-reported steps) ---------- */
 
 .activity-trail {
-  max-height: 150px;
+  max-height: 220px;
   overflow-y: auto;
-  margin: 2px 0 6px 27px;
+  margin: 2px 0 2px 22px;
 }
 
 .trail-step {
@@ -1151,7 +1200,9 @@ body::after {
   50% { opacity: 1; }
 }
 
-.trail-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trail-label { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+
+.trail-count { color: var(--ink-soft); }
 
 .trail-ms { flex: none; }
 
@@ -1169,6 +1220,7 @@ body::after {
 
 @media (max-width: 760px) {
   .msg--trail { max-width: 92%; }
+  .workbench { max-width: 92%; }
   .activity-trail { margin-left: 20px; }
 }
 

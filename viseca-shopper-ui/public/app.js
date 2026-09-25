@@ -121,8 +121,11 @@
 
   let thinkingTimer = null; // 1 s re-render tick so elapsed time stays live
   let lastProgress = null;
-  let activityTrail = []; // live steps: {kind, label, ts, ok, durationMs?}
+  let activityTrail = []; // live steps: {kind, label, ts, ok, durationMs?, count?}
+  let planItems = []; // pending checklist from the agent's "Plan:" report: {item, done}
   let trailHost = null;
+  let planHost = null;
+  let wbMetaHost = null;
   let currentSessionId = null; // active sidebar conversation (null = fresh chat)
   let sessionsCache = [];
 
@@ -145,33 +148,90 @@
     return n >= 1000 ? `${(n / 1000).toFixed(1)}k tok` : `${n} tok`;
   }
 
-  /** Renders the live status area. The headline names the agent's CURRENT
-   *  step verbatim (e.g. "Visiting digitec.ch"), so the customer always sees
-   *  what is happening right now; the growing ✓ checklist sits above it.
-   *  Before the first real step arrives it falls back to a plain "thinking…". */
-  function renderBusyLine() {
-    renderTrailLive();
-    const bits = [];
-    bits.push(activityTrail.length
-      ? activityTrail[activityTrail.length - 1].label
-      : "thinking…");
-    if (lastProgress) {
-      bits.push(fmtElapsed(lastProgress.elapsedMs));
-      const tok = fmtTokens(lastProgress.totalTokens);
-      if (tok) bits.push(tok);
-      if (!activityTrail.length && lastProgress.status && lastProgress.status !== "running") {
-        bits.push(lastProgress.status);
-      }
-    }
-    typingText.textContent = bits.join(" · ");
+  /** Split the agent's reported plan into checklist items: "Plan: search
+   *  Swiss shops, compare prices, order" → three pending items. */
+  function planFromLabel(label) {
+    return label
+      .replace(/^plan\s*:\s*/i, "")
+      .split(/\s*[,;]\s*|\s*→\s*|\s+then\s+/i)
+      .map((s) => s.trim().replace(/^[-•*]\s*/, ""))
+      .filter((s) => s.length >= 3)
+      .slice(0, 8)
+      .map((item) => ({ item, done: false }));
   }
 
-  /** Live trail panel: earlier steps ✓ with per-step time, current pulsing. */
-  function renderTrailLive() {
+  /** Tick off plan items a step label plausibly advances: a significant
+   *  word stem of the item appearing in the label ("search Swiss shops" →
+   *  "Searching the web for toppreise.ch …"). */
+  function tickPlan(label) {
+    const hay = String(label).toLowerCase();
+    for (const p of planItems) {
+      if (p.done) continue;
+      const hit = p.item.toLowerCase().split(/\s+/).some((w) => {
+        if (w.length < 4) return false;
+        const stem = w.length > 5 ? w.slice(0, 5) : w;
+        return hay.includes(stem);
+      });
+      if (hit) p.done = true;
+    }
+  }
+
+  /** One agent-reported step arrived over SSE. A "Plan:" label becomes the
+   *  pending checklist (shown immediately, ticks off as work lands); real
+   *  steps extend the trail — consecutive repeats bump a ×N counter. */
+  function pushActivity(label) {
+    if (/^plan\s*:/i.test(label)) {
+      if (!planItems.length) planItems = planFromLabel(label);
+      return;
+    }
+    const last = activityTrail[activityTrail.length - 1];
+    if (last && last.label === label && last.ok !== false) {
+      last.count = (last.count || 1) + 1;
+      last.ts = Date.now();
+    } else {
+      activityTrail.push({ kind: "activity", label, ts: Date.now(), ok: true });
+    }
+    tickPlan(label);
+  }
+
+  /** Renders the live workbench. The headline names the agent's CURRENT
+   *  step verbatim (e.g. "Visiting digitec.ch"), so the customer always
+   *  sees what is happening right now; the plan checklist and the growing
+   *  ✓ step list sit above it. Before the first real step arrives it falls
+   *  back to a plain "thinking…" — never rotating fake specifics. */
+  function renderBusyLine() {
+    renderWorkbench();
+    if (wbMetaHost === null) wbMetaHost = document.getElementById("wbMeta");
+    if (wbMetaHost) {
+      const bits = [];
+      if (lastProgress) {
+        bits.push(fmtElapsed(lastProgress.elapsedMs));
+        const tok = fmtTokens(lastProgress.totalTokens);
+        if (tok) bits.push(tok);
+      }
+      wbMetaHost.textContent = bits.join(" · ");
+    }
+    typingText.textContent = activityTrail.length
+      ? activityTrail[activityTrail.length - 1].label
+      : lastProgress && lastProgress.status && lastProgress.status !== "running" && !planItems.length
+        ? lastProgress.status
+        : "thinking…";
+  }
+
+  /** Live workbench panels: the plan checklist (pending ☐ → done ✓) and
+   *  the step trail — earlier steps ✓ with per-step time, current pulsing. */
+  function renderWorkbench() {
     if (!trailHost) trailHost = document.getElementById("activityTrail");
+    if (!planHost) planHost = document.getElementById("wbPlan");
+    const now = Date.now();
+    if (planHost) {
+      planHost.hidden = planItems.length === 0;
+      planHost.innerHTML = planItems.map((p) =>
+        `<div class="plan-step${p.done ? " plan-step--done" : ""}"><span class="trail-mark">${p.done ? "✓" : "☐"}</span><span class="trail-label">${esc(p.item)}</span></div>`
+      ).join("");
+    }
     if (!trailHost) return;
     trailHost.hidden = activityTrail.length === 0;
-    const now = Date.now();
     trailHost.innerHTML = activityTrail.map((e, i) => {
       const isLast = i === activityTrail.length - 1;
       const dur = e.durationMs != null
@@ -185,7 +245,8 @@
           ? "<span class=\"trail-mark trail-mark--fail\">✕</span>"
           : "<span class=\"trail-mark trail-mark--done\">✓</span>";
       const gate = e.kind === "stage" ? " trail-step--gate" : "";
-      return `<div class="trail-step${gate}">${mark}<span class="trail-label">${esc(e.label)}</span><span class="trail-ms">${dur}</span></div>`;
+      const count = e.count && e.count > 1 ? ` <span class="trail-count">×${e.count}</span>` : "";
+      return `<div class="trail-step${gate}">${mark}<span class="trail-label">${esc(e.label)}${count}</span><span class="trail-ms">${dur}</span></div>`;
     }).join("");
     trailHost.scrollTop = trailHost.scrollHeight;
   }
@@ -586,6 +647,7 @@
     if (id === currentSessionId) return;
     currentSessionId = id;
     activityTrail = [];
+    planItems = [];
     lastProgress = null;
     resetFeed();
     await loadHistory(id);
@@ -676,6 +738,7 @@
     input.value = "";
     input.style.height = "auto";
     activityTrail = [];
+    planItems = [];
     setBusy(true);
     turns += 1;
     turnCounter.textContent = `${turns} message${turns === 1 ? "" : "s"}`;
@@ -735,7 +798,7 @@
               lastProgress = ev;
               renderBusyLine();
             } else if (ev.type === "activity") {
-              activityTrail.push({ kind: "activity", label: ev.label, ts: ev.ts || Date.now(), ok: true });
+              pushActivity(String(ev.label || "").slice(0, 200));
               renderBusyLine();
             } else if (ev.type === "stage") {
               activityTrail.push({
@@ -745,6 +808,7 @@
                 ok: ev.ok !== false,
                 durationMs: ev.durationMs,
               });
+              tickPlan("order policy signed");
               renderBusyLine();
             } else if (ev.type === "done") {
               settled = true;
@@ -1451,6 +1515,7 @@
     if (busy || !authed) return;
     currentSessionId = null;
     activityTrail = [];
+    planItems = [];
     lastProgress = null;
     resetFeed();
     renderSessions();
