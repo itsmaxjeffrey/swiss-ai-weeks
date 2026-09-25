@@ -319,6 +319,36 @@ function turnError(kind, message, detail) {
   return err;
 }
 
+/** Kill the whole process tree of a spawned CLI child. The openclaw bin is a
+ *  launcher: the direct child exits at once and the real CLI runs as a
+ *  grandchild holding the stdio pipes (verified live 2026-09-25 — a plain
+ *  child.kill() never reaches it). Children are spawned detached, so they are
+ *  their own process-group leader and a negative-pid kill reaches the tree. */
+function killTree(child) {
+  try {
+    if (child.pid) process.kill(-child.pid, "SIGKILL");
+  } catch {
+    try { child.kill("SIGKILL"); } catch { /* already gone */ }
+  }
+}
+
+/** PIDs of live processes carrying an env marker (same-user /proc scan).
+ *  This reaches the anchored CLI grandchild that child.kill() and process-
+ *  group kills both miss (verified live 2026-09-25: the openclaw bin is only
+ *  a launcher; the real CLI is re-parented into a supervisor-owned group). */
+function pidsWithEnvMarker(marker) {
+  const hits = [];
+  let dirs = [];
+  try { dirs = fs.readdirSync("/proc"); } catch { return hits; }
+  for (const d of dirs) {
+    if (!/^\d+$/.test(d)) continue;
+    try {
+      if (fs.readFileSync(`/proc/${d}/environ`).includes(marker)) hits.push(Number(d));
+    } catch { /* vanished or not ours */ }
+  }
+  return hits;
+}
+
 /** Run one agent turn through the Gateway CLI and resolve the reply text.
  *  onSpawn receives the child process right after launch (used for stop). */
 function agentTurn(message, sessionKey, timeoutMs = TIMEOUT_MS, onSpawn = null) {
@@ -331,13 +361,20 @@ function agentTurn(message, sessionKey, timeoutMs = TIMEOUT_MS, onSpawn = null) 
       "-m", message,
     ];
     if (MODEL) args.push("--model", MODEL);
-    const child = spawn(BIN, args, { stdio: ["ignore", "pipe", "pipe"] });
-    if (onSpawn) { try { onSpawn(child); } catch { /* registry is best-effort */ } }
+    // Unique per-turn env marker: lets /api/chat/stop find and kill the REAL
+    // CLI process tree via /proc, wherever the supervisor anchored it.
+    const turnToken = crypto.randomBytes(8).toString("hex");
+    const child = spawn(BIN, args, {
+      stdio: ["ignore", "pipe", "pipe"],
+      detached: true,
+      env: { ...process.env, VISECA_TURN_TOKEN: turnToken },
+    });
+    if (onSpawn) { try { onSpawn(child, turnToken); } catch { /* registry is best-effort */ } }
 
     let stdout = "";
     let stderr = "";
     const timer = setTimeout(() => {
-      child.kill("SIGKILL");
+      killTree(child);
       reject(turnError("timeout", `Agent turn timed out after ${Math.round(timeoutMs / 1000)}s.`));
     }, timeoutMs);
 
@@ -391,14 +428,17 @@ const CONTINUE_NUDGE =
 
 /** One agent turn with a single budget-aware retry when the run died without
  *  a reply. The session keeps the partial work, so a continuation nudge lets
- *  the agent finish cheaply instead of redoing the whole task. */
-async function turnWithRetry(message, sessionKey, onSpawn = null) {
+ *  the agent finish cheaply instead of redoing the whole task.
+ *  `isStopped` short-circuits the retry when the CUSTOMER stopped the turn —
+ *  a stop-aborted run looks exactly like a no-reply failure, and auto-retrying
+ *  it would restart the work the customer just asked to stop. */
+async function turnWithRetry(message, sessionKey, onSpawn = null, isStopped = null) {
   const deadline = Date.now() + OVERALL_BUDGET_MS;
   try {
     return await agentTurn(message, sessionKey, OVERALL_BUDGET_MS, onSpawn);
   } catch (err) {
     const left = deadline - Date.now();
-    if (err.kind === "no-reply" && left > 90000) {
+    if (err.kind === "no-reply" && left > 90000 && !(isStopped && isStopped())) {
       console.log(`[chat] retry after no-reply (${err.detail || "no detail"}); ${Math.round(left / 1000)}s left`);
       return await agentTurn(message + CONTINUE_NUDGE, sessionKey, left, onSpawn);
     }
@@ -797,7 +837,12 @@ async function runChatTurn(req, res, user, message, mode, sessionId) {
   const turn = (async () => {
     activeTurns += 1;
     try {
-      return await turnWithRetry(fullMessage, sessionKey, (child) => userProcs.set(user.id, child));
+      return await turnWithRetry(
+        fullMessage,
+        sessionKey,
+        (child, turnToken) => userProcs.set(user.id, { child, sessionKey, turnToken }),
+        () => stoppedTurns.has(user.id)
+      );
     } finally {
       activeTurns -= 1;
       userProcs.delete(user.id);
@@ -1335,11 +1380,35 @@ async function handle(req, res) {
   if (req.method === "POST" && pathname === "/api/chat/stop") {
     const auth = authenticate(req);
     if (!auth) return sendJson(res, 401, { error: "Sign in or send a Bearer API key." });
-    const child = userProcs.get(auth.user.id);
-    if (!child) return sendJson(res, 404, { error: "No running turn to stop." });
+    const entry = userProcs.get(auth.user.id);
+    if (!entry) return sendJson(res, 404, { error: "No running turn to stop." });
     stoppedTurns.add(auth.user.id);
-    child.kill("SIGKILL");
-    console.log(`[chat] STOP requested by ${auth.user.email}`);
+    // 1) Kill the REAL CLI: scan /proc for the turn's env marker and SIGKILL
+    //    every match. Gateway abort RPCs (chat.abort / sessions.abort) refuse
+    //    cross-connection aborts of CLI-spawned runs ("unauthorized"), and
+    //    child/group kills miss the anchored grandchild — the env marker is
+    //    the one handle that always reaches it. When it dies, its stdio pipes
+    //    close, the turn settles, and the customer gets the Stopped message.
+    const killed = [];
+    if (entry.turnToken) {
+      for (const p of pidsWithEnvMarker(entry.turnToken)) {
+        try { process.kill(p, "SIGKILL"); killed.push(p); } catch { /* gone */ }
+      }
+    }
+    // 2) Backstop: group-kill the launcher's tree anyway (harmless when the
+    //    launcher's group is already empty).
+    const pid = entry.child.pid;
+    if (pid) {
+      setTimeout(() => {
+        try {
+          process.kill(-pid, "SIGKILL");
+          console.log(`[chat] STOP backstop: killed group -${pid}`);
+        } catch (e) {
+          console.log(`[chat] STOP backstop: group -${pid} already gone (${e.code || e.message})`);
+        }
+      }, 12000).unref();
+    }
+    console.log(`[chat] STOP requested by ${auth.user.email} for ${entry.sessionKey} (killed CLI pids: ${killed.join(",") || "none"})`);
     return sendJson(res, 200, { ok: true });
   }
 
@@ -1508,6 +1577,7 @@ server.listen(PORT, HOST, () => {
   console.log(`[viseca-shopper-ui] serving ${PUBLIC_DIR}`);
   console.log(`[viseca-shopper-ui] ${url}  →  agent '${AGENT}' (base session key: ${SESSION})`);
   console.log(`[viseca-shopper-ui] multi-user on · plans: ${Object.keys(accounts.PLANS).join("/")} · registration ${accounts.REGISTRATION_OPEN ? "open" : "closed"} · agent slots: ${MAX_CONCURRENT}`);
+  console.log(`[viseca-shopper-ui] marker: stop-v4 env-marker tree kill`);
 });
 
 /* Last words: two silent deaths tonight (22:55, ~23:22) left no evidence.

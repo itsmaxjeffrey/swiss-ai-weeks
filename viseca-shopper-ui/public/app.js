@@ -471,6 +471,7 @@
     busy = on;
     composer.classList.toggle("busy", on);
     sendBtn.disabled = on || locked;
+    sendBtn.hidden = on; // send morphs into stop while the agent works
     typing.hidden = !on;
     if (btnStopTurn) btnStopTurn.hidden = !on;
     if (!on) { activeController = null; stopRequested = false; }

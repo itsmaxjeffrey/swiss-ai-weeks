@@ -415,6 +415,17 @@ body::after {
 .send:hover { background: var(--red-deep); transform: rotate(-35deg); }
 .send:active { transform: rotate(-35deg) scale(0.92); }
 
+/* stop button shares the send slot: outline style, square icon, clickable
+   while the busy composer is pointer-dead (composer.busy sets pointer-events:none) */
+.send.stop {
+  background: var(--paper);
+  border: 2px solid var(--red);
+  color: var(--red);
+}
+.send.stop:hover { background: var(--red); color: #fff; transform: scale(0.94); }
+.send.stop:active { transform: scale(0.88); }
+.composer.busy .send.stop { pointer-events: auto; opacity: 1; }
+
 .composer-hint {
   padding: 10px 36px 16px;
   text-align: center;
