@@ -1,0 +1,59 @@
+{
+ "query": "Bürobedarf online shop Schweiz",
+ "kl": "ch-de",
+ "category": "office-supplies",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:39:51.553Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.officeworld.ch/de",
+   "title": "Führender Anbieter für Bürobedarf in der Schweiz"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.iba.ch/",
+   "title": "iba Büromaterial: günstiger Bürobedarf online bestellen"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.officeworld.ch/de/buerobedarf",
+   "title": "Bürobedarf & Büromaterial - Papeterie-Artikel online bestellen"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.officeb2b.ch/",
+   "title": "Bürobedarf online günstig kaufen | Büroartikel bei officeb2b"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.vikingdirekt.ch/de/",
+   "title": "Bürobedarf & Büromaterial | Viking Direct Switzerland"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.schaefer-shop.ch/",
+   "title": "Büromöbel, Bürobedarf & Lagereinrichtung | Schäfer Shop"
+  },
+  {
+   "rank": 6,
+   "url": "https://www.mueller.ch/c/schreibwaren/buero/buerobedarf/",
+   "title": "Bürobedarf online bestellen | MÜLLER - mueller.ch"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.wachter.ch/",
+   "title": "Home - bürobedarf, büromöbel, druckerzubehör by büro.ch und wachter büro AG"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.conrad.ch/de/c/buerobedarf-40078.html",
+   "title": "Bürobedarf online kaufen - Conrad Electronic Schweiz"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.internetstore.ch/bueromaterial/buerobedarf/",
+   "title": "Bürobedarf online kaufen | internetstore.ch"
+  }
+ ]
+}

@@ -1,0 +1,59 @@
+{
+ "query": "Meat and fish online shop Switzerland",
+ "kl": "ch-en",
+ "category": "meat-fish",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:21:49.873Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.dasfleisch.ch/en/",
+   "title": "DasFleisch.ch | Buy premium meat online in Switzerland"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.migros.ch/en/category/meat-fish",
+   "title": "Meat & fish • Migros"
+  },
+  {
+   "rank": 2,
+   "url": "https://crispyswiss.ch/shop",
+   "title": "Crispy Swiss: Premium Frozen Meat & Seafood | Crispy Swiss"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.coop.ch/en/food/meat-fish/c/m_0087?page=1",
+   "title": "Meat & Fish | coop.ch"
+  },
+  {
+   "rank": 4,
+   "url": "https://meat4you.ch/en/",
+   "title": "Your Online-Butcher | easy online meat shopping. - meat4you.ch"
+  },
+  {
+   "rank": 5,
+   "url": "https://foodspotters.ch/places/category/meat-fish/",
+   "title": "Meat and Fish | Best regional Meat and Fish Shops | Foodspotters"
+  },
+  {
+   "rank": 6,
+   "url": "https://crispyswiss.ch/",
+   "title": "Crispy Swiss - Tiefkühl-Grosshandel für die Gastronomie"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.migros.ch/en/category/meat-fish/meat-poultry",
+   "title": "Meat & poultry • Migros"
+  },
+  {
+   "rank": 8,
+   "url": "https://shop.breitenmoser-metzgerei.ch/en",
+   "title": "Online-Metzgerei Breitenmoser » Erstklassiges Appenzeller Fleisch"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.merat.ch/",
+   "title": "Startseite | Mérat AG"
+  }
+ ]
+}

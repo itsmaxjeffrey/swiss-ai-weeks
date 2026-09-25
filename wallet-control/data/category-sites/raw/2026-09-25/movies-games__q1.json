@@ -1,0 +1,59 @@
+{
+ "query": "Movies and video games online shop Switzerland",
+ "kl": "ch-en",
+ "category": "movies-games",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:36:27.501Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.coin-op.ch/",
+   "title": "Coin-op, jeux, films, BD et collectors"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.mueller.ch/c/multi-media/filme-tv/",
+   "title": "Filme & DVD online bestellen | MÜLLER"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.wog.ch/de/index.cfm/home",
+   "title": "World of Games"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.cede.ch/en/movies/",
+   "title": "Movies - All formats"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.digitec.ch/en",
+   "title": "digitec.ch - the online shop for all things digital"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.cede.ch/",
+   "title": "Willkommen bei CeDe - deinem Experten für Musik, Filme, Games, Bücher ..."
+  },
+  {
+   "rank": 6,
+   "url": "https://www.fr.fnac.ch/video",
+   "title": "Vidéo, films, sagas, séries TV, DVD, Blu-ray - Fnac Suisse"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.mueller.ch/c/multi-media/",
+   "title": "Multimedia online bestellen | MÜLLER"
+  },
+  {
+   "rank": 8,
+   "url": "https://swissdvdshop.ch/en/",
+   "title": "Swissdvdshop"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.de.fnac.ch/",
+   "title": "Fnac Schweiz: Computer, Smartphones, Bücher, Videospiele, Fotos ..."
+  }
+ ]
+}

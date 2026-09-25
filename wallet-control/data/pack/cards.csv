@@ -40,3 +40,13 @@ CA0038,AC0029,debit,everyday,active,2024-09-21,2029-09-01,true,false,false
 CA0039,AC0030,prepaid,online,active,2025-09-08,2030-09-01,true,true,true
 CA0040,AC0031,credit,everyday,active,2024-10-02,2029-10-01,true,true,false
 CA0041,AC0031,credit,mobile_and_online,active,2025-02-01,2030-02-01,true,true,true
+CA1576,AC1469,credit,everyday,active,2025-08-20,2030-08-01,true,true,false
+CA1573,AC1466,credit,mobile_and_online,active,2025-02-13,2030-02-01,true,true,true
+CA1022,AC1021,credit,everyday,active,2025-08-20,2030-08-01,true,true,false
+CA1559,AC1454,debit,family,active,2025-08-20,2030-08-01,true,true,false
+CA1696,AC1564,credit,everyday,active,2023-04-12,2028-04-01,true,true,false
+CA1331,AC1275,debit,everyday,active,2024-11-26,2029-11-01,true,true,false
+CA1643,AC1519,debit,everyday,active,2025-07-07,2030-07-01,true,true,false
+CA1738,AC1598,debit,everyday,active,2024-05-28,2028-05-01,true,true,false
+CA1079,AC1066,debit,everyday,active,2023-12-11,2028-12-01,true,true,false
+CA1471,AC1385,debit,everyday,active,2024-01-15,2029-01-01,true,true,false

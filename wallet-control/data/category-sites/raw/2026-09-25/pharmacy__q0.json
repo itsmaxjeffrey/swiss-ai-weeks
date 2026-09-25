@@ -1,0 +1,59 @@
+{
+ "query": "Apotheke und Drogerie online shop Schweiz",
+ "kl": "ch-de",
+ "category": "pharmacy",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:33:18.833Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.apothekedrogerie.ch/",
+   "title": "Apotheke & Drogerie Online Shop & Schweizer Versand ..."
+  },
+  {
+   "rank": 1,
+   "url": "https://www.apothekedrogerie.ch/apothekedrogerie-ch.html",
+   "title": "apothekedrogerie.ch"
+  },
+  {
+   "rank": 2,
+   "url": "https://direkt-apotheke.ch/",
+   "title": "direkt-apotheke.ch - Schweizer Shop für Gesundheit, Pflege, Ernährung"
+  },
+  {
+   "rank": 3,
+   "url": "https://apotheke-drogerie.ch/",
+   "title": "Apotheke - Drogerie - Onlineshop für Apotheke und Drogerie Schweiz"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.coopvitality.ch/de",
+   "title": "Coop Vitality Apotheke - Einfach online bestellen"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.puravita.ch/de_ch",
+   "title": "Online Apotheke Schweiz | Online Drogerie | Online Apotheke Schweiz ..."
+  },
+  {
+   "rank": 6,
+   "url": "https://www.online-apotheke.ch/",
+   "title": "Ihre Schweizer Online-Apotheke | online-apotheke.ch"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.amavita.ch/de",
+   "title": "Amavita | Online bestellen bei der grössten Apotheke der Schweiz"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.apo24.ch/de/",
+   "title": "Apo24 | Alles Für Gesundheit, Schönheit und Wohlbefinden Online !"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.redcare-apotheke.ch/de/",
+   "title": "Online Apotheke für die Schweiz Redcare Apotheke"
+  }
+ ]
+}

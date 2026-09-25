@@ -1,0 +1,59 @@
+{
+ "query": "Fleisch und Fisch online shop Schweiz",
+ "kl": "ch-de",
+ "category": "meat-fish",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:21:41.298Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.coop.ch/de/lebensmittel/tiefgekuehlte-produkte/fleisch-fisch/c/m_0215",
+   "title": "Fleisch & Fisch online kaufen | coop.ch"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.bianchi.ch/",
+   "title": "Bianchi - Frisch seit 1881!"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.migros.ch/de/category/fleisch-fisch",
+   "title": "Fleisch & Fisch • Migros"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.bianchi.ch/sortiment/",
+   "title": "Sortiment - Bianchi"
+  },
+  {
+   "rank": 4,
+   "url": "https://meat4you.ch/",
+   "title": "Fleisch online bestellen bei meat4you, der grössten Online-Metzgerei ..."
+  },
+  {
+   "rank": 5,
+   "url": "https://shop.bianchi.swiss/",
+   "title": "Delikatessen Laden für Fisch, Fleisch, Geflügel und italienische ..."
+  },
+  {
+   "rank": 6,
+   "url": "https://www.coop.ch/de/aktionen/aktionen-fleisch-fisch/c/m_1170?page=1",
+   "title": "Aktionen Fleisch & Fisch online kaufen | coop.ch"
+  },
+  {
+   "rank": 7,
+   "url": "https://shop.bianchi.ch/",
+   "title": "Bianchi - Unser Sortiment"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.dasfleisch.ch/shop/",
+   "title": "Shop - Premium Fleisch online kaufen | DasFleisch.ch"
+  },
+  {
+   "rank": 9,
+   "url": "https://fleischpost.ch/",
+   "title": "Fleischpost Online Metzgerei - Fleisch & Wurst online"
+  }
+ ]
+}

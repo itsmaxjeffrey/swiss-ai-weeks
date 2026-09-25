@@ -1,0 +1,59 @@
+{
+ "query": "Garten online shop Schweiz",
+ "kl": "ch-de",
+ "category": "garden",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:32:50.012Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.wyssgarten.ch/Shops",
+   "title": "Online einkaufen bei Wyss - wyssgarten.ch"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.baldur-garten.ch/",
+   "title": "Pflanzen online kaufen: Pflanzenversand & Gartenversand BALDUR-Garten"
+  },
+  {
+   "rank": 2,
+   "url": "https://shop.wyssgarten.ch/",
+   "title": "Onlineshop Wyss Samen und Pflanzen AG"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.landi.ch/shop/garten_10",
+   "title": "Gartenartikel - LANDI"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.pflanzen-shop.ch/",
+   "title": "Pflanzen-shop.ch - Ihr Online-Gartencenter - Pflanzen, Blumen und ..."
+  },
+  {
+   "rank": 5,
+   "url": "https://www.wyssgarten.ch/Shops/Wyss-Online-Shop",
+   "title": "Wyss Online-Shop - wyssgarten.ch"
+  },
+  {
+   "rank": 6,
+   "url": "https://www.lubera.com/ch/",
+   "title": "Pflanzen online kaufen - Pflanzenversand | Lubera® Shop"
+  },
+  {
+   "rank": 7,
+   "url": "https://gartencenter.ch/",
+   "title": "Das Schweizer Online-Gartencenter"
+  },
+  {
+   "rank": 8,
+   "url": "https://shop.seiler-gaerten.ch/",
+   "title": "Online Shop Seiler Gärten | Schweizer Shop für Garten Accessoires"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.hunn.ch/",
+   "title": "Grösste Gartenmöbel-Auswahl | Hunn Gartenmöbel"
+  }
+ ]
+}

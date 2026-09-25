@@ -65,3 +65,24 @@ IT0063,Trail-running shoes,sporting_goods,"Off-road running shoes with a lugged 
 IT0064,Cycling helmet,sporting_goods,Road cycling helmet sold in standard sizes.,50.00,110.00,250.00
 IT0065,Running socks,sporting_goods,"Technical running socks, usually sold in packs.",8.00,18.00,40.00
 IT0066,Extended protection plan,subscriptions,Optional add-on service extending repair cover beyond the seller warranty.,25.00,79.00,180.00
+IT0112,Winter boots,clothing,Insulated winter boots sold in standard sizes.,70.00,160.00,320.00
+IT0158,Premium streaming tier,membership,Premium tier upgrade of a streaming service for one month.,12.00,25.00,60.00
+IT0123,Camera lens,photography,"Interchangeable camera lens from a specialist shop, with a return window.",250.00,620.00,2400.00
+IT0111,Light bulbs and batteries,household,Household consumables such as bulbs and batteries.,8.00,22.00,70.00
+IT0160,Store loyalty membership,membership,Paid annual loyalty membership with a retailer.,20.00,60.00,150.00
+IT0136,Travel insurance add-on,travel,Optional travel insurance offered at checkout.,15.00,45.00,200.00
+IT0173,Hostel bed,hotel,Bed in a shared hostel dormitory.,30.00,55.00,120.00
+IT0104,USB-C hub,electronics,Multi-port USB-C hub for laptops.,20.00,45.00,120.00
+IT0108,Vacuum cleaner,household,Cordless stick vacuum cleaner.,90.00,260.00,700.00
+IT0165,Bakery and dairy order,groceries,"Bread, milk, cheese, and other fresh dairy.",8.00,22.00,70.00
+IT0161,Prepaid gift card,gift_card,"Prepaid gift card for a retailer or platform, redeemable by anyone holding the code.",25.00,100.00,500.00
+IT0166,Drinks and snacks,groceries,"Soft drinks, snacks, and party supplies.",10.00,30.00,120.00
+IT0168,Wine and spirits,groceries,Alcoholic beverages sold by a licensed retailer.,15.00,45.00,300.00
+IT0171,"Hotel room, refundable rate",hotel,Hotel room at a refundable rate; cancellation terms are carried on the order.,110.00,240.00,600.00
+IT0159,Gym membership,membership,Monthly gym membership.,40.00,85.00,200.00
+IT0132,Economy flight ticket,travel,Economy class flight ticket; fare rules are carried on the order.,60.00,220.00,900.00
+IT0117,Hiking backpack,sporting_goods,Daypack or trekking backpack sized in litres.,40.00,120.00,320.00
+IT0167,Frozen food order,groceries,Frozen meals and ingredients.,12.00,35.00,110.00
+IT0172,"Hotel room, non-refundable rate",hotel,Hotel room at a discounted non-refundable rate.,90.00,190.00,480.00
+IT0155,Annual media subscription,subscriptions,Twelve months of a digital media subscription billed upfront.,60.00,140.00,320.00
+IT0169,Weekly meal kit,food_delivery,Meal kit box with recipes and ingredients for one week.,40.00,75.00,160.00

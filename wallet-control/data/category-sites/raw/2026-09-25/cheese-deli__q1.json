@@ -1,0 +1,59 @@
+{
+ "query": "Cheese and delicatessen online shop Switzerland",
+ "kl": "ch-en",
+ "category": "cheese-deli",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:21:32.151Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://inalpe.ch/en/",
+   "title": "Inalpe - Online Delicatessen"
+  },
+  {
+   "rank": 1,
+   "url": "https://stores.swissfavorites.com/",
+   "title": "SwissFavorites | Imported Swiss Foods & Swiss Delicacies"
+  },
+  {
+   "rank": 2,
+   "url": "https://shop.chaesbueb.ch/",
+   "title": "Chäsbueb | Käsefachgeschäft"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.delikatessen-shop.com/",
+   "title": "Delikatessen-Shop - Der Onlineshop für echte Feinschmecker"
+  },
+  {
+   "rank": 4,
+   "url": "https://swissfood.store/",
+   "title": "Swiss Food Online — Authentic Swiss Grocery Store"
+  },
+  {
+   "rank": 5,
+   "url": "https://cheesefood.ch/",
+   "title": "Der Onlineshop für Schweizer Käse, Fondue und Raclette - ab Käsekeller"
+  },
+  {
+   "rank": 6,
+   "url": "https://owana.ch/en/",
+   "title": "Delicatessen Online Shop Switzerland | Direct trade from Palestine ..."
+  },
+  {
+   "rank": 7,
+   "url": "https://delistore.ch/",
+   "title": "delistore Onlineshop"
+  },
+  {
+   "rank": 8,
+   "url": "https://swissfood.store/de/",
+   "title": "Schweizer Lebensmittel Online - Authentischer Schweizer Lebensmittelladen"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.walkerdelicia.ch/",
+   "title": "Raclette Käse und Käsefondue kaufen | Walliser Spezialitäten"
+  }
+ ]
+}

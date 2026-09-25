@@ -1,0 +1,59 @@
+{
+ "query": "Beer and spirits online shop Switzerland",
+ "kl": "ch-en",
+ "category": "beer-spirits",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:20:47.407Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.bringts.ch/en",
+   "title": "Whisky & Spirits Online Shop Switzerland | bringts.ch"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.exclusivebottle.ch/?language=en",
+   "title": "Spirits Shop in Switzerland. Buy Gin, Vodka online"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.drinkdirect.ch/",
+   "title": "drinkdirect.ch | dein Onlineshop für Spirituosen"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.drink-shop.ch/en/drink-shop/",
+   "title": "Drink-Shop.ch - Swiss Online Specialist for Global Beverage Specialties ..."
+  },
+  {
+   "rank": 4,
+   "url": "https://www.drinks.ch/de/startseite",
+   "title": "Der grösste Online Spirituosen Shop der Schweiz | Drinks.ch"
+  },
+  {
+   "rank": 5,
+   "url": "https://swiss.delicando.com/en",
+   "title": "Spirits Online Shop Switzerland | Over 10,000 Products"
+  },
+  {
+   "rank": 6,
+   "url": "https://shoppingtotal.ch/en/online-stores/property/beer-wine-spirits/",
+   "title": "Online stores in Switzerland: Beer, Wine & Spirits | Shopping Total"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.bringts.ch/",
+   "title": "Whisky & Spirituosen Onlineshop Schweiz | bringts.ch"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.myspirits.ch/",
+   "title": "Spirituosen online kaufen bei mySpirits.ch | Top Online Shop"
+  },
+  {
+   "rank": 9,
+   "url": "https://thedrinkshop.ch/",
+   "title": "Achat alcool en ligne Suisse : Boutique en ligne Whisky, Champagne ..."
+  }
+ ]
+}

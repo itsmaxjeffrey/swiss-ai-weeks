@@ -1,0 +1,59 @@
+{
+ "query": "Filme und Videospiele online shop Schweiz",
+ "kl": "ch-de",
+ "category": "movies-games",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:36:21.202Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.wog.ch/de/index.cfm/home",
+   "title": "World of Games"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.cede.ch/de/movies/?view=home&branch_sub=1",
+   "title": "Filme - Alle Formate - cede.ch"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.mueller.ch/c/multi-media/filme-tv/",
+   "title": "Filme & DVD online bestellen | MÜLLER - mueller.ch"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.cede.ch/",
+   "title": "Willkommen bei CeDe - deinem Experten für Musik, Filme, Games, Bücher ..."
+  },
+  {
+   "rank": 4,
+   "url": "https://www.manor.ch/de/shop/multimedia/gaming/video-pc-spiele/c/gaming-games",
+   "title": "Video- & PC-Spiele | online kaufen - Manor"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.mediamarkt.ch/de/category/filme-202601810.html",
+   "title": "Filme online kaufen | MediaMarkt"
+  },
+  {
+   "rank": 6,
+   "url": "https://laserzone.ch/db/index.htm",
+   "title": "Laserzone - DVD/Blu-ray Shop: DVD und Blu-ray Versand. Riesige Film ..."
+  },
+  {
+   "rank": 7,
+   "url": "https://www.dvdfilmshop.ch/",
+   "title": "DVD und Blu-ray sorgenfrei kaufen - FTS │ DVD-Film-Shop"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.exlibris.ch/de/filme/",
+   "title": "DVD-Filme & Blu-ray-Filme kaufen | Ex Libris"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.actionspielzeug.ch/collections/videospiele",
+   "title": "Videospiele - ActionSpielzeug.ch"
+  }
+ ]
+}

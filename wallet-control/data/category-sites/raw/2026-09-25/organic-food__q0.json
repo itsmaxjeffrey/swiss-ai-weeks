@@ -1,0 +1,59 @@
+{
+ "query": "Bio-Lebensmittel online shop Schweiz",
+ "kl": "ch-de",
+ "category": "organic-food",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:20:10.347Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.greenist.ch/",
+   "title": "Bio-Online-Shop für Superfoods & Naturkosmetik | greenist | greenist.ch"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.grossgutgunstig.ch/",
+   "title": "gross, gut & günstig | Bio Lebensmittel günstig Schweiz"
+  },
+  {
+   "rank": 2,
+   "url": "https://biofueralle.ch/",
+   "title": "Bio-Shop Schweiz | Demeter, Naturland & vegan | Bio für alle"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.bionline.ch/",
+   "title": "Bio Kiste online bestellen - Bioshop Online - Regional vom Bolderhof"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.green-shop.ch/de/",
+   "title": "Green-Shop.ch - Bio-, Öko- und Naturprodukte: Ihr Geschäft"
+  },
+  {
+   "rank": 5,
+   "url": "https://quer-beet.ch/",
+   "title": "Querbeet | Bio Lebensmittel online kaufen"
+  },
+  {
+   "rank": 6,
+   "url": "https://alnaturale.ch/",
+   "title": "Online Shop für Bio- und Naturprodukte | AlNaturale"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.7-bio.ch/de/",
+   "title": "Bioladen Shop - Bio Produkte online"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.green-shop.ch/de/collections/alimentation",
+   "title": "Bio Lebensmittel & natürliche Ernährung Schweiz — Online kaufen | Green ..."
+  },
+  {
+   "rank": 9,
+   "url": "https://www.biomondo.ch/",
+   "title": "Biomondo - Dein online Bio-Marktplatz der Schweiz"
+  }
+ ]
+}

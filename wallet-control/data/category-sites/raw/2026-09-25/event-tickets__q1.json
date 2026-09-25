@@ -1,0 +1,59 @@
+{
+ "query": "Concert and event tickets online shop Switzerland",
+ "kl": "ch-en",
+ "category": "event-tickets",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:37:26.762Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.ticketmaster.ch/",
+   "title": "Tickets, Events, Konzerte & Sport bei Ticketmaster.ch - offizieller ..."
+  },
+  {
+   "rank": 1,
+   "url": "https://www.ticketcorner.ch/",
+   "title": "Tickets, Events, Konzerte, Skitickets @ Ticketcorner"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.ticketcorner.ch/en/",
+   "title": "Tickets, events, concerts, ski tickets @ Ticketcorner"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.ticketmaster.ch/?language=en-us",
+   "title": "Tickets for Concerts, Theatre & Sports - Ticketmaster Switzerland"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.starticket.ch/en",
+   "title": "Tickets for events, parties, festivals, concerts and theatre ..."
+  },
+  {
+   "rank": 5,
+   "url": "https://www.starticket.ch/en/concerts",
+   "title": "Concerts in Switzerland | Tickets | starticket.ch"
+  },
+  {
+   "rank": 6,
+   "url": "https://www.seetickets.com/ch/music-tickets",
+   "title": "See Tickets (CH) - Musik"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.ticketino.com/en/Home",
+   "title": "Buy tickets for events, concerts, theatre, festivals - TICKETINO"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.alltickets.ch/",
+   "title": "Tickets für Konzerte, Shows, Festival, Sport Events und mehr ..."
+  },
+  {
+   "rank": 9,
+   "url": "https://eventfrog.ch/de/events/ch/konzerte.html",
+   "title": "Konzerte in der Schweiz | Finden & Tickets kaufen - Eventfrog"
+  }
+ ]
+}

@@ -1,0 +1,59 @@
+{
+ "query": "Essen Lieferung online shop Schweiz",
+ "kl": "ch-de",
+ "category": "food-delivery",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:22:11.220Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://weekly-food.ch/de/",
+   "title": "Weekly Food | Lieferung von Fertiggerichten für Ihre Woche"
+  },
+  {
+   "rank": 1,
+   "url": "https://eatunique.ch/",
+   "title": "Eat Unique - Gesunde, köstliche Mahlzeiten an deine Haustür geliefert."
+  },
+  {
+   "rank": 2,
+   "url": "https://allcook.ch/de/",
+   "title": "Gesunde Fertiggerichte nach Hause geliefert | Allcook Kitchen"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.just-eat.ch/",
+   "title": "Just Eat | Essen bestellen - Lieferservice & Takeaway"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.just-eat.ch/lieferservice/essen/schweizlieferung",
+   "title": "Essen bestellen in schweizlieferung Schweizlieferung | Just Eat"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.tomtasty.ch/",
+   "title": "Tom Tasty | Balance your Lifestyle"
+  },
+  {
+   "rank": 6,
+   "url": "https://mercichef.ch/?lang=de",
+   "title": "Lieferservice Essen Schweiz — Gerichte bestellen | merciChef"
+  },
+  {
+   "rank": 7,
+   "url": "https://weekly-food.ch/de/box-repas-suisse/",
+   "title": "Schweizer Essensboxen nach Hause geliefert - Weekly Food"
+  },
+  {
+   "rank": 8,
+   "url": "https://everyfoods.ch/",
+   "title": "every I Delicious, balanced and plant-based comfort meals"
+  },
+  {
+   "rank": 9,
+   "url": "https://tellivery.ch/",
+   "title": "Tellivery — Order food online"
+  }
+ ]
+}

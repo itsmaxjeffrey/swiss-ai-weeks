@@ -2,11 +2,12 @@
   "name": "viseca-shopper-ui",
   "version": "1.0.0",
   "private": true,
-  "description": "Chat UI for the viseca-shopper OpenClaw agent — Swiss editorial concierge",
+  "description": "Chat UI for the viseca-shopper OpenClaw agent \u2014 Swiss editorial concierge",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node --test test/smoke.test.js test/agent-friendly.test.js"
+    "test": "node --test test/smoke.test.js test/agent-friendly.test.js test/late-delivery.test.js test/wallet-review.test.js test/reliability.test.js",
+    "test:browser-safety": "node --test test/browser-safe.test.js"
   },
   "engines": {
     "node": ">=18"

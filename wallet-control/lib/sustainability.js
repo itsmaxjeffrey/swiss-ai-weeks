@@ -81,9 +81,11 @@ const RISK_BAND_ORDER = { low: 0, medium: 1, high: 2, unknown: 3 };
  *  when prefer is on, sustainability breaks ties WITHIN the same risk band
  *  only — it never promotes an offer past a strictly safer band. Within a
  *  band, shops with sustainability data sort before unknown ones, then lower
- *  absolute risk wins. Pure + deterministic. */
-export function rankOffers(offers, { prefer = false } = {}) {
-  return offers.slice().sort((a, b) => {
+ *  absolute risk wins. `limit` (when a positive number) caps the result to the
+ *  top N — the comparison endpoint compares only the top 3 by this score.
+ *  Pure + deterministic. */
+export function rankOffers(offers, { prefer = false, limit = null } = {}) {
+  const ranked = offers.slice().sort((a, b) => {
     const r = (RISK_BAND_ORDER[a.risk?.band] ?? 3) - (RISK_BAND_ORDER[b.risk?.band] ?? 3);
     if (r !== 0) return r;
     if (prefer) {
@@ -95,4 +97,5 @@ export function rankOffers(offers, { prefer = false } = {}) {
     }
     return (a.risk?.score ?? 0) - (b.risk?.score ?? 0); // lower absolute risk first
   });
+  return Number.isFinite(limit) && limit > 0 ? ranked.slice(0, limit) : ranked;
 }

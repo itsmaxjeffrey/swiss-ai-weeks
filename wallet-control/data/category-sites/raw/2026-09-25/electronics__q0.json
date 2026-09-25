@@ -1,0 +1,59 @@
+{
+ "query": "Elektronik online shop Schweiz",
+ "kl": "ch-de",
+ "category": "electronics",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:22:42.727Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.digitec.ch/",
+   "title": "digitec.ch - der Onlineshop für alles Digitale"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.interdiscount.ch/de",
+   "title": "Interdiscount - Der Elektronik-Shop Nr. 1"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.conrad.ch/",
+   "title": "Conrad Electronic - Alle Teile des Erfolgs"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.ep-online.ch/de/",
+   "title": "EP: Onlineshop |ElectronicPartner"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.reichelt.com/ch/de/",
+   "title": "Elektronik und Technik bei reichelt elektronik günstig bestellen"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.brack.ch/",
+   "title": "Brack - dein Schweizer Online Shop"
+  },
+  {
+   "rank": 6,
+   "url": "https://www.hawk.ch/",
+   "title": "HAWK.ch"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.mediamarkt.ch/de/",
+   "title": "Willkommen bei MediaMarkt Schweiz"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.schweiztipps.ch/shop/in/elektronik/",
+   "title": "Die besten Elektronik Shops Schweiz | Online kaufen"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.pctipp.ch/themen/praxis/beste-elektronik-onlineshop-schweiz",
+   "title": "Das ist der beste Elektronik-Onlineshop der Schweiz | PCtipp"
+  }
+ ]
+}

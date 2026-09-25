@@ -57,8 +57,8 @@ export class HistoryProfiles {
   /** Has this customer bought at this merchant before (any approved purchase)? */
   merchantFamiliar(customerId, merchantId) {
     const e = this.merchants.get(customerId)?.get(merchantId);
-    if (!e) return { familiar: false, approvedCount: 0 };
-    return { familiar: e.approved > 0, approvedCount: e.approved, lastApprovedTs: e.lastApprovedTs, name: e.name };
+    if (!e) return { familiar: false, approvedCount: 0, available: this.merchants.has(customerId) };
+    return { available: true, familiar: e.approved > 0, approvedCount: e.approved, lastApprovedTs: e.lastApprovedTs, name: e.name };
   }
 
   /** All merchant names/ids this customer has approved purchases with (for lookalike checks). */
@@ -71,9 +71,9 @@ export class HistoryProfiles {
   }
 
   deviceKnown(customerId, deviceId) {
-    if (!deviceId) return { known: false, approvedCount: 0 };
+    if (!deviceId) return { known: false, approvedCount: 0, available: false };
     const e = this.devices.get(customerId)?.get(deviceId);
-    return { known: !!e && (e.approved > 0 || !!e.lastTs), approvedCount: e?.approved || 0 };
+    return { available: this.devices.has(customerId), known: !!e && (e.approved > 0 || !!e.lastTs), approvedCount: e?.approved || 0 };
   }
 
   /** Hour never observed in this customer's history AND outside a generous 07–23 envelope. */
@@ -82,6 +82,6 @@ export class HistoryProfiles {
     const hour = new Date(ts).getUTCHours();
     const everSeen = h ? h[hour] > 0 : false;
     const envelope = hour >= 7 && hour <= 22;
-    return { unusual: !everSeen && !envelope, everSeen, hour };
+    return { available: Boolean(h), unusual: Boolean(h) && !everSeen && !envelope, everSeen, hour };
   }
 }

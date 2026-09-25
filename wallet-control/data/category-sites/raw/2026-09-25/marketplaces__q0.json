@@ -1,0 +1,59 @@
+{
+ "query": "Online Marktplätze online shop Schweiz",
+ "kl": "ch-de",
+ "category": "marketplaces",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:39:05.454Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.openstream.ch/online-marktplaetze-schweiz/",
+   "title": "Die beliebtesten Online-Marktplätze der Schweiz - Openstream"
+  },
+  {
+   "rank": 1,
+   "url": "https://selluta.ch/",
+   "title": "Selluta | Schweizer Online-Marktplatz für Produkte & Marken"
+  },
+  {
+   "rank": 2,
+   "url": "https://de.statista.com/statistik/daten/studie/655525/umfrage/beliebteste-online-marktplaetze-in-der-schweiz/",
+   "title": "Beliebteste Online-Marktplätze in der Schweiz| Statista"
+  },
+  {
+   "rank": 3,
+   "url": "https://e-tailize.com/de/blog/top-30-marktplaetze-in-der-schweiz/",
+   "title": "Marktplätze in der Schweiz für Verkäufer - e-tailize"
+  },
+  {
+   "rank": 4,
+   "url": "https://firmo.ch/onlineshop-kaufen-und-verkaufen-schweiz/",
+   "title": "Onlineshop verkaufen und kaufen - Schweizer Marktplatz - firmo"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.ricardo.ch/de/",
+   "title": "Ricardo - Sicher kaufen & verkaufen mit über 5 Mio. Nutzern"
+  },
+  {
+   "rank": 6,
+   "url": "https://blog.carpathia.ch/2026/02/06/marktplaetze-in-der-schweiz-vielfalt-chancen-und-strategische-herausforderungen/",
+   "title": "Marktplätze in der Schweiz: Vielfalt, Chancen und strategische ..."
+  },
+  {
+   "rank": 7,
+   "url": "https://www.ibusiness.de/onlineshop-ranking-schweiz/",
+   "title": "Top Onlineshops Schweiz - iBusiness"
+  },
+  {
+   "rank": 8,
+   "url": "https://digital-commerce.post.ch/de/studien/marktplaetze/die-wichtigsten-marktplaetze-in-der-schweiz",
+   "title": "Die wichtigsten Marktplätze in der Schweiz - Digital-Commerce"
+  },
+  {
+   "rank": 9,
+   "url": "https://insights.carpathia.ch/",
+   "title": "Top 50 B2C-Onlineshops 2026 - Carpathia Insights"
+  }
+ ]
+}

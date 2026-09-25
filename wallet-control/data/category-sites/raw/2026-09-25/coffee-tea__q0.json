@@ -1,0 +1,59 @@
+{
+ "query": "Kaffee und Tee online shop Schweiz",
+ "kl": "ch-de",
+ "category": "coffee-tea",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:20:56.080Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.schwarzenbach.ch/",
+   "title": "H. Schwarzenbach - Zürich - Kaffee, Tee, Gewürze, Honig, Schokolade ..."
+  },
+  {
+   "rank": 1,
+   "url": "https://www.teas.ch/",
+   "title": "Tee-Shop | Tee kaufen in der Schweiz | Teas.ch"
+  },
+  {
+   "rank": 2,
+   "url": "https://teezyt.ch/",
+   "title": "Tee Online Shop mit Schweizer Qualität - TeeZyt.ch"
+  },
+  {
+   "rank": 3,
+   "url": "https://swissfood.store/de/produktkategorie/kaffee-tee/",
+   "title": "Kaffee & Tee - Schweizer Lebensmittel - Online-Grocery Store"
+  },
+  {
+   "rank": 4,
+   "url": "https://candyshop.ch/collections/kaffee-tee",
+   "title": "Kaffee & Tee online kaufen in der Schweiz | Candyshop"
+  },
+  {
+   "rank": 5,
+   "url": "https://teasense.ch/",
+   "title": "Tee Online-Shop Schweiz - TeaSense.ch"
+  },
+  {
+   "rank": 6,
+   "url": "https://icaffe.ch/",
+   "title": "iCaffè.ch | Ihr Online-Shop für hochwertigen Kaffee"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.kaffee-partner-shop.ch/",
+   "title": "Ihr Online-Shop für Kaffee & Co. | Kaffee Partner Shop"
+  },
+  {
+   "rank": 8,
+   "url": "https://mokashop.ch/de",
+   "title": "Kaffeepads, Kapseln, Bohnen, Tee & Infusionen | Mokashop"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.teelade.ch/",
+   "title": "Tee Shop teelade.ch GmbH - Tee Online Shop - Ronnefeldt"
+  }
+ ]
+}

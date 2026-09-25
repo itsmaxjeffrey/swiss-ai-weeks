@@ -1,0 +1,59 @@
+{
+ "query": "Camping online shop Schweiz",
+ "kl": "ch-de",
+ "category": "camping",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:29:35.636Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.campingshop.ch/",
+   "title": "campingshop.ch AG | Der grösste Campingshop der Zentralschweiz!"
+  },
+  {
+   "rank": 1,
+   "url": "https://campingbedarf24.ch/",
+   "title": "Campingbedarf24.ch - Camping & Outdoor Zubehör online kaufen (CH)"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.berger-camping.ch/",
+   "title": "Berger-camping.ch - Spezialist für Campingzubehör und Freizeit"
+  },
+  {
+   "rank": 3,
+   "url": "https://caravan-shop.ch/",
+   "title": "Caravan-Shop.ch - Campingzubehör online bestellen"
+  },
+  {
+   "rank": 4,
+   "url": "https://caravaning-shop.ch/",
+   "title": "Caravaning-Shop.ch"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.camping-factory.ch/",
+   "title": "Camping Factory | Camping-Artikel günstig online kaufen!"
+  },
+  {
+   "rank": 6,
+   "url": "https://camping-shop.ch/",
+   "title": "Kreher Camping - Camping Shop - Camping & Outdoor Ausrüstung in Mumpf"
+  },
+  {
+   "rank": 7,
+   "url": "https://clever-campen.ch/",
+   "title": "clever-campen - Camping & Outdoor Schweiz"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.schlanser.ch/",
+   "title": "Campingzubehör Online Shop | Schlanser.ch"
+  },
+  {
+   "rank": 9,
+   "url": "https://shop.bantam.ch/de/",
+   "title": "Ausrüstung und Zubehör für Wohnmobile - Bantam"
+  }
+ ]
+}

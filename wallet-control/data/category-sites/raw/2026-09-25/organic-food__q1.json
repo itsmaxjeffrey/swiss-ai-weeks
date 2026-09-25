@@ -1,0 +1,59 @@
+{
+ "query": "Organic food online shop Switzerland",
+ "kl": "ch-en",
+ "category": "organic-food",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:20:16.079Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.7-bio.ch/en/",
+   "title": "Organic shop online - Swiss shipping - 7-bio"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.7-bio.ch/",
+   "title": "Magasin en ligne bio - 7-bio.ch"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.greenist.ch/",
+   "title": "Bio-Online-Shop für Superfoods & Naturkosmetik | greenist | greenist.ch"
+  },
+  {
+   "rank": 3,
+   "url": "https://fitmarket.ch/en/?lang=en",
+   "title": "Fit Market - Are you looking for 100% organic food products? Visit our ..."
+  },
+  {
+   "rank": 4,
+   "url": "https://foodspotters.ch/places/category/sustainable/",
+   "title": "Sustainable Food Shops in Switzerland | Foodspotters"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.migros.ch/en/content/swiss-organic-products-in-autumn",
+   "title": "Swiss organic products in autumn | Migros Online • Migros"
+  },
+  {
+   "rank": 6,
+   "url": "https://www.siradis.ch/",
+   "title": "Home - Siradis - Online Shop - Healthy food - Switzerland"
+  },
+  {
+   "rank": 7,
+   "url": "https://biofueralle.ch/",
+   "title": "Bio-Shop Schweiz | Demeter, Naturland & vegan | Bio für alle"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.biomondo.ch/de",
+   "title": "Biomondo - Dein online Bio-Marktplatz der Schweiz"
+  },
+  {
+   "rank": 9,
+   "url": "https://bio-swiss.ch/",
+   "title": "Bio-Swiss Naturprodukte"
+  }
+ ]
+}

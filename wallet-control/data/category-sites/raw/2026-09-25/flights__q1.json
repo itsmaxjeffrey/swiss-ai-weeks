@@ -1,0 +1,59 @@
+{
+ "query": "Flights online shop Switzerland",
+ "kl": "ch-en",
+ "category": "flights",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:37:42.631Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.swiss.com/",
+   "title": "Book flights with SWISS - your journey starts here | SWISS"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.swiss.com/ch/de/homepage",
+   "title": "Flüge buchen mit SWISS - Ihre Reise beginnt hier"
+  },
+  {
+   "rank": 2,
+   "url": "https://shop.swiss.com/",
+   "title": "swiss.com - LHG booking"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.expedia.com/Destinations-In-Switzerland.d174.Flight-Destinations",
+   "title": "$230 Cheap Flights & Airfare to Switzerland - Expedia.com"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.flightstore.ch/",
+   "title": "flightstore.ch - flightstore.ch"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.swissair.com/de/de",
+   "title": "SWISS Flüge - jetzt günstig mit SWISS fliegen"
+  },
+  {
+   "rank": 6,
+   "url": "https://www.swissair.com/us/en/",
+   "title": "Destinations and connections worlwide - Swiss"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.skyscanner.com/flights-from/ch/cheap-flights-from-switzerland.html",
+   "title": "Cheap Tickets from Switzerland from $34 | Skyscanner"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.worldshop.eu/en/SWISS",
+   "title": "Welcome to the Worldshop! - Worldshop"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.skyscanner.ch/ch/en-gb/chf/",
+   "title": "Compare Cheap Flights & Book Airline Tickets to Everywhere | Skyscanner"
+  }
+ ]
+}

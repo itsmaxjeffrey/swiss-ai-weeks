@@ -1,0 +1,59 @@
+{
+ "query": "Vinyl and music online shop Switzerland",
+ "kl": "ch-en",
+ "category": "vinyl-music",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:35:57.075Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.cede.ch/de/vinyl/",
+   "title": "Musik - Vinyl"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.cede.ch/en/music/",
+   "title": "Music - All formats - CeDe.ch"
+  },
+  {
+   "rank": 2,
+   "url": "https://imusic.ch/vinyl",
+   "title": "Vinyl & Schallplatten kaufen - Große Auswahl bei iMusic"
+  },
+  {
+   "rank": 3,
+   "url": "https://recordroom.ch/",
+   "title": "Recordroom - Vinyl Collectors Paradise"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.muziker.ch/vinyl-schallplatten",
+   "title": "Vinyl Schallplatten - Muziker"
+  },
+  {
+   "rank": 5,
+   "url": "https://recordroom.ch/en",
+   "title": "Vinyl Collectors Paradise - Recordroom"
+  },
+  {
+   "rank": 6,
+   "url": "https://fontastix.ch/de/",
+   "title": "Fontastix - CD, DVD, Vinyl Online-Shop und Vertrieb für Schweizer Musik"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.mueller.ch/c/multi-media/vinyl-schallplatten/",
+   "title": "Vinyl & Schallplatten online bestellen | MÜLLER"
+  },
+  {
+   "rank": 8,
+   "url": "https://imusic.ch/",
+   "title": "Riesige Auswahl an Musik, Merch & Filmen"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.layup.ch/records-c-121.html",
+   "title": "RECORDSRECORDS Vinyl Shop Switzerland - Layup Online Shop"
+  }
+ ]
+}

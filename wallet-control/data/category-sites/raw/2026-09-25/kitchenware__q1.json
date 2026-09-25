@@ -1,0 +1,59 @@
+{
+ "query": "Kitchenware online shop Switzerland",
+ "kl": "ch-en",
+ "category": "kitchenware",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:31:10.982Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://schwarzkitchen.com/en/",
+   "title": "Schwarz Kitchen"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.piccantino.ch/",
+   "title": "Piccantino Onlineshop Schweiz - Dein Onlineshop für die feine Küche"
+  },
+  {
+   "rank": 2,
+   "url": "https://kuhnrikon.com/ch_en/kitchen-essentials/kitchen-essentials",
+   "title": "Kitchen utensils - Swiss Made - Online Shop - Order now | Kuhn Rikon"
+  },
+  {
+   "rank": 3,
+   "url": "https://ch.zyliss.com/",
+   "title": "Zyliss Switzerland | Kitchenware, Cookware, Bakeware and Utensils"
+  },
+  {
+   "rank": 4,
+   "url": "https://kuhnrikon.com/ch_en/",
+   "title": "Premium quality pots and pans - The Swiss no. 1 brand"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.ikea.com/ch/en/cat/kitchenware-tableware-kt001/",
+   "title": "Kitchenware & tableware - IKEA Switzerland"
+  },
+  {
+   "rank": 6,
+   "url": "https://shopswiss.com/product-category/kitchen-home/kitchen/",
+   "title": "Swiss Kitchen Tools & Cookware - Premium European Culinary"
+  },
+  {
+   "rank": 7,
+   "url": "https://shopswiss.com/product-category/kitchen-home/",
+   "title": "Swiss Kitchen & Home - Premium European Cookware & Accessories"
+  },
+  {
+   "rank": 8,
+   "url": "https://swiss-made.shop/en/shop/kitchen-and-household.html",
+   "title": "Swiss Products - Swiss Products Kitchen - Swiss Made Products - Shop ..."
+  },
+  {
+   "rank": 9,
+   "url": "https://www.sibler.com/",
+   "title": "Sibler Online-Shop"
+  }
+ ]
+}

@@ -1,0 +1,59 @@
+{
+ "query": "TV and hifi online shop Switzerland",
+ "kl": "ch-en",
+ "category": "tv-hifi",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:24:21.194Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.digitec.ch/en",
+   "title": "digitec.ch - the online shop for all things digital"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.digitec.ch/",
+   "title": "digitec.ch - der Onlineshop für alles Digitale"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.hawk.ch/",
+   "title": "HAWK.ch"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.hubacherhifi.ch/",
+   "title": "Onlineshop - Hubacherhifi.ch Ihr Shop für Hifi, TV, Video, Plasma und ..."
+  },
+  {
+   "rank": 4,
+   "url": "https://www.pearl.ch/de-ch/ar-125-5_tv-radio-video-hifi-audio-streaming-shop/",
+   "title": "TV, Radio, Video, HiFi, Audio & -Streaming Shop » günstig einkaufen ..."
+  },
+  {
+   "rank": 5,
+   "url": "https://www.galaxus.ch/en",
+   "title": "galaxus.ch - pretty much everything"
+  },
+  {
+   "rank": 6,
+   "url": "https://www.hifi-shop.ch/",
+   "title": "HiFi-SHOP AG I Pfäffikon I Qualität zum besten Preis"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.mediamarkt.ch/",
+   "title": "Willkommen bei MediaMarkt Schweiz"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.mueller-spring.ch/",
+   "title": "Müller + Spring AG Online Shop"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.hifi-shop.ch/shop",
+   "title": "Online-SHOP für Multimedia | HiFi-SHOP I Pfäffikon I Zürcher Oberland"
+  }
+ ]
+}

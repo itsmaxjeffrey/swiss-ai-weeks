@@ -1,0 +1,59 @@
+{
+ "query": "Smartphones and phones online shop Switzerland",
+ "kl": "ch-en",
+ "category": "phones",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:23:03.995Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.swisscom.ch/en/residential/products/smartphones.html",
+   "title": "Buy cell phones & smartphones | Swisscom"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.digitec.ch/en/s1/producttype/smartphones-24",
+   "title": "Smartphones · Cell phone - buy at Digitec"
+  },
+  {
+   "rank": 2,
+   "url": "https://shop.post.ch/en/electronics/smartphones-tablets/smartphones/c/mobiles",
+   "title": "Buy smartphones easily and affordably online | postshop.ch"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.mediamarkt.ch/de/category/smartphone-680815.html",
+   "title": "Smartphones kaufen | MediaMarkt"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.digitec.ch/en",
+   "title": "digitec.ch - the online shop for all things digital"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.swisscom.ch/en/residential/products.html",
+   "title": "Online Shop: Latest Devices & Accessories | Swisscom"
+  },
+  {
+   "rank": 6,
+   "url": "https://www.toppreise.ch/browse/Smartphones-mobile-phones-c1346",
+   "title": "Smartphones mobile phones - Price comparison and ratings at ..."
+  },
+  {
+   "rank": 7,
+   "url": "https://www.galaxus.ch/en/s1/sale/producttype/smartphones-24",
+   "title": "Clearance: Smartphones - Galaxus"
+  },
+  {
+   "rank": 8,
+   "url": "https://shop.post.ch/de/elektronik/smartphones-tablets/smartphones/c/mobiles",
+   "title": "Smartphones einfach und günstig online kaufen | postshop.ch"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.mediamarkt.ch/fr/category/smartphone-680815.html",
+   "title": "Achete des smartphones | MediaMarkt"
+  }
+ ]
+}

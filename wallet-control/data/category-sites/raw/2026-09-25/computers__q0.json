@@ -1,0 +1,59 @@
+{
+ "query": "Computer und Laptops online shop Schweiz",
+ "kl": "ch-de",
+ "category": "computers",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:23:12.603Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.mediamarkt.ch/de/category/laptop-notebooks-750532.html",
+   "title": "Laptop / Notebooks kaufen | MediaMarkt"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.digitec.ch/de/s1/producttype/notebook-6",
+   "title": "Notebook · Laptop - kaufen bei Digitec"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.mediamarkt.ch/de/category/notebooks-751020.html",
+   "title": "Notebooks mit Startklar-Service kaufen | MediaMarkt Schweiz"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.toppreise.ch/produktsuche?q=Laptops%20und%20notebooks",
+   "title": "Laptops und notebooks - Preisvergleich und Bewertungen bei Toppreise.ch"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.computerli.ch/",
+   "title": "IT-Shop for smart buyers computerli.ch"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.interdiscount.ch/de/laptop--c511000",
+   "title": "Notebooks - günstig online kaufen - Interdiscount"
+  },
+  {
+   "rank": 6,
+   "url": "https://www.alternate.ch/Notebook",
+   "title": "Laptops & Notebook-Zubehör günstig kaufen | ALTERNATE"
+  },
+  {
+   "rank": 7,
+   "url": "https://shop.post.ch/de/elektronik/computer-gaming/notebooks/c/notebooks",
+   "title": "Notebooks | postshop.ch"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.digitec.ch/de/s1/producttype/pc-18",
+   "title": "PC · Computer - kaufen bei Digitec"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.conforama.ch/de/computer/c/0805",
+   "title": "Günstige Computer: PC, Laptop - Conforama Schweiz"
+  }
+ ]
+}

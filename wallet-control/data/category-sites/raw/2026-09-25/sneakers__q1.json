@@ -1,0 +1,59 @@
+{
+ "query": "Sneakers online shop Switzerland",
+ "kl": "ch-en",
+ "category": "sneakers",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:26:43.069Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://sneakerstore.ch/en",
+   "title": "Sneakerstore - your online shop for sneakers in Switzerland"
+  },
+  {
+   "rank": 1,
+   "url": "https://newsole.ch/",
+   "title": "Newsole | Your Authentic Sneakers Online Shop from Switzerland"
+  },
+  {
+   "rank": 2,
+   "url": "https://sa-sneakers.ch/",
+   "title": "SA Sneakers - Online Store - Original Sneakers"
+  },
+  {
+   "rank": 3,
+   "url": "https://sneakerstore.ch/",
+   "title": "Sneakerstore - dein Onlineshop für Sneaker in der Schweiz"
+  },
+  {
+   "rank": 4,
+   "url": "https://sneakzmarket.ch/",
+   "title": "Sneaker Online Shop - sneakzmarket"
+  },
+  {
+   "rank": 5,
+   "url": "https://sneakzmarket.ch/en/",
+   "title": "Sneaker Online Shop - sneakzmarket"
+  },
+  {
+   "rank": 6,
+   "url": "https://www.on.com/en-ch/shop/shoes/sneakers",
+   "title": "Sneakers | On Switzerland"
+  },
+  {
+   "rank": 7,
+   "url": "https://sa-sneakers.ch/de/collections/sneakers",
+   "title": "Sneakers Online | Nike, Adidas | Free Swiss Shipping - SA Sneakers"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.on.com/en-ch/",
+   "title": "On | Swiss Performance Running Shoes & Clothing"
+  },
+  {
+   "rank": 9,
+   "url": "https://stridetribesneakers.com/en",
+   "title": "Stride Tribe Sneakers - Nike, Jordan, and Adidas in Switzerland"
+  }
+ ]
+}

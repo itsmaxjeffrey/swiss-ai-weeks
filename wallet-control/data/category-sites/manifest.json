@@ -1,0 +1,700 @@
+{
+  "schema": "wallet-control.category-sites.manifest.v1",
+  "scriptVersion": "1.0.0",
+  "generatedAt": "2026-09-25T09:41:31.634Z",
+  "runDate": "2026-09-25",
+  "partial": false,
+  "provider": "duckduckgo-html",
+  "counts": {
+    "categories": 84,
+    "queriesOk": 168,
+    "queriesFailed": 0,
+    "sites": 1143,
+    "querySuccessRate": 1
+  },
+  "artifact": {
+    "path": "category-sites.json",
+    "sha256": "2d9944c041fb2841c3405fdf5abb3767f8a22197a0d96c58f510418f42445ea9",
+    "bytes": 213634
+  },
+  "raw": [
+    {
+      "file": "raw/2026-09-25/arts-crafts__q0.json",
+      "sha256": "8a211ec1a72f784321993c4917f906e697719d2fe89d759c36e80c8e6a6f3e58"
+    },
+    {
+      "file": "raw/2026-09-25/arts-crafts__q1.json",
+      "sha256": "71cba3752e4fb241ed2aa9c48ca6e709c3477c6a4fa27153ae9688fb76707e52"
+    },
+    {
+      "file": "raw/2026-09-25/audio-headphones__q0.json",
+      "sha256": "719193356525fb2b73635e72b7f7dcd5e8ba32d53d39556c3fc3bf8937337805"
+    },
+    {
+      "file": "raw/2026-09-25/audio-headphones__q1.json",
+      "sha256": "baca65c9031606f9fd95c5eb8cb6c22c2b4d0180d7a4dadbbe576dea5d23f662"
+    },
+    {
+      "file": "raw/2026-09-25/baby__q0.json",
+      "sha256": "22a23b9df87db76a1abbbd63165d388e640780b2220ae39e1860f48bd7d7f8af"
+    },
+    {
+      "file": "raw/2026-09-25/baby__q1.json",
+      "sha256": "7e86967d36a1b66d04ce728fa70b74a8137eb36b3c951310b7603e1a4f9796f9"
+    },
+    {
+      "file": "raw/2026-09-25/bags-accessories__q0.json",
+      "sha256": "486e32e082d86ba2c15abd51e48b908766b8a3bf1160aab01bddbaf421552b43"
+    },
+    {
+      "file": "raw/2026-09-25/bags-accessories__q1.json",
+      "sha256": "49fec84b35763d4019c7f9b6cbf394f227982ea1fb1aaa4bf2594651ba3c727f"
+    },
+    {
+      "file": "raw/2026-09-25/bakery-cake__q0.json",
+      "sha256": "ce727480c1f46adf99f3f622f4d52c79389f0e49a4ae84325f3d2a3ddb777ed7"
+    },
+    {
+      "file": "raw/2026-09-25/bakery-cake__q1.json",
+      "sha256": "a3fde397f0191b2880b7b6df62afa16820dfb02d3e68e97e25b10e1562f819e9"
+    },
+    {
+      "file": "raw/2026-09-25/bathroom__q0.json",
+      "sha256": "c8db0f061ec11806ce4e0cb8ce8b80d847b97dc4cf23b81cab1b96d570c493f0"
+    },
+    {
+      "file": "raw/2026-09-25/bathroom__q1.json",
+      "sha256": "87ab2301898122aee39fe89594ce8fed73d1ec4dae9203c6a5a94d5dc4ed33be"
+    },
+    {
+      "file": "raw/2026-09-25/bbq-grill__q0.json",
+      "sha256": "3713a2b513c2439bdc34a02b8b0996183f5e7672e4b95ae188c8090f34380397"
+    },
+    {
+      "file": "raw/2026-09-25/bbq-grill__q1.json",
+      "sha256": "97e75c856bf10448d3a3b9b862759e3d6d1f3d782ede21a54149d20824813f99"
+    },
+    {
+      "file": "raw/2026-09-25/beauty-skincare__q0.json",
+      "sha256": "7599691b9bf3d41178294783d16c9b6c663ce6334e56f821c67bececb746d3ca"
+    },
+    {
+      "file": "raw/2026-09-25/beauty-skincare__q1.json",
+      "sha256": "38c801cfaf1ba7d1e5f1c7491bf3b2d95fb4f2d6045ec36ec3c0706d8502616d"
+    },
+    {
+      "file": "raw/2026-09-25/bed-bedding__q0.json",
+      "sha256": "78d2b5b561953b300ceb00443ecde142850d3e0ea9a39e6978528d5aa4b77724"
+    },
+    {
+      "file": "raw/2026-09-25/bed-bedding__q1.json",
+      "sha256": "69071b50b1ce34fe4b76432502358eb71dd27df58e32187af294c3bf5a1cf769"
+    },
+    {
+      "file": "raw/2026-09-25/beer-spirits__q0.json",
+      "sha256": "45e8f85965cf921d61723947894132d3922414c056e31c684df898146a911b45"
+    },
+    {
+      "file": "raw/2026-09-25/beer-spirits__q1.json",
+      "sha256": "b1b39966b151fada7783c27fdc6bb349cf03c4eab8daaafe89f8a87d4902a7a5"
+    },
+    {
+      "file": "raw/2026-09-25/bikes__q0.json",
+      "sha256": "cdb4598ee6ef6f72832dc8853dab75f503d81db49521ff4a56419266ff72209c"
+    },
+    {
+      "file": "raw/2026-09-25/bikes__q1.json",
+      "sha256": "e0cdf2df7fb03c0ae416c1cfca085c35465b7ee6088025d874408a4ec7a38129"
+    },
+    {
+      "file": "raw/2026-09-25/board-games__q0.json",
+      "sha256": "d4e8801494d2d33f81b8902a34c9ae0e6e24dd3dbd0aa4690e30239debdc8b68"
+    },
+    {
+      "file": "raw/2026-09-25/board-games__q1.json",
+      "sha256": "e69b557d301685864fb305a544fe5ea8ac289c8204c87bd388d7d3eecb84a6e6"
+    },
+    {
+      "file": "raw/2026-09-25/books__q0.json",
+      "sha256": "160b401b5d3c41f9c9dbcabad95416aaba7d0980874ff161e18ec4c8de192b5c"
+    },
+    {
+      "file": "raw/2026-09-25/books__q1.json",
+      "sha256": "3271087328b53332baaa770159cba2a09dbfe6ddac3d3d4dc8aaed690c9de55b"
+    },
+    {
+      "file": "raw/2026-09-25/building-materials__q0.json",
+      "sha256": "656d83e50858712768c8243a5e6b7bada9e526476c91063c153dbe37245e5172"
+    },
+    {
+      "file": "raw/2026-09-25/building-materials__q1.json",
+      "sha256": "9eff385b6ffff498cdfc06150afe0b7cb81618bf51b0b27896da6a0e2ec74d03"
+    },
+    {
+      "file": "raw/2026-09-25/camping__q0.json",
+      "sha256": "d5742d1203824c68fa885ca7518e4635d0cb148fda65ca80de285ac75f9e51d3"
+    },
+    {
+      "file": "raw/2026-09-25/camping__q1.json",
+      "sha256": "39f0928e578c06b7efd93d52bee886d4747ff3313635f3f17f04fa894539c7e2"
+    },
+    {
+      "file": "raw/2026-09-25/car-rental__q0.json",
+      "sha256": "17ba60bc14df95d71e965ecfeaee4ee688863873ffa991c5f23ff14b9b59d76d"
+    },
+    {
+      "file": "raw/2026-09-25/car-rental__q1.json",
+      "sha256": "9fcf7cf8b02f7175afd8900563a512535ee2016aefda52062df4e8852fd67c20"
+    },
+    {
+      "file": "raw/2026-09-25/cheese-deli__q0.json",
+      "sha256": "950b438c56c6f4fdbdc7ab0b2a706400ba0af21cd1e05200c8fafae24b87f865"
+    },
+    {
+      "file": "raw/2026-09-25/cheese-deli__q1.json",
+      "sha256": "16ec08467dba44bb25e3ee8512ac855ef783bc728b77015a18204e4f9d0fe186"
+    },
+    {
+      "file": "raw/2026-09-25/chocolate-sweets__q0.json",
+      "sha256": "2bcc5d3d32ab2bb640c2f99c8c4d3daf129ce3cf248c45df369e35d992b220b6"
+    },
+    {
+      "file": "raw/2026-09-25/chocolate-sweets__q1.json",
+      "sha256": "a2e88298aedd82d57b7dd40cfa48ec8edbe772c01d3bbfb7d616d43618580a0d"
+    },
+    {
+      "file": "raw/2026-09-25/coffee-tea__q0.json",
+      "sha256": "ad52b2e13b2faba59bb1e2a1d71f48fad5464a7c7dddcd90e3217f408423f0a7"
+    },
+    {
+      "file": "raw/2026-09-25/coffee-tea__q1.json",
+      "sha256": "0d4b3b0217157f54034914e78cc5aeeefcbffdb1f96726e48266f2deab6584b3"
+    },
+    {
+      "file": "raw/2026-09-25/computers__q0.json",
+      "sha256": "722f397ead12a33cca050532c780c00740e816bbea5a887997467f105c3f2e76"
+    },
+    {
+      "file": "raw/2026-09-25/computers__q1.json",
+      "sha256": "d7f757977ba324de4b277fa5152891761e6fb2776662fb52ffda9d88aea8d589"
+    },
+    {
+      "file": "raw/2026-09-25/diy-tools__q0.json",
+      "sha256": "8c75a164e426c813afcb8af285c246c2394e55ea03414e592309d1c982577f61"
+    },
+    {
+      "file": "raw/2026-09-25/diy-tools__q1.json",
+      "sha256": "1ca01dcfccae424ecab96f35ab1d92337613cdcb86ff914c9c3ab4c320adfb66"
+    },
+    {
+      "file": "raw/2026-09-25/drinks-wine__q0.json",
+      "sha256": "5bd885905169ae41ebf32c029366e8a0497098576b335916397e014384b23078"
+    },
+    {
+      "file": "raw/2026-09-25/drinks-wine__q1.json",
+      "sha256": "2b41b9b2f24732d7c6fbff77041dc78963d76408fbf97794c7344a97530d4a96"
+    },
+    {
+      "file": "raw/2026-09-25/e-mobility__q0.json",
+      "sha256": "910d7e2e567a4579bb21608af0f29d3441ede2a7ccb60386cb9e79d67af6edab"
+    },
+    {
+      "file": "raw/2026-09-25/e-mobility__q1.json",
+      "sha256": "846921efb07e41d885c2b81538c5959d2224310f9ed5e5ea890f62d278d58bcf"
+    },
+    {
+      "file": "raw/2026-09-25/electronics__q0.json",
+      "sha256": "66ec257c9665fec35447a8b2a8806adc5f59b9a0c69fa673acb563ad4905b340"
+    },
+    {
+      "file": "raw/2026-09-25/electronics__q1.json",
+      "sha256": "a84c8c9cd704b0cd37964602220bc15771f80cfa1de5211ff11953afab4ad931"
+    },
+    {
+      "file": "raw/2026-09-25/event-tickets__q0.json",
+      "sha256": "c11185201183f39bd09919e916769814e533e2d050d8141c2d3b1919cbdc7a52"
+    },
+    {
+      "file": "raw/2026-09-25/event-tickets__q1.json",
+      "sha256": "40ac22c4e6340779e465544772a737e9decfeca5695b5d91677a7969ad7dde81"
+    },
+    {
+      "file": "raw/2026-09-25/eyewear__q0.json",
+      "sha256": "32df7aa7807f1c6f848a5e200f18facb79fad0b11b00de83d86b9a8665cecbf6"
+    },
+    {
+      "file": "raw/2026-09-25/eyewear__q1.json",
+      "sha256": "374ceb7ca8071b2d331afdc9de92a44b18d3d6a74f2db2d7a0386cfc307a51b1"
+    },
+    {
+      "file": "raw/2026-09-25/fashion-kids__q0.json",
+      "sha256": "5f4c417abebc9c098a43de2f16f0238227a6154dfaed4a4bf90c9f89aee5a521"
+    },
+    {
+      "file": "raw/2026-09-25/fashion-kids__q1.json",
+      "sha256": "58d4715bec7841c2d0d26210370ba9705654f86213e8dd03e5cdd546d92fad47"
+    },
+    {
+      "file": "raw/2026-09-25/fashion-men__q0.json",
+      "sha256": "d0f5c3b210cd491ab1c542ae74fce4e33bfedd05e682193aff89010f74ccaf1a"
+    },
+    {
+      "file": "raw/2026-09-25/fashion-men__q1.json",
+      "sha256": "653ea545aeea102bdfc35045e8e98e14fcc10cd2865ecf5e4e796bd540fbd371"
+    },
+    {
+      "file": "raw/2026-09-25/fashion-women__q0.json",
+      "sha256": "1ddcd96ef254958f5824dcea14a705c4ff116ecbcf1f879f8ccf540459348698"
+    },
+    {
+      "file": "raw/2026-09-25/fashion-women__q1.json",
+      "sha256": "2fa508dc153cef437cbfc384e2dacdaf031ecc3b5d133c65ad143d9bd8d0764a"
+    },
+    {
+      "file": "raw/2026-09-25/fitness-equipment__q0.json",
+      "sha256": "3008d7321c1caac1d44ddfbe29e553b465e7934bb27d4b721c3ba285cf117f9e"
+    },
+    {
+      "file": "raw/2026-09-25/fitness-equipment__q1.json",
+      "sha256": "a5b0b1a297419007111e13b64d06632eaf20ee4ecce2c73100f8f825a3e1866e"
+    },
+    {
+      "file": "raw/2026-09-25/flights__q0.json",
+      "sha256": "683c7259bef65d667c9673ecf6650bfbbe3c2bae11a75f55be30e10d923b1e53"
+    },
+    {
+      "file": "raw/2026-09-25/flights__q1.json",
+      "sha256": "d83fc463126178380036c7e1e7ff05ef161395380b27abd7741054d270f11ad8"
+    },
+    {
+      "file": "raw/2026-09-25/flowers-gifts__q0.json",
+      "sha256": "d2917c0cbbdec51a91652f976fc7f167f6b0078f815117ad85acd0b3cdf4f1de"
+    },
+    {
+      "file": "raw/2026-09-25/flowers-gifts__q1.json",
+      "sha256": "42e412ba1d0654b6299700f3a036a49dc9d0981a938baf150799db794a42ff56"
+    },
+    {
+      "file": "raw/2026-09-25/food-delivery__q0.json",
+      "sha256": "b1b58042900f0551fff24343d15258fe7008764479babf1cbe41f4b424df25f4"
+    },
+    {
+      "file": "raw/2026-09-25/food-delivery__q1.json",
+      "sha256": "615c150aa86d589f299f2a1c3e31d96714970ed9dc7d1ea0ddf9c9c0136f255c"
+    },
+    {
+      "file": "raw/2026-09-25/furniture__q0.json",
+      "sha256": "dac179e7c5aa515b9f9d6f79bb49cca32444dbdac6d58ec66b467d1f98e6507a"
+    },
+    {
+      "file": "raw/2026-09-25/furniture__q1.json",
+      "sha256": "29315e98622efdc922c5025bf8bb6e7bb19234334e95f0c6964153e8548a3a01"
+    },
+    {
+      "file": "raw/2026-09-25/gaming-consoles__q0.json",
+      "sha256": "cfbe98de6d78e433570bfa71c9db4de1d7ad7e4add35a491e4ee95c7eeb623ae"
+    },
+    {
+      "file": "raw/2026-09-25/gaming-consoles__q1.json",
+      "sha256": "5fe8fe5a18618e2751d222680bf1fc045177aa30e96e3b8517e62f54860a22b9"
+    },
+    {
+      "file": "raw/2026-09-25/garden__q0.json",
+      "sha256": "39fc09970a5b912d5282bb8e73a373ea17e155c49dc20b646f9f537423abd7f3"
+    },
+    {
+      "file": "raw/2026-09-25/garden__q1.json",
+      "sha256": "3f3bb723cffe96e811a5319e1f38a9aeb092290f815348170cae4fabacf7b817"
+    },
+    {
+      "file": "raw/2026-09-25/gifts-gadgets__q0.json",
+      "sha256": "9ed46f451da3dd8e7cef10378f895ebc9c430e12a98a034f9f8326068554d274"
+    },
+    {
+      "file": "raw/2026-09-25/gifts-gadgets__q1.json",
+      "sha256": "66dc4dcce486e6faecfd66f852472aa3395147dce67c74df7cd11216ae562192"
+    },
+    {
+      "file": "raw/2026-09-25/groceries__q0.json",
+      "sha256": "d093b09e6d36ddab4384170505cd84b0b08547a49f381c74f5b9400735775e7c"
+    },
+    {
+      "file": "raw/2026-09-25/groceries__q1.json",
+      "sha256": "4cdac79ac630dcb397fdb30c9c820b6dea4eb4dbf2e541619031ae572195ac50"
+    },
+    {
+      "file": "raw/2026-09-25/haircare__q0.json",
+      "sha256": "20934705809782762c18f080196a28b6a74d10afc725b8593a800003d0677f7e"
+    },
+    {
+      "file": "raw/2026-09-25/haircare__q1.json",
+      "sha256": "4c31f59be92bb824783b199e2adcf763aac38c0cdeeb8805b45c17ab7a0862e3"
+    },
+    {
+      "file": "raw/2026-09-25/home-decor__q0.json",
+      "sha256": "b2460e221f84c03df5a1811d262e9b1f67dd54de93cbea6c369bff21dc61ba23"
+    },
+    {
+      "file": "raw/2026-09-25/home-decor__q1.json",
+      "sha256": "6fe856d25f12b21edbd3025cc7369193f53ba5e566ba4f91fefae41fd3953482"
+    },
+    {
+      "file": "raw/2026-09-25/hotels__q0.json",
+      "sha256": "eb5bf2af857cbd66104540d10657ceadb74a6c382d67ef1b5d31cb2f70ea3db9"
+    },
+    {
+      "file": "raw/2026-09-25/hotels__q1.json",
+      "sha256": "f7600f18685d2cc8b9db2502668250107d516d88b920de1517b5cd07a1d7ad30"
+    },
+    {
+      "file": "raw/2026-09-25/household-supplies__q0.json",
+      "sha256": "d04c2462cd35811b75a9f2fd9c346b75f3c22b2a0f0985ad82e4fc6c85d69b2c"
+    },
+    {
+      "file": "raw/2026-09-25/household-supplies__q1.json",
+      "sha256": "25c04ab32e4eaa36f73f2832a50ebe9241f3021423d8cf38f51acdbb726db5a9"
+    },
+    {
+      "file": "raw/2026-09-25/jewelry-watches__q0.json",
+      "sha256": "81fa9dbfe88218f798f5915a31715be24256ce7f59e5b5389d9ebb44327bb4c7"
+    },
+    {
+      "file": "raw/2026-09-25/jewelry-watches__q1.json",
+      "sha256": "d9781af2ea6f5152f3ea13f88a43ea6ee2ddfe453d8405e6bd856fa875edd2db"
+    },
+    {
+      "file": "raw/2026-09-25/kids-furniture__q0.json",
+      "sha256": "05af98db4eeab914f5a2fc0da68a3b43ae86cc892cce358c521ae04dfc4c216f"
+    },
+    {
+      "file": "raw/2026-09-25/kids-furniture__q1.json",
+      "sha256": "4f9f03812b3372e650072a90edf3932f40b275a17908b2e94379011480b2cb5d"
+    },
+    {
+      "file": "raw/2026-09-25/kitchenware__q0.json",
+      "sha256": "a279b508df104ba788c6237c8371882aa3c33cf8a4527b21f282ba071bfac764"
+    },
+    {
+      "file": "raw/2026-09-25/kitchenware__q1.json",
+      "sha256": "e3c548aa8cc44266b2f2422014833d9cc4f11c3419e9ee9abf4b3d34f8260df2"
+    },
+    {
+      "file": "raw/2026-09-25/large-appliances__q0.json",
+      "sha256": "de79a1a1b1cb99a2fa891ba57c0b37ffc7301a358f4592feb09f749416a7fd6d"
+    },
+    {
+      "file": "raw/2026-09-25/large-appliances__q1.json",
+      "sha256": "27819d5f047fac50b887d32e0d75d526e0b600c2112328520b08fb7f4a09fa9b"
+    },
+    {
+      "file": "raw/2026-09-25/lighting__q0.json",
+      "sha256": "1ddf8c645438df1c20e8a415ec8a478b7c77d97dbf12842afe45da2cb827bcb8"
+    },
+    {
+      "file": "raw/2026-09-25/lighting__q1.json",
+      "sha256": "657f3fa31a363cc10c0269dab689d19da05f0af40529eb42314ef41f28358f8a"
+    },
+    {
+      "file": "raw/2026-09-25/luggage__q0.json",
+      "sha256": "6616fefcf32f647bcf5ed19f7befe81db7f4ec9e2781e50ff0ab6b9eb5ee1991"
+    },
+    {
+      "file": "raw/2026-09-25/luggage__q1.json",
+      "sha256": "d019eb860722fdf4923aa264b41dfc2c4b89457d9bf6a57ee473cc0465712cc4"
+    },
+    {
+      "file": "raw/2026-09-25/luxury-resale__q0.json",
+      "sha256": "5bda06adc5a7a45e8ef39b29160630b244c8978e6dbb76540b9bc77298d603fb"
+    },
+    {
+      "file": "raw/2026-09-25/luxury-resale__q1.json",
+      "sha256": "065a1225a57a9fc103468f7620ad3a01412b477f7c74063d7e5e24a343af430e"
+    },
+    {
+      "file": "raw/2026-09-25/marketplaces__q0.json",
+      "sha256": "d243374cb2e093188284207deea3994aff4a407b37a62245faaca424dee27135"
+    },
+    {
+      "file": "raw/2026-09-25/marketplaces__q1.json",
+      "sha256": "b5c0540285967b61dff6755f8866abe8197ceb27cec1e48ee5f904fbfbf4ca9c"
+    },
+    {
+      "file": "raw/2026-09-25/meal-kits__q0.json",
+      "sha256": "855546c6ddb9776d8a186a866783530bcfb103172d479f3321810532bc22c5d8"
+    },
+    {
+      "file": "raw/2026-09-25/meal-kits__q1.json",
+      "sha256": "7ff491f0f0190f38695b8677a5255c9d3841c350409828988e4eb41190b8f475"
+    },
+    {
+      "file": "raw/2026-09-25/meat-fish__q0.json",
+      "sha256": "86bf588ca219778852295674a9c4e4dafbce6a2c81858088a03017a28aad36b6"
+    },
+    {
+      "file": "raw/2026-09-25/meat-fish__q1.json",
+      "sha256": "e9c698c24f01812ad8d1a5406b66305b55d9cd8d7698d428aa683af96f3192ef"
+    },
+    {
+      "file": "raw/2026-09-25/movies-games__q0.json",
+      "sha256": "e4cf93d58fbdf4ae1da1ff56460e86154d4458942abe5652bd63722d60cbd23e"
+    },
+    {
+      "file": "raw/2026-09-25/movies-games__q1.json",
+      "sha256": "88a6446c73850705a51233e57b4d442f1b8757eb949ac06d369f2e27b40fc36a"
+    },
+    {
+      "file": "raw/2026-09-25/musical-instruments__q0.json",
+      "sha256": "f8152b1fea396919048bfb6a1c07627edbc13600e4c8e661736d5335d2703353"
+    },
+    {
+      "file": "raw/2026-09-25/musical-instruments__q1.json",
+      "sha256": "967e502ef4cb6cbf0c4ef33698bb90b86ba1cd38fa36f204ea584cd0db68664e"
+    },
+    {
+      "file": "raw/2026-09-25/office-furniture__q0.json",
+      "sha256": "57f24d4f2cae89567ab6aa61cb97da554f9893be966c9c27a1a366c597b8fa2c"
+    },
+    {
+      "file": "raw/2026-09-25/office-furniture__q1.json",
+      "sha256": "69984829a55755fb11720ce7563b7fc95bc5c595f6e28540dba83b184421bc7c"
+    },
+    {
+      "file": "raw/2026-09-25/office-supplies__q0.json",
+      "sha256": "6d429d070950e3c202bc9ae3e2ee7967db14cb0dbe019e21724ad85f3f99bc80"
+    },
+    {
+      "file": "raw/2026-09-25/office-supplies__q1.json",
+      "sha256": "22dab366043459ffce6fbbe70041320a5e516fdfa30953d62411eccb6aeeb8e9"
+    },
+    {
+      "file": "raw/2026-09-25/organic-food__q0.json",
+      "sha256": "31f0ea795d30f1ecc974dc63d364d567f7a33bda6dfc0b1409730f83c859a8b6"
+    },
+    {
+      "file": "raw/2026-09-25/organic-food__q1.json",
+      "sha256": "dca6b635efbc916062e34a1e64f383bc7411a25c4925482630cb78c4ca8d69c7"
+    },
+    {
+      "file": "raw/2026-09-25/outdoor-hiking__q0.json",
+      "sha256": "a0f7aa5889e536136f1e401d421f190c37e80cadf9d07dc922de1cfeba47f0b0"
+    },
+    {
+      "file": "raw/2026-09-25/outdoor-hiking__q1.json",
+      "sha256": "468e9fba1424a2d0d13b04e90edc94f58796b8878002ac5a038ce7ae3ec6f4ae"
+    },
+    {
+      "file": "raw/2026-09-25/package-holidays__q0.json",
+      "sha256": "80abdf60cdb5356f66942e392626ab70c728524a12a183a9df52bee28b687b54"
+    },
+    {
+      "file": "raw/2026-09-25/package-holidays__q1.json",
+      "sha256": "3f985e0e66099f1c5df02e71914667f334a7f994a52b2b33745c67363103ad1c"
+    },
+    {
+      "file": "raw/2026-09-25/pc-components__q0.json",
+      "sha256": "fd0b754c3232c9d22f0f70f9c238303b5a6ff7a5bf03b6ee992b5d38230bb163"
+    },
+    {
+      "file": "raw/2026-09-25/pc-components__q1.json",
+      "sha256": "357c1a62d8d9129df319c869839420e51518ac930ce3cb7f1853093e241252fb"
+    },
+    {
+      "file": "raw/2026-09-25/perfume__q0.json",
+      "sha256": "072bf599b866bb8b8db61e7c024c11c743e26dd157838c266dfa7efdd96d1607"
+    },
+    {
+      "file": "raw/2026-09-25/perfume__q1.json",
+      "sha256": "a15e8aab3f2f46c4f8994fa78ea2a7ea641a6a546e8821113a1e8281877e3018"
+    },
+    {
+      "file": "raw/2026-09-25/pet-supplies__q0.json",
+      "sha256": "dbb0599e4d4709478020e157251aede307164003ae1c36e03b72ed9fbb5cb913"
+    },
+    {
+      "file": "raw/2026-09-25/pet-supplies__q1.json",
+      "sha256": "b6a44aad18a0fff7bb2c1eded52ae4fc1b3419d0ac234a94264b0b87b95f6580"
+    },
+    {
+      "file": "raw/2026-09-25/pharmacy__q0.json",
+      "sha256": "db13f59c2af3cf75279399ef0d80f3be98941f16036863cfc4f3a47bc96f68a1"
+    },
+    {
+      "file": "raw/2026-09-25/pharmacy__q1.json",
+      "sha256": "1870b6f499a7ff78b62c893fe08fa2a57fba26a6f20620658390849a2ca633f3"
+    },
+    {
+      "file": "raw/2026-09-25/phones__q0.json",
+      "sha256": "2c680894f8388cb83d8c9dfc2295795525f006bf2a13f48ad2fccda3e6f5715d"
+    },
+    {
+      "file": "raw/2026-09-25/phones__q1.json",
+      "sha256": "52125dcbe8ed75101e1b9a84f80fd309e45e28d9a1662f89bb92a4cd8ca1de51"
+    },
+    {
+      "file": "raw/2026-09-25/photo-video__q0.json",
+      "sha256": "65e87d4a0da5c5600913becfd1c0280ae4b169362acbe9e3607199f131ddb5e8"
+    },
+    {
+      "file": "raw/2026-09-25/photo-video__q1.json",
+      "sha256": "10a90e50d6ba757a51bad85b65e760cd5c95af73123ce10ca42837c5d5522513"
+    },
+    {
+      "file": "raw/2026-09-25/printer-toner__q0.json",
+      "sha256": "003983b7e8a28196c2f00b8d7106fd19f64f82b503a78ccd4c0dee24c6b08994"
+    },
+    {
+      "file": "raw/2026-09-25/printer-toner__q1.json",
+      "sha256": "1b28d45812d798c411d11251b8f38395a43d153884e283b171a75df0433808fa"
+    },
+    {
+      "file": "raw/2026-09-25/refurbished__q0.json",
+      "sha256": "71ad73a553bf15c0e3e619052ffe390bbc69cadacccbf63cfc0520c8c963b958"
+    },
+    {
+      "file": "raw/2026-09-25/refurbished__q1.json",
+      "sha256": "93ceeb30089107fbae50e1843b25ad0f44b2d84e171ce4cd2ef21f87944a3762"
+    },
+    {
+      "file": "raw/2026-09-25/second-hand__q0.json",
+      "sha256": "4183b26277d2c29e5fb7fc5ccc58cf44a336f90b3c7d18efbad4913ec225373f"
+    },
+    {
+      "file": "raw/2026-09-25/second-hand__q1.json",
+      "sha256": "c7380a966032640251cedda44032f60de900127cf02db97f85839a574e46ffdb"
+    },
+    {
+      "file": "raw/2026-09-25/shoes__q0.json",
+      "sha256": "f75adae74c2ab36be848576ebfeffbfd1944a6eb3389aaee95878f1758cddb6d"
+    },
+    {
+      "file": "raw/2026-09-25/shoes__q1.json",
+      "sha256": "072122bfbc1ddfd714e6e7aa33ac590a3e6ab10879384e44365b698452683164"
+    },
+    {
+      "file": "raw/2026-09-25/small-appliances__q0.json",
+      "sha256": "7922304a9bee4390ce5b12e3823287a3a7043c54fdaa54cb06cb24a1f4e2824b"
+    },
+    {
+      "file": "raw/2026-09-25/small-appliances__q1.json",
+      "sha256": "af9160c9ec172a7e1651f41f63cb0fdd6e731467ec6d2806a4e4f102ce6e9c78"
+    },
+    {
+      "file": "raw/2026-09-25/smart-home__q0.json",
+      "sha256": "4e9056b0d48dba058d981e7190c76e23f96ef082f2d058b652cca2a3a0feac7c"
+    },
+    {
+      "file": "raw/2026-09-25/smart-home__q1.json",
+      "sha256": "3c3b3334f015794eab745ac816652b012ace27f837960fcf6734ad2a2f1cfdb5"
+    },
+    {
+      "file": "raw/2026-09-25/sneakers__q0.json",
+      "sha256": "6857a0acef1272e16f8edc4eee58a98498c1c61b00cfb345f4095ac2f1251c31"
+    },
+    {
+      "file": "raw/2026-09-25/sneakers__q1.json",
+      "sha256": "20bcf3d9954ed606f30a99fedfe023610fa0de27ff1848b9db2af0570b1fadfd"
+    },
+    {
+      "file": "raw/2026-09-25/souvenirs__q0.json",
+      "sha256": "70122e772736a2dbccae666326a0f3be2fbf59f282704f3db73009b92e952c94"
+    },
+    {
+      "file": "raw/2026-09-25/souvenirs__q1.json",
+      "sha256": "da6c27eb41d5ed366ff88e51cf2f031b264766d279bfb155d46db77cdad58179"
+    },
+    {
+      "file": "raw/2026-09-25/sports-general__q0.json",
+      "sha256": "996d9bdcaa8ef11f25ff85afe09e5dfabc55f033b3bc2a2250a5f00f58b3ad2a"
+    },
+    {
+      "file": "raw/2026-09-25/sports-general__q1.json",
+      "sha256": "e10181835ab86a384f99e7396a73ae18e9695b47cf5cd2fe22d920728539dc8f"
+    },
+    {
+      "file": "raw/2026-09-25/sportswear__q0.json",
+      "sha256": "e7f43a4844a7062c7213f1faa3af7cee11d8c778591ee3c081d4e2c514ad4cda"
+    },
+    {
+      "file": "raw/2026-09-25/sportswear__q1.json",
+      "sha256": "a9a6db3dca5976df3611bca23ac78472e2b4d743b6f378d7388e67cd9f940ae2"
+    },
+    {
+      "file": "raw/2026-09-25/strollers-car-seats__q0.json",
+      "sha256": "4a15715e4f1643b8e5fc8522a2ac7e0d25e5f12c50b0efc280d184a75ca18e36"
+    },
+    {
+      "file": "raw/2026-09-25/strollers-car-seats__q1.json",
+      "sha256": "025a4a60085fd1bc623543866924519e2f0e484a3a2e44b1bcddf351059079c9"
+    },
+    {
+      "file": "raw/2026-09-25/supplements__q0.json",
+      "sha256": "6676d5ee459ec0a57d22545c9bfc504495a2d7f9683f103fb03e340635577a71"
+    },
+    {
+      "file": "raw/2026-09-25/supplements__q1.json",
+      "sha256": "ffcdf1fe520b9b8be115021b4901ce1c3d1eb07b11b076fd77dcb2b2b13313db"
+    },
+    {
+      "file": "raw/2026-09-25/swiss-regional__q0.json",
+      "sha256": "4dd97342f4b2ba8f2e74cab60213eee50261cd97a3dc5c81f338f4c863fadf25"
+    },
+    {
+      "file": "raw/2026-09-25/swiss-regional__q1.json",
+      "sha256": "50a8cc6863568adc16fb4446a9fa416ae77ff8da14527a96ece357ffc5b975d7"
+    },
+    {
+      "file": "raw/2026-09-25/toys__q0.json",
+      "sha256": "061d9c8006786d132d42eab2686b271a1ee740b04cc4af16f6c5ca59cd4a5961"
+    },
+    {
+      "file": "raw/2026-09-25/toys__q1.json",
+      "sha256": "f0f2ca6178cc6c372ffc6377d25001bad22f4bab1391ef17d997dc25a10dcfaf"
+    },
+    {
+      "file": "raw/2026-09-25/tv-hifi__q0.json",
+      "sha256": "e6bf34d5f9b92a5e3663b4e4f7cca6e44f138cbdb954d7efb73646e1f8643980"
+    },
+    {
+      "file": "raw/2026-09-25/tv-hifi__q1.json",
+      "sha256": "7c3950fb3f2e3c28fc29de1bf5076f7a37ca0973918c01e058684de452130478"
+    },
+    {
+      "file": "raw/2026-09-25/underwear-lingerie__q0.json",
+      "sha256": "aa25f3b46d75dbbcc605a43b295957429468139e4e83269f1dbf8267930e8cd0"
+    },
+    {
+      "file": "raw/2026-09-25/underwear-lingerie__q1.json",
+      "sha256": "f8f80414911296ebf18b1e91a74582a884560e6072f60ed58506c1308dbcc778"
+    },
+    {
+      "file": "raw/2026-09-25/vinyl-music__q0.json",
+      "sha256": "322ecd96cf2f718b27f91c0957671332d1778250989564a1754f05667d1d4b98"
+    },
+    {
+      "file": "raw/2026-09-25/vinyl-music__q1.json",
+      "sha256": "8d1d9b518419344e072b3449b797f4cc47eebf9cff96f5dd7a144e3bf57f645f"
+    },
+    {
+      "file": "raw/2026-09-25/wellness-supplements__q0.json",
+      "sha256": "8fc1df26bc746ff5f383fd20b15c5931d4421330fe440bd8ad11ed499a69ffdc"
+    },
+    {
+      "file": "raw/2026-09-25/wellness-supplements__q1.json",
+      "sha256": "a1b14fbc3ad6431d34c2949881561fdc339a043b97fe7522bbd7d8ff2e0f92b7"
+    },
+    {
+      "file": "raw/2026-09-25/winter-sports__q0.json",
+      "sha256": "e13b854a3be248c2b5bed8c308dcac397f16ccbb367ff343a6f45c24a0583d40"
+    },
+    {
+      "file": "raw/2026-09-25/winter-sports__q1.json",
+      "sha256": "c59bde48aa2d2cb323d7baa1c04f9f6951e92b8e115334973519aa20e2e64da9"
+    }
+  ],
+  "failures": [],
+  "searchStats": {
+    "ok": 168,
+    "failed": 0,
+    "failures": []
+  }
+}

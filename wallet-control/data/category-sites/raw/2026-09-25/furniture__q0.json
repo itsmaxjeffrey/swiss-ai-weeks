@@ -1,0 +1,59 @@
+{
+ "query": "Möbel online shop Schweiz",
+ "kl": "ch-de",
+ "category": "furniture",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:29:52.486Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.home24.ch/",
+   "title": "Einfach schön einrichten. Möbel online bestellen | home24"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.pfister.ch/de/home",
+   "title": "Möbel und Accessoires online kaufen · pfister"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.xxxlutz.ch/",
+   "title": "XXXLutz Online Möbelhaus - Jetzt Möbel online kaufen bei - XXXLutz.ch"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.megasb.ch/de/",
+   "title": "Möbel günstig kaufen im MEGA Möbel Online Shop Schweiz"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.ottos.ch/de/moebel",
+   "title": "Möbel günstig online kaufen - Möbelvielfalt | OTTO&#x27;S"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.moebel1.ch/",
+   "title": "Tausende Möbel online für Ihr Zuhause | Moebel1.ch"
+  },
+  {
+   "rank": 6,
+   "url": "https://www.beliani.ch/",
+   "title": "Möbel, Lampen und Wohnzubehör bis 50% günstiger | Beliani.ch"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.moemax.ch/",
+   "title": "♥ mömax ♥ Möbel & Wohnideen günstig online kaufen | mömax.ch"
+  },
+  {
+   "rank": 8,
+   "url": "https://lipo.ch/",
+   "title": "LIPO - Möbel discount günstig kaufen & clever einrichten"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.livique.ch/de/",
+   "title": "LIVIQUE Möbel & Accessoires ️ 20% auf alles online*"
+  }
+ ]
+}

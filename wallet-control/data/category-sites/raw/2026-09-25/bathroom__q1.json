@@ -1,0 +1,59 @@
+{
+ "query": "Bathroom online shop Switzerland",
+ "kl": "ch-en",
+ "category": "bathroom",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:32:10.625Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://the-bath-shop.com/",
+   "title": "THE BATH SHOP | Klassische Badezimmer Schweiz"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.ikea.com/ch/en/cat/bathroom-products-ba001/",
+   "title": "Bathroom products - IKEA Switzerland"
+  },
+  {
+   "rank": 2,
+   "url": "https://swiss-vfg.ch/",
+   "title": "Bad, Sanitär und Heizung Shop | swiss.vfg"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.beliani.ch/bathroom-furniture/all+products/",
+   "title": "Modern Bathroom Furniture and Modern Design Vanities Up to 50% OFF |"
+  },
+  {
+   "rank": 4,
+   "url": "https://badshoper.ch/",
+   "title": "Der Schweizer Online-Shop für Badezimmerzubehör"
+  },
+  {
+   "rank": 5,
+   "url": "https://bernstein-badshop.ch/",
+   "title": "Bernstein Badshop - Badezimmermöbel, Duschen & Badaccessoires"
+  },
+  {
+   "rank": 6,
+   "url": "https://www.beliani.ch/badmoebel/alle+produkte/",
+   "title": "Badezimmermöbel bis zu 50% günstiger online kaufen |"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.froidevaux.ch/de/",
+   "title": "Badmöbel Schweiz nach Mass | Froidevaux - 60 Jahre Qualität"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.laufen.ch/shop/",
+   "title": "Home page [www.laufen.ch]"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.baddirekt.ch/",
+   "title": "baddirekt.ch; Sanitärarmaturen I Sanitärbedarf I Sanitärkeramik"
+  }
+ ]
+}

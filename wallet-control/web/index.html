@@ -6,7 +6,8 @@
 <title>LEASH — Wallet Control</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..700&family=Spline+Sans+Mono:wght@300..700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="upgrade.css">
 </head>
 <body>
 <header class="masthead">
@@ -46,7 +47,7 @@
 
     <div class="row">
       <button id="btn-compile" class="btn primary">Translate to permissions</button>
-      <span class="hint">deterministic parser — no model involved</span>
+      <span class="hint">deterministic permissions with advisory review</span>
     </div>
 
     <div id="draft" class="draft hidden">
@@ -103,7 +104,7 @@
 
     <details class="offers-box" id="offers-box">
       <summary>🌱 Compare offers across shops</summary>
-      <p class="hint">Paste the shops that offer the same item — e.g. black running shoes at four sellers. Shows each shop's risk score and sustainability score; with “Prefer sustainable” on, the suggestion favours the more sustainable shop within the safest risk band. Basic static dataset — shops without data show as unknown, never guessed.</p>
+      <p class="hint">Paste the shops that offer the same item — e.g. black running shoes at four sellers. Shows each shop's risk score and sustainability score; with “Prefer sustainable” on, the suggestion favours the more sustainable shop within the safest risk band. Basic static dataset — shops without data show as unknown, never guessed. For now only the <b>top 3 shops by our score</b> are compared.</p>
       <div class="row">
         <input id="offers-item" class="offers-input" placeholder="Item (optional), e.g. black running shoes, size 43">
       </div>
@@ -122,16 +123,18 @@
   <section class="panel" id="panel-approve">
     <div class="panel-head">
       <h2><span class="num">3</span> Waiting for you</h2>
-      <p class="panel-sub">Paused purchases keep until you answer — a pause is not an approval.</p>
+      <p class="panel-sub">Review purchases before their approval window expires. A pause is not an approval.</p>
     </div>
     <div id="approvals"><p class="hint">Nothing waiting.</p></div>
   </section>
 </main>
 
 <footer>
-  <span class="mono">LEASH wallet-control · deterministic engine, zero models in the decision path · merchant text is untrusted data</span>
+  <span class="mono">LEASH wallet-control · deterministic rules with advisory review · merchant text is untrusted data</span>
 </footer>
 
-<script src="/app.js"></script>
+<script src="access.js"></script>
+<script src="app.js"></script>
+<script src="upgrade.js"></script>
 </body>
 </html>

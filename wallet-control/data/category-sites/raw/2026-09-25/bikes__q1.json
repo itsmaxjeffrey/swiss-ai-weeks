@@ -1,0 +1,59 @@
+{
+ "query": "Bikes and cycling online shop Switzerland",
+ "kl": "ch-en",
+ "category": "bikes",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:29:00.115Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://velocorner.ch/en",
+   "title": "Bicycle, E-Bike, Accessories: New & Used - TCS Velocorner"
+  },
+  {
+   "rank": 1,
+   "url": "https://bmc-switzerland.com/",
+   "title": "BMC Premium Performance Bicycles - BMC Switzerland AG"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.bikester.ch/",
+   "title": "Velo Shop Bikester | Alles rund ums Fahrrad online kaufen"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.ibkbike.ch/",
+   "title": "IBKBike | Online Bike Shop & Cycling Equipment"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.decathlon.ch/en/sports/bicycles-cycling",
+   "title": "Bikes, Cycling - Decathlon"
+  },
+  {
+   "rank": 5,
+   "url": "https://veloplace.ch/",
+   "title": "Veloplace.ch - Dein Online-Shop für Velos, E-Bikes & Zubehör"
+  },
+  {
+   "rank": 6,
+   "url": "https://velocorner.ch/en/buy-bike",
+   "title": "E-Bikes & Bikes buy online & used - TCS Velocorner"
+  },
+  {
+   "rank": 7,
+   "url": "https://bikeswitzerland.com/shop/",
+   "title": "Shop - Bike Switzerland"
+  },
+  {
+   "rank": 8,
+   "url": "https://stcycling.ch/",
+   "title": "Velo, Fahrrad, Bike-Teile und Zubehör - ST Cycling"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.swisscycle.ch/",
+   "title": "Swisscycle.ch, die Velobörse des Schweizer Velo-Fachhandel - Velo oder ..."
+  }
+ ]
+}

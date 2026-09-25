@@ -1,0 +1,59 @@
+{
+ "query": "Flowers and gifts online shop Switzerland",
+ "kl": "ch-en",
+ "category": "flowers-gifts",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:40:44.296Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://flower24.ch/en",
+   "title": "Order flowers online | Flower24.ch - Flower delivery Switzerland"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.blueme-shop.ch/en",
+   "title": "Flower delivery - Switzerland-wide flower delivery service - Blueme-Shop"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.lesfleurs.ch/en/",
+   "title": "Flower delivery to Switzerland directly from our florists"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.fleurop.ch/en/",
+   "title": "Order flowers - FLEUROP delivers worldwide"
+  },
+  {
+   "rank": 4,
+   "url": "https://floramall.ch/en",
+   "title": "Send a beautiful love message today. - FLORAMALL"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.giftblooms.com/Switzerland/Flower-Delivery",
+   "title": "Send Gifts Switzerland | Online Flower Delivery Switzerland | GiftBlooms"
+  },
+  {
+   "rank": 6,
+   "url": "https://www.daily-flowers.ch/shop/flower-bouquets",
+   "title": "Flower Delivery Switzerland - Bouquets in 24h | Daily-Flowers"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.tomflowers.ch/en",
+   "title": "TOM FLOWERS - Order and send flowers online"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.lesfleurs.ch/flower-delivery-switzerland/",
+   "title": "Flower delivery to Switzerland - Send flowers to Switzerland"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.sayflowers.ch/de/flowers-switzerland",
+   "title": "Flower delivery Switzerland | SayFlowers Flower Shop"
+  }
+ ]
+}

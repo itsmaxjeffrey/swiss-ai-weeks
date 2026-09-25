@@ -1,0 +1,59 @@
+{
+ "query": "Underwear and lingerie online shop Switzerland",
+ "kl": "ch-en",
+ "category": "underwear-lingerie",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:27:15.267Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.underwear-shop.ch/de/",
+   "title": "die grösste Markenvielfalt der Schweiz - Underwear-Shop"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.underwear-shop.ch/fr/",
+   "title": "Underwear-Shop.ch - die grösste Markenvielfalt der Schweiz - schnell ..."
+  },
+  {
+   "rank": 2,
+   "url": "https://www.zimmerli.com/",
+   "title": "ZIMMERLI | Feinste Unterwäsche, Nachtwäsche & Loungewear"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.zimmerli.com/en",
+   "title": "ZIMMERLI | Underwear, Nightwear & Loungewear"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.hunkemoller.ch/de/",
+   "title": "Hunkemöller - Lingerie, Bademode & Unterwäsche"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.isabodywear.ch/en/",
+   "title": "ISA bodywear - Schweizer Unterwäsche & Nachtwäsche seit 1849"
+  },
+  {
+   "rank": 6,
+   "url": "https://womentrends.ch/",
+   "title": "Onlineshop für Dessous, BHs & Bademode - Womentrends.ch"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.underwearshopping.ch/",
+   "title": "UnderwearShopping.ch - Markenwäsche online kaufen"
+  },
+  {
+   "rank": 8,
+   "url": "https://ch.lounge.com/",
+   "title": "Lounge | Unterwäsche & Kleidung | Official Store"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.lascana.ch/lingerie-waesche/",
+   "title": "Unterwäsche für Damen kaufen Lingerie Trends 2026 - LASCANA"
+  }
+ ]
+}

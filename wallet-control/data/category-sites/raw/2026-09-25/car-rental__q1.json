@@ -1,0 +1,59 @@
+{
+ "query": "Car rental online shop Switzerland",
+ "kl": "ch-en",
+ "category": "car-rental",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:38:27.260Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.rentcars.com/en/locations/switzerland",
+   "title": "Car rentals in Switzerland from $53 | Rentcars"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.finalrentals.ch/",
+   "title": "Rent a Car in Switzerland | Cheap Switzerland Car Rental"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.europcar.com/en-us/places/car-rental-switzerland",
+   "title": "Car rental in Switzerland - Europcar"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.kayak.com/Switzerland-Car-Rentals.233.crc.html",
+   "title": "Car Rentals in Switzerland from $21/day - KAYAK"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.rentalcars.com/en/country/ch",
+   "title": "Cheap Car Hire Switzerland - Rentalcars.com"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.europcar.ch/en-ch/p/car-rental",
+   "title": "Car rental Switzerland | Europcar"
+  },
+  {
+   "rank": 6,
+   "url": "https://www.europcar.ch/en-ch",
+   "title": "Car Rental - Car & Utility Van Hire | Europcar Switzerland"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.swissrentacar.ch/index_en",
+   "title": "Swiss Rent a Car - Car Rental, Transfers & Airport Parking Zurich-Kloten"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.finalrentals.com/switzerland-car-rental",
+   "title": "Switzerland Car Rental From $30/day | Switzerland Car Hire"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.carrentalswitzerland.ch/de-ch",
+   "title": "Professional Car Rental Across Switzerland"
+  }
+ ]
+}

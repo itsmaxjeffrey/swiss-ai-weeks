@@ -1,0 +1,59 @@
+{
+ "query": "Winter sports and ski online shop Switzerland",
+ "kl": "ch-en",
+ "category": "winter-sports",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:28:43.332Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://ski-shop.ch/",
+   "title": "ski-shop.ch - Dein Sport Shop für Sommer & Winter"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.sportmania.ch/en/",
+   "title": "The Swiss Action Sports Store to Inspire and Push Your Limits"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.sportmania.ch/en/ski-store-online.html",
+   "title": "Online Ski Store - Ski equipment Switzerland - Sportmania"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.sportsonline.ch/",
+   "title": "Ski-Sport und Berg-Sport - Swiss Onlineshop"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.decathlon.ch/en/sports/winter-sports",
+   "title": "Winter Sports Store - Decathlon CH"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.decathlon.ch/en/sports/winter-sports/ski-equipment",
+   "title": "Ski, Equipment - Decathlon"
+  },
+  {
+   "rank": 6,
+   "url": "https://www.ekosport.ch/de_CH/",
+   "title": "Ekosport, Nr.1 für Outdoor Sport auf web"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.xspo.ch/alpin-ski",
+   "title": "Alpin Ski & Ausrüstung » günstig online kaufen | XSPO"
+  },
+  {
+   "rank": 8,
+   "url": "https://andrist-sport.ch/en/onlineshop/",
+   "title": "ANDRIST Sport Onlineshop - Outdoor, Hunting, Bike & Ski Switzerland"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.ottos.ch/de/ski",
+   "title": "Ski & Zubehör - online kaufen & losfahren | OTTO&#x27;S"
+  }
+ ]
+}

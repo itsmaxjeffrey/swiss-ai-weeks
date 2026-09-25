@@ -109,6 +109,7 @@ export function extractItemAttributes(item) {
   const sz = item.item_details?.match(/\bsize[:\s]+([0-9]{1,2}(?:\.5)?|[SMLX]{1,3})\b/i)
           || item.item_name?.match(/\bsize[:\s]+([0-9]{1,2}(?:\.5)?|[SMLX]{1,3})\b/i);
   if (sz) attrs.size = sz[1].toUpperCase();
+  if (/\bcamera lens\b/.test(text)) attrs.family = 'camera_lens';
   if (/\bmonitor\b/.test(text)) attrs.family = 'monitor';
   if (/\b(?:road[- ]?running|running) (?:shoes|shoe)\b/.test(text)) { attrs.family = 'shoes'; attrs.sport = 'running'; }
   if (/\broad[- ]?running\b/.test(text)) attrs.terrain = 'road';

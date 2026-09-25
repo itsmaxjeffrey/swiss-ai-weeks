@@ -1,0 +1,58 @@
+{
+ "query": "Shoes online shop Switzerland",
+ "kl": "ch-en",
+ "category": "shoes",
+ "fetchedAt": "2026-09-25T06:30:55.576Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.on.com/en-ch/shop/shoes",
+   "title": "Sports shoes and sneakers : High-Performance Comfort | On Switzerland"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.on.com/en-ch/",
+   "title": "On | Swiss Performance Running Shoes & Clothing - On Shop"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.koala.ch/en/shoes.html",
+   "title": "Shoes | Koala"
+  },
+  {
+   "rank": 3,
+   "url": "https://newsole.ch/",
+   "title": "Newsole | Your Authentic Sneakers Online Shop from Switzerland"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.ochsner-shoes.ch/de-ch/",
+   "title": "Ochsner Shoes Schweiz - Schuhe für Damen, Herren & Kinder"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.zalando.ch/schuhe/",
+   "title": "Schuhe online kaufen - Upgrade für deinen Schuhschrank bei ZALANDO"
+  },
+  {
+   "rank": 6,
+   "url": "https://sa-sneakers.ch/",
+   "title": "SA Sneakers - Online Store - Original Sneakers"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.zalando.ch/",
+   "title": "Schuhe, Mode und Accessoires online kaufen | ZALANDO"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.koala.ch/en/woman.html",
+   "title": "KOALA.CH for Women"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.skechers.ch/en",
+   "title": "SKECHERS Switzerland Official Site | The Comfort Technology Company"
+  }
+ ]
+}

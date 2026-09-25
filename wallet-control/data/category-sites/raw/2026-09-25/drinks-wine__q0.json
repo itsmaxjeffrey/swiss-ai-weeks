@@ -1,0 +1,59 @@
+{
+ "query": "Wein online shop Schweiz",
+ "kl": "ch-de",
+ "category": "drinks-wine",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:20:22.387Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.flaschenpost.ch/",
+   "title": "Die grösste Weinhandlung der Schweiz | Flaschenpost"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.vinello.ch/",
+   "title": "Weinhandel & Weinversand | VINELLO.winefamily vinello.ch"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.weinonline.ch/",
+   "title": "Weinonline.ch - Der Webshop mit Klasse statt Masse"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.weinbestellung.ch/",
+   "title": "Weinbestellung.ch - Wein online kaufen"
+  },
+  {
+   "rank": 4,
+   "url": "https://shop.weinlife.ch/",
+   "title": "WeinLife.ch - Dein Schweizer Wein Online Shop"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.vinovintana.ch/",
+   "title": "Wein online kaufen Schweiz - Vino Vintana Wein Shop"
+  },
+  {
+   "rank": 6,
+   "url": "https://www.vicampo.ch/",
+   "title": "Wein online kaufen & bestellen - Weinversand | Vicampo.ch"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.vinello.ch/wein",
+   "title": "Weine vinello.ch"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.zwg.ch/de/shop/wein",
+   "title": "Wein online kaufen & liefern lassen | ZWG"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.schuler.ch/",
+   "title": "Schweizer Weinhandlung & Wein-Onlineshop | SCHULER"
+  }
+ ]
+}

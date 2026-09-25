@@ -1,0 +1,59 @@
+{
+ "query": "Large home appliances online shop Switzerland",
+ "kl": "ch-en",
+ "category": "large-appliances",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:25:06.225Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://premium-haushaltsgeraete.ch/en/",
+   "title": "Premium household appliances (IB-Elektroniks in Switzerland): Exclusive ..."
+  },
+  {
+   "rank": 1,
+   "url": "https://www.ikea.com/ch/en/cat/appliances-ka002/",
+   "title": "Appliances - IKEA Switzerland"
+  },
+  {
+   "rank": 2,
+   "url": "https://premium-haushaltsgeraete.ch/",
+   "title": "Premium Haushaltsgeräte (IB-Elektroniks in Schweiz): Exklusive ..."
+  },
+  {
+   "rank": 3,
+   "url": "https://asko-shop.ch/",
+   "title": "ASKO-Shop.ch - Beste Haushaltsgeräte für die Küche und den Waschraum"
+  },
+  {
+   "rank": 4,
+   "url": "https://swiss-electro.com/en/collections/electromenager",
+   "title": "Home appliance - Swiss Electro"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.xxxlutz.ch/haushaltsgeraete-C75C4",
+   "title": "Haushaltsgeräte online kaufen - XXXLutz.ch"
+  },
+  {
+   "rank": 6,
+   "url": "https://www.bosch-home.com/ch/de/shop/",
+   "title": "Hausgeräte im Online-Shop kaufen | Bosch CH"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.manor.ch/fr/shop/maison-voyage/gros-electromenager/b/b2x/living-electronics-large-home-appliances",
+   "title": "Gros électroménager B2X | acheter en ligne - Manor"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.galaxus.ch/en",
+   "title": "galaxus.ch - pretty much everything"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.krix.ch/de/",
+   "title": "Krix Haushaltsgeräte: Grosse Marken, schweizweit beste Preise"
+  }
+ ]
+}

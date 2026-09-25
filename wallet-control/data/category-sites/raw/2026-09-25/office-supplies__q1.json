@@ -1,0 +1,59 @@
+{
+ "query": "Office supplies online shop Switzerland",
+ "kl": "ch-en",
+ "category": "office-supplies",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:39:57.758Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://shop.post.ch/en/stationery/workplace/c/workplace",
+   "title": "Office supplies: buy online from Swiss Post | postshop.ch"
+  },
+  {
+   "rank": 1,
+   "url": "https://shop.post.ch/en/stationery/c/officeandstationery",
+   "title": "Stationery: buy online from Swiss Post | postshop.ch"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.globus.ch/en/home/stationery",
+   "title": "Order Stationery & Writing supplies from GLOBUS in the online store"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.officeworld.ch/de",
+   "title": "Office World: Büromaterial zu attraktiven Preisen online kaufen ..."
+  },
+  {
+   "rank": 4,
+   "url": "https://www.distrelec.ch/en/office-computing-network-products/office-supplies/c/cat-L3D_543055",
+   "title": "Office Supplies | Distrelec Switzerland"
+  },
+  {
+   "rank": 5,
+   "url": "https://swiss-arena.ch/en/collections/fourniture-de-bureau",
+   "title": "Office supplies - SWISS ARENA"
+  },
+  {
+   "rank": 6,
+   "url": "https://www.galaxus.ch/en/s12/sector/office-stationery-12",
+   "title": "Buy Office + Stationery products online - Galaxus"
+  },
+  {
+   "rank": 7,
+   "url": "https://online.vikingoffice.ch/",
+   "title": "Office Supplies: Office Products and Office Furniture: Viking Office"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.officeworld.ch/fr",
+   "title": "Office World : acheter du matériel de bureau à des prix attractifs ..."
+  },
+  {
+   "rank": 9,
+   "url": "https://www.digitec.ch/en/s1/tag/office-stationery-678",
+   "title": "Buy products from area Office + Stationery - Digitec"
+  }
+ ]
+}

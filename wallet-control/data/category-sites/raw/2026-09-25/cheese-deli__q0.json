@@ -1,0 +1,59 @@
+{
+ "query": "Käse und Delikatessen online shop Schweiz",
+ "kl": "ch-de",
+ "category": "cheese-deli",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:21:24.648Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://shop.chaesbueb.ch/",
+   "title": "Chäsbueb | Käsefachgeschäft"
+  },
+  {
+   "rank": 1,
+   "url": "https://shop.chaesbueb.ch/pages/heimlieferdienst",
+   "title": "Chäsbueb Online-Shop: Käseklassiker, Raclette, Fondue und vieles mehr!"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.rolfbeeler.ch/",
+   "title": "Rolf Beeler Maître Fromager - Gourmet Käse-Shop"
+  },
+  {
+   "rank": 3,
+   "url": "https://spezialitaetenversand.ch/ueber-uns/",
+   "title": "Über uns - Spezialitätenversand.ch"
+  },
+  {
+   "rank": 4,
+   "url": "https://schniderkaese.ch/shop/",
+   "title": "Schweizer Käse Online Shop | Käserei Schnider Giswil"
+  },
+  {
+   "rank": 5,
+   "url": "https://cheesefood.ch/",
+   "title": "Der Onlineshop für Schweizer Käse, Fondue und Raclette - ab Käsekeller"
+  },
+  {
+   "rank": 6,
+   "url": "https://www.schweizer-paeckli.ch/",
+   "title": "Schweizer Spezialitäten zum Verschenken | Schweizer Päckli"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.vomfritz.ch/collections/schweizer-kaese",
+   "title": "Schweizer Käse online kaufen - vomFRITZ"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.cheezy.ch/collections/all",
+   "title": "All - cheezy Käseboxen | Schweizer Käsevielfalt online bestellen"
+  },
+  {
+   "rank": 9,
+   "url": "https://vomchaeser.ch/collections/alle-produkte",
+   "title": "Alle Produkte - VomChäser"
+  }
+ ]
+}

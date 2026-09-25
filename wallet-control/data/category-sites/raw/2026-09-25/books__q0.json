@@ -1,0 +1,59 @@
+{
+ "query": "Bücher online shop Schweiz",
+ "kl": "ch-de",
+ "category": "books",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:35:34.350Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.exlibris.ch/de/",
+   "title": "Ex Libris - die Nr. 1 für Bücher online"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.mybooks.ch/",
+   "title": "Bücher online kaufen Schweiz | Deine adhoc Buchhandlung"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.buchhaus.ch/de/buecher",
+   "title": "Bücher online bestellen Schweiz - buchhaus.ch"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.orellfuessli.ch/",
+   "title": "Orell Füssli Online Shop - mehr als 18 Mio. Bücher, eBooks, uvm. kaufen"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.exlibris.ch/de/buecher-buch/",
+   "title": "Bücher online portofrei kaufen | Ex Libris"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.mybooks.ch/mybooks",
+   "title": "Die Schweizer Onlinebuchhandlung - Bücher online kaufen Schweiz | Deine ..."
+  },
+  {
+   "rank": 6,
+   "url": "https://www.bookseller.ch/home",
+   "title": "Bücher sofort lieferbar - Bookseller.ch"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.orellfuessli.ch/kategorie/buecher-2/",
+   "title": "Bücher online bestellen | Orell Füssli"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.buchhaus.ch/de/home",
+   "title": "Bücher, E-Books, Kalender - Lüthy Balmer Stocker - buchhaus.ch"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.lesestoff.ch/de/home",
+   "title": "Ihre Schweizer Online-Buchhandlung - lesestoff.ch - Lesestoff"
+  }
+ ]
+}

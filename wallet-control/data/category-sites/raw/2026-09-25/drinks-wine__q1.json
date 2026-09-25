@@ -1,0 +1,59 @@
+{
+ "query": "Wine online shop Switzerland",
+ "kl": "ch-en",
+ "category": "drinks-wine",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:20:29.368Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://arvi.ch/en",
+   "title": "The Premium Online Wine Shop for Fine & Rare Wines - ARVI"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.vivino.com/CH/en/",
+   "title": "Vivino (Switzerland) - Buy the Right Wine"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.flaschenpost.ch/en",
+   "title": "The largest wine shop in Switzerland | Flaschenpost"
+  },
+  {
+   "rank": 3,
+   "url": "https://winecore.ch/",
+   "title": "Winecore - Buy Fine Wine Online in Switzerland"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.vinello.ch/",
+   "title": "Weinhandel & Weinversand | VINELLO.winefamily vinello.ch"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.vinello.ch/en",
+   "title": "Wine trade and wine shipping | VINELLO.winefamily vinello.ch"
+  },
+  {
+   "rank": 6,
+   "url": "https://www.vinovintana.ch/en/",
+   "title": "Buy Wine Online Switzerland - Vino Vintana Wine Shop"
+  },
+  {
+   "rank": 7,
+   "url": "https://thewinefamily.ch/en",
+   "title": "Buy Swiss and international wines online - the Wine family"
+  },
+  {
+   "rank": 8,
+   "url": "https://thewinefamily.ch/en/collections/wines",
+   "title": "Buy wine online - the Wine family - theWinefamily.ch"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.vinotheque.ch/de_DE/",
+   "title": "Online-Kauf von Weinen, Champagnern und Spirituosen - Vinotheque.ch"
+  }
+ ]
+}

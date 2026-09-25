@@ -41,6 +41,8 @@ const crypto = require("crypto");
 const accounts = require("./accounts");
 const shopping = require("./shopping");
 const family = require("./family");
+const walletReview = require("./wallet-review");
+const { agentTimeoutSeconds, classifyFailure, turnSafetyNote } = require("./turn-reliability");
 
 const PORT = parseInt(process.env.PORT || "8794", 10);
 const HOST = process.env.HOST || "127.0.0.1";
@@ -365,7 +367,8 @@ function agentTurn(message, sessionKey, timeoutMs = TIMEOUT_MS, onSpawn = null) 
       "--agent", AGENT,
       "--session-key", sessionKey,
       "--json",
-      "-m", message,
+      "--timeout", String(agentTimeoutSeconds(timeoutMs)),
+      "-m", message + turnSafetyNote(timeoutMs),
     ];
     if (MODEL) args.push("--model", MODEL);
     // Unique per-turn env marker: lets /api/chat/stop find and kill the REAL
@@ -378,9 +381,14 @@ function agentTurn(message, sessionKey, timeoutMs = TIMEOUT_MS, onSpawn = null) 
     });
     if (onSpawn) { try { onSpawn(child, turnToken); } catch { /* registry is best-effort */ } }
 
+    const runStarted = Date.now();
     let stdout = "";
     let stderr = "";
     const timer = setTimeout(() => {
+      // The launcher can exit while its supervised grandchild stays alive.
+      for (const pid of pidsWithEnvMarker(Buffer.from(`VISECA_TURN_TOKEN=${turnToken}\0`))) {
+        try { process.kill(pid, "SIGKILL"); } catch { /* already exited */ }
+      }
       killTree(child);
       reject(turnError("timeout", `Agent turn timed out after ${Math.round(timeoutMs / 1000)}s.`));
     }, timeoutMs);
@@ -420,7 +428,8 @@ function agentTurn(message, sessionKey, timeoutMs = TIMEOUT_MS, onSpawn = null) 
           diag.stopReason && `stop=${diag.stopReason}`,
           diag.errorMessage,
         ].filter(Boolean).join(" · ");
-        return reject(turnError("no-reply", "Agent JSON contained no reply text.", bits));
+        const failure = classifyFailure({ detail: bits, stderr, elapsedMs: Date.now() - runStarted, timeoutMs });
+        return reject(turnError(failure.kind, failure.message, bits));
       }
       resolve({ reply, stats: extractRunStats(parsed) });
     });
@@ -430,11 +439,17 @@ function agentTurn(message, sessionKey, timeoutMs = TIMEOUT_MS, onSpawn = null) 
 // Retry budget stays under the UI client's abort timer (app.js keeps its timer
 // above this value). Override per-deployment for long real-shop checkouts.
 const OVERALL_BUDGET_MS = Math.min(TIMEOUT_MS, parseInt(process.env.OPENCLAW_OVERALL_BUDGET_MS || "590000", 10));
+// Retry only when the leftover budget could plausibly finish real work: a
+// shopping-scale turn needs minutes, and retrying with pocket change left
+// just guarantees a second failure (observed 2026-09-25: a 278s-left retry
+// re-planned from scratch and timed out while the first run's gateway-side
+// orphan finished on its own minutes later). Default: half the budget.
+const RETRY_MIN_LEFT_MS = parseInt(process.env.OPENCLAW_RETRY_MIN_LEFT_MS || "0", 10) || Math.round(OVERALL_BUDGET_MS / 2);
 const CONTINUE_NUDGE =
   "\n\n(System note: your previous attempt at this request was cut off before you produced a reply. Continue from where you left off and give your final answer now — do not restart the research from scratch.)";
 
-/** One agent turn with a single budget-aware retry when the run died without
- *  a reply. The session keeps the partial work, so a continuation nudge lets
+/** One agent turn. Automatic retry is disabled unless explicitly opted in.
+ *  With OPENCLAW_ALLOW_AUTOMATIC_RETRY=1, permit one budget-aware retry without a reply. The session keeps the partial work, so a continuation nudge lets
  *  the agent finish cheaply instead of redoing the whole task.
  *  `isStopped` short-circuits the retry when the CUSTOMER stopped the turn —
  *  a stop-aborted run looks exactly like a no-reply failure, and auto-retrying
@@ -445,7 +460,7 @@ async function turnWithRetry(message, sessionKey, onSpawn = null, isStopped = nu
     return await agentTurn(message, sessionKey, OVERALL_BUDGET_MS, onSpawn);
   } catch (err) {
     const left = deadline - Date.now();
-    if (err.kind === "no-reply" && left > 90000 && !(isStopped && isStopped())) {
+    if (process.env.OPENCLAW_ALLOW_AUTOMATIC_RETRY === "1" && err.kind === "no-reply" && left > RETRY_MIN_LEFT_MS && !(isStopped && isStopped())) {
       console.log(`[chat] retry after no-reply (${err.detail || "no detail"}); ${Math.round(left / 1000)}s left`);
       return await agentTurn(message + CONTINUE_NUDGE, sessionKey, left, onSpawn);
     }
@@ -455,14 +470,61 @@ async function turnWithRetry(message, sessionKey, onSpawn = null, isStopped = nu
 
 /** Map structured turn failures to a message a shopper can act on. */
 function friendlyTurnError(err) {
-  if (err && err.kind === "timeout") {
-    return "This task ran longer than the bridge allows without finishing. The shopper may still complete it in the background — try a smaller ask, or ask a follow-up in a minute.";
+  if (err && err.kind === "infrastructure") {
+    return "The shopping service lost access to its browser or agent runtime. This attempt could not finish. Check Purchases before trying again; no new order will be started automatically.";
+  }
+  if (err && (err.kind === "timeout" || err.kind === "agent-timeout")) {
+    return "The shopper reached its time limit before finishing. Check Purchases or the merchant confirmation before retrying an order. No new order will be started automatically.";
   }
   if (err && err.kind === "no-reply") {
     const why = err.detail ? ` (reason: ${err.detail})` : "";
-    return `The shopper's run was cut off before it produced a reply${why}. Your conversation history is kept — send the request again and it will pick up where it left off.`;
+    return `The shopper's run was cut off before it produced a reply${why}. Your conversation history is kept. Check Purchases before retrying an order; no new order will be started automatically.`;
   }
   return `The shopper could not complete the request: ${(err && err.message) || "unknown error"}`;
+}
+
+/* ---------- opt-in legacy late delivery (disabled in production by default) ----------
+ * The gateway-side run survives any bridge-side kill, so a turn that hit the
+ * budget often FINISHES in the session minutes later — invisibly (observed
+ * 2026-09-25: the full shoe-order report landed at 08:58 after the 08:55
+ * failure frame). One same-session pickup turn fetches it; delivery is via
+ * GET /api/chat/late (polled by the UI after a failure) or flushed at the
+ * start of the session's next turn. */
+const LATE_PICKUP_DELAY_MS = parseInt(process.env.OPENCLAW_LATE_PICKUP_DELAY_MS || "45000", 10);
+const LATE_PICKUP_BUDGET_MS = parseInt(process.env.OPENCLAW_LATE_PICKUP_BUDGET_MS || "420000", 10);
+const LATE_PICKUP_PROMPT =
+  "(System: bridge task-completion pickup — your previous turn in this conversation was cut off by the bridge deadline while still working; the gateway may have finished that work after the cutoff, and the finished reply is in this conversation's history. Do NOT restart the task and do NO new research or browsing. If the finished final answer exists in the conversation, output exactly that final answer, unchanged, with no preamble. If the work never finished and you have nothing new to report, output exactly NOTHING_NEW and nothing else.)";
+const pendingLateDeliveries = new Map(); // sessionKey -> { text, ts }
+const latePickupArmed = new Set(); // sessionKeys with a pickup pending/in flight
+
+/** Arm one pickup turn for this session. Postpones while a customer turn is
+ *  running (two CLI runs on one agent session would interleave); gives up
+ *  after ~10 minutes of postponement. */
+function scheduleLatePickup(sessionKey, attempts = 0) {
+  if (process.env.OPENCLAW_LATE_PICKUP_ENABLED !== "1") return;
+  if (latePickupArmed.has(sessionKey)) return;
+  latePickupArmed.add(sessionKey);
+  setTimeout(() => {
+    const busy = [...userProcs.values()].some((p) => p.sessionKey === sessionKey);
+    if (busy) {
+      latePickupArmed.delete(sessionKey);
+      if (attempts < 20) scheduleLatePickup(sessionKey, attempts + 1);
+      else console.log(`[chat] late pickup: gave up, session stayed busy (${sessionKey})`);
+      return;
+    }
+    agentTurn(LATE_PICKUP_PROMPT, sessionKey, LATE_PICKUP_BUDGET_MS)
+      .then(({ reply }) => {
+        const text = String(reply || "").trim();
+        if (!text || /^NOTHING_NEW\b/.test(text)) {
+          console.log(`[chat] late pickup: nothing new session=${sessionKey}`);
+          return;
+        }
+        pendingLateDeliveries.set(sessionKey, { text, ts: Date.now() });
+        console.log(`[chat] late pickup: captured ${text.length} chars session=${sessionKey}`);
+      })
+      .catch((err) => console.log(`[chat] late pickup failed session=${sessionKey}: ${err.message}`))
+      .finally(() => latePickupArmed.delete(sessionKey));
+  }, attempts === 0 ? LATE_PICKUP_DELAY_MS : 30000).unref();
 }
 
 /** Validate + sign via scripts/policy.js, then file the signed envelope as
@@ -526,7 +588,7 @@ function customerContextNote(user) {
   return `\n\n(System: customer on file — email ${cust.email}, name ${cust.name || "unknown"}, delivery address: ${cust.delivery_address}. Use exactly this identity and address for order policies, merchant checkouts and deliveries — never a different or historical default.)\n\n${shoppingControlsNote(user)}`;
 }
 
-function signPolicy(policy, res, user) {
+async function signPolicy(policy, res, user, sessionId) {
   const signT0 = Date.now(); // every exit below reports its gate duration
 
   /* Shopping controls first: spend cap + website whitelist (see shopping.js).
@@ -571,6 +633,21 @@ function signPolicy(policy, res, user) {
       missing: [],
     });
   }
+  // Evaluate the actual proposed order against THIS customer's chat and saved controls.
+  const reviewSession = loadSession(user.id, sessionId);
+  const reviewInput = walletReview.buildReview(policy,
+    { cap: shopping.getSpendCap(user.id), whitelist: shopping.getWhitelist(user.id) },
+    (reviewSession && Array.isArray(reviewSession.messages) ? reviewSession.messages : []).filter(m => m.role === "user").map(m => m.text));
+  const assessment = await walletReview.reviewPolicy(reviewInput, { token: SHOPPING_SYNC_TOKEN, port: Number(process.env.WALLET_CONTROL_PORT || 8790) });
+  recordTurnStage(user.id, { stage: "wallet_ai_review", ok: assessment.status === "ok" && !assessment.review_required,
+    detail: assessment.status === "ok" ? (assessment.review_required ? "Jev requests policy review" : "Jev reviewed your order and account controls") : `Jev ${assessment.status}; account controls still enforced`, durationMs: Date.now() - signT0 });
+  if (assessment.review_required) return sendJson(res, 422, { ok: false,
+    error: "Jev found a possible conflict between this order and your instructions. Ask the shopper to revise the policy before signing.",
+    violations: ["Order permissions need review against your original request."], missing: [], wallet_review: assessment });
+  // Recheck after the asynchronous assessment: account/family settings may have changed.
+  const latest = shopping.checkPolicyAgainstSettings(user.id, policy);
+  const latestFamily = family.checkParentalLimits(user.id, policy);
+  if (!latest.ok || !latestFamily.ok) return sendJson(res, 422, { ok: false, error: "Your spending controls changed during review.", violations: [...(latest.violations || []), ...(latestFamily.violations || [])], missing: [] });
   policy.delivery = policy.delivery && typeof policy.delivery === "object" && !Array.isArray(policy.delivery) ? policy.delivery : {};
   policy.delivery.address = cust.delivery_address;
   policy.customer = cust;
@@ -589,6 +666,11 @@ function signPolicy(policy, res, user) {
       const finalPath = path.join(POLICY_DIR, `${env.policy.policy_id}.signed.json`);
       fs.copyFileSync(tmpOut, finalPath);
       payload.signed_path = finalPath;
+      payload.wallet_review = assessment;
+      const reviewDir = path.join(DATA_DIR, "wallet-reviews");
+      fs.mkdirSync(reviewDir, { recursive: true });
+      fs.writeFileSync(path.join(reviewDir, crypto.createHash("sha256").update(env.policy.policy_id).digest("hex") + ".json"),
+        JSON.stringify({ at: new Date().toISOString(), input_sha256: walletReview.digest(reviewInput), assessment }), { mode: 0o600 });
       recordPolicyOwner(env.policy.policy_id, user);
       /* Ledger: children's signed budgets count against their monthly limits. */
       if (user.parentId) {
@@ -944,7 +1026,16 @@ async function runChatTurn(req, res, user, message, mode, sessionId) {
         if (!res.writableEnded) res.write(`data: ${JSON.stringify(obj)}\n\n`);
       } catch { /* client gone — the turn still completes server-side */ }
     };
-    send({ type: "start", agent: AGENT, session: sessionKey });
+    send({ type: "start", agent: AGENT, session: sessionKey, sessionId: sess.id });
+    // Flush a late pickup captured for a previously interrupted turn before
+    // this turn's work starts.
+    const lateNow = pendingLateDeliveries.get(sessionKey);
+    if (lateNow) {
+      pendingLateDeliveries.delete(sessionKey);
+      appendSessionMessage(user.id, sess, "agent", lateNow.text);
+      console.log(`[chat] late delivery flushed with new turn session=${sessionKey}`);
+      send({ type: "late", text: lateNow.text, ts: lateNow.ts });
+    }
     // Live process-stage events (e.g. the Viseca control policy gate) reach
     // the UI the moment they happen, not only in the final done frame.
     stageLog.onStage = (mark) => {
@@ -990,9 +1081,15 @@ async function runChatTurn(req, res, user, message, mode, sessionId) {
       })
       .catch((err) => {
         console.log(`[chat] turn FAILED  after ${((Date.now() - started) / 1000).toFixed(1)}s: ${err.message} user=${user.email}`);
+        const wasStopped = stoppedTurns.has(user.id);
         const friendly = friendlyError(err);
         appendSessionMessage(user.id, sess, "error", friendly);
         send({ type: "error", error: friendly });
+        // The gateway-side run survives the CLI-tree kill — arm one pickup to
+        // fetch the late reply unless the customer stopped this turn on purpose.
+        if (!wasStopped && (err.kind === "timeout" || err.kind === "no-reply")) {
+          scheduleLatePickup(sessionKey);
+        }
       })
       .finally(() => {
         clearInterval(poll);
@@ -1013,9 +1110,13 @@ async function runChatTurn(req, res, user, message, mode, sessionId) {
     sendJson(res, 200, { reply, agent: AGENT, session: sessionKey, usage, timings, trail: trailFromMarks(stageLog.marks), sessionId: sess.id });
   } catch (err) {
     console.log(`[chat] turn FAILED  after ${((Date.now() - started) / 1000).toFixed(1)}s: ${err.message} user=${user.email}`);
+    const wasStopped = stoppedTurns.has(user.id);
     const friendly = friendlyError(err);
     appendSessionMessage(user.id, sess, "error", friendly);
     sendJson(res, 502, { error: friendly });
+    if (!wasStopped && (err.kind === "timeout" || err.kind === "no-reply")) {
+      scheduleLatePickup(sessionKey);
+    }
   } finally {
     if (stageLog.activityToken) activityTokens.delete(stageLog.activityToken);
     turnStageLogs.delete(user.id);
@@ -1142,6 +1243,14 @@ function openApiSpec(base) {
 /* ---------- server ---------- */
 
 const server = http.createServer((req, res) => {
+  if(req.url === '/wallet') {res.writeHead(302,{Location:'/wallet/'});return res.end();}
+  if(req.url.startsWith('/wallet/')) {
+    const upstream=http.request({hostname:'127.0.0.1',port:Number(process.env.WALLET_CONTROL_PORT||8790),path:req.url,method:req.method,headers:req.headers},incoming=>{
+      res.writeHead(incoming.statusCode,incoming.headers);incoming.pipe(res);
+    });
+    upstream.on('error',()=>{if(!res.headersSent)res.writeHead(502,{'Content-Type':'application/json'});res.end(JSON.stringify({error:'Wallet control is temporarily unavailable'}));});
+    req.pipe(upstream);return;
+  }
   handle(req, res).catch((e) => {
     console.error(`[http] ${req.method} ${req.url} -> ${e.message}`);
     if (!res.headersSent) sendJson(res, 500, { error: "Internal bridge error." });
@@ -1176,7 +1285,7 @@ async function handle(req, res) {
       agent: AGENT,
       session: SESSION,
       bridge: "openclaw-cli",
-      build: "auto-whitelist-1",
+      build: "shopper-reliability-1",
       busy: activeTurns >= MAX_CONCURRENT,
       activeTurns,
       maxConcurrent: MAX_CONCURRENT,
@@ -1540,6 +1649,28 @@ async function handle(req, res) {
     return sendJson(res, 200, { ok: true });
   }
 
+  if (req.method === "GET" && pathname === "/api/chat/late") {
+    const auth = authenticate(req);
+    if (!auth) return sendJson(res, 401, { error: "Sign in or send a Bearer API key." });
+    const wanted = new URL(req.url, "http://localhost").searchParams.get("sessionId");
+    // resolveTurnSession CREATES a session when none matches — wrong for a
+    // read-only lookup. Read the requested session, else the most recent one.
+    let sess = loadSession(auth.user.id, wanted || "");
+    if (!sess) {
+      const latest = listSessions(auth.user.id)[0];
+      sess = latest ? loadSession(auth.user.id, latest.id) : null;
+    }
+    if (!sess) return sendJson(res, 200, { late: null });
+    const lateKey = userSessionKey(auth.user, sess.id);
+    const late = pendingLateDeliveries.get(lateKey) || null;
+    if (late) {
+      pendingLateDeliveries.delete(lateKey);
+      appendSessionMessage(auth.user.id, sess, "agent", late.text);
+      console.log(`[chat] late delivery served via poll session=${lateKey}`);
+    }
+    return sendJson(res, 200, { late });
+  }
+
   if (req.method === "POST" && pathname === "/api/chat/stop") {
     const auth = authenticate(req);
     if (!auth) return sendJson(res, 401, { error: "Sign in or send a Bearer API key." });
@@ -1712,7 +1843,7 @@ async function handle(req, res) {
     if (!policy || typeof policy !== "object" || Array.isArray(policy)) {
       return sendJson(res, 400, { error: "Field 'policy' must be an object." });
     }
-    return signPolicy(policy, res, auth.user);
+    return signPolicy(policy, res, auth.user, body.sessionId);
   }
 
   serveStatic(req, res);
@@ -1740,7 +1871,7 @@ server.listen(PORT, HOST, () => {
   console.log(`[viseca-shopper-ui] serving ${PUBLIC_DIR}`);
   console.log(`[viseca-shopper-ui] ${url}  →  agent '${AGENT}' (base session key: ${SESSION})`);
   console.log(`[viseca-shopper-ui] multi-user on · plans: ${Object.keys(accounts.PLANS).join("/")} · registration ${accounts.REGISTRATION_OPEN ? "open" : "closed"} · agent slots: ${MAX_CONCURRENT}`);
-  console.log(`[viseca-shopper-ui] marker: stop-v4 env-marker tree kill`);
+  console.log(`[viseca-shopper-ui] marker: shopper-reliability-1 explicit agent deadline`);
 });
 
 /* Last words: two silent deaths tonight (22:55, ~23:22) left no evidence.

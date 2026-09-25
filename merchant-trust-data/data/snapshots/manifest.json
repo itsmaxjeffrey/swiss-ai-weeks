@@ -1,0 +1,276 @@
+{
+  "format": 1,
+  "excluded_pending_redistribution_review": [
+    "abuseipdb",
+    "ieee_cis",
+    "openphish",
+    "rdap",
+    "zefix",
+    "sanctions_eu",
+    "hackaprompt",
+    "malwarebazaar"
+  ],
+  "sources": [
+    {
+      "source": "agentdojo",
+      "original_files": 2,
+      "archive_sha256": "00b009fce2559d21d07e07e3fd0395596b81e38c45ebbc467f99363e399c5ddc",
+      "parts": [
+        {
+          "file": "agentdojo.tar.gz.part000",
+          "bytes": 36442082,
+          "sha256": "00b009fce2559d21d07e07e3fd0395596b81e38c45ebbc467f99363e399c5ddc"
+        }
+      ]
+    },
+    {
+      "source": "bipia",
+      "original_files": 2,
+      "archive_sha256": "ffc22a7bb675de3c2da09afa5bd144951cfacb694539d5304cc4fa23edd6bf79",
+      "parts": [
+        {
+          "file": "bipia.tar.gz.part000",
+          "bytes": 608546,
+          "sha256": "ffc22a7bb675de3c2da09afa5bd144951cfacb694539d5304cc4fa23edd6bf79"
+        }
+      ]
+    },
+    {
+      "source": "dns",
+      "original_files": 1,
+      "archive_sha256": "8defdc1b8f936d13d6900c0f1c935cfb9c33069e001a94c6dcf1ddfb5c2264d5",
+      "parts": [
+        {
+          "file": "dns.tar.gz.part000",
+          "bytes": 9352,
+          "sha256": "8defdc1b8f936d13d6900c0f1c935cfb9c33069e001a94c6dcf1ddfb5c2264d5"
+        }
+      ]
+    },
+    {
+      "source": "domain_health",
+      "original_files": 4,
+      "archive_sha256": "ccf39bb6671f0faf0b93fb9babc05e81e8911a2208a71d9c77f730472320d71f",
+      "parts": [
+        {
+          "file": "domain_health.tar.gz.part000",
+          "bytes": 66182,
+          "sha256": "ccf39bb6671f0faf0b93fb9babc05e81e8911a2208a71d9c77f730472320d71f"
+        }
+      ]
+    },
+    {
+      "source": "feodotracker",
+      "original_files": 2,
+      "archive_sha256": "014904b62bd1febac5a9cce1316966953f313c8fa3829bded7771362f98cf425",
+      "parts": [
+        {
+          "file": "feodotracker.tar.gz.part000",
+          "bytes": 1056,
+          "sha256": "014904b62bd1febac5a9cce1316966953f313c8fa3829bded7771362f98cf425"
+        }
+      ]
+    },
+    {
+      "source": "gleif",
+      "original_files": 386,
+      "archive_sha256": "7d349adad637d394e49ce397b0611ebfcf7de77acc74fb3ab7343a8a3a1025bf",
+      "parts": [
+        {
+          "file": "gleif.tar.gz.part000",
+          "bytes": 9475211,
+          "sha256": "7d349adad637d394e49ce397b0611ebfcf7de77acc74fb3ab7343a8a3a1025bf"
+        }
+      ]
+    },
+    {
+      "source": "google_taxonomy",
+      "original_files": 2,
+      "archive_sha256": "84cdb3875fbc52d6ded039176cf6897ec0ad7da32fb57c080ef09cb1b90afeb3",
+      "parts": [
+        {
+          "file": "google_taxonomy.tar.gz.part000",
+          "bytes": 78855,
+          "sha256": "84cdb3875fbc52d6ded039176cf6897ec0ad7da32fb57c080ef09cb1b90afeb3"
+        }
+      ]
+    },
+    {
+      "source": "majestic",
+      "original_files": 2,
+      "archive_sha256": "0a4caf7e9b49b906b3b6b0913b887e1f67bf763720b943ce42fe4b4ac1c95a53",
+      "parts": [
+        {
+          "file": "majestic.tar.gz.part000",
+          "bytes": 29524160,
+          "sha256": "0a4caf7e9b49b906b3b6b0913b887e1f67bf763720b943ce42fe4b4ac1c95a53"
+        }
+      ]
+    },
+    {
+      "source": "sanctions_ofac",
+      "original_files": 2,
+      "archive_sha256": "35e313d942e62a2ded10feed1e2a030d323ac6cc379e8fc04ebe2703e49d29f7",
+      "parts": [
+        {
+          "file": "sanctions_ofac.tar.gz.part000",
+          "bytes": 1056031,
+          "sha256": "35e313d942e62a2ded10feed1e2a030d323ac6cc379e8fc04ebe2703e49d29f7"
+        }
+      ]
+    },
+    {
+      "source": "sanctions_seco",
+      "original_files": 2,
+      "archive_sha256": "26f52934a20fe372e67603f82f3f130ab3c88cc2722637f23adfb7116883d00f",
+      "parts": [
+        {
+          "file": "sanctions_seco.tar.gz.part000",
+          "bytes": 3802862,
+          "sha256": "26f52934a20fe372e67603f82f3f130ab3c88cc2722637f23adfb7116883d00f"
+        }
+      ]
+    },
+    {
+      "source": "sanctions_un",
+      "original_files": 2,
+      "archive_sha256": "a133a7a770abe8e27200d534e1f666905cd451f9166ba52186662c96471703d8",
+      "parts": [
+        {
+          "file": "sanctions_un.tar.gz.part000",
+          "bytes": 258337,
+          "sha256": "a133a7a770abe8e27200d534e1f666905cd451f9166ba52186662c96471703d8"
+        }
+      ]
+    },
+    {
+      "source": "tabformer",
+      "original_files": 2,
+      "archive_sha256": "9b45754dc6e3181605cd1fbd85641c4e9e489ed60b0dd105a14d57b612a7e3ed",
+      "parts": [
+        {
+          "file": "tabformer.tar.gz.part000",
+          "bytes": 41943040,
+          "sha256": "7ab078bccded4503386b7358d106d7f1097ebe085f24967f15830bb60099aea7"
+        },
+        {
+          "file": "tabformer.tar.gz.part001",
+          "bytes": 41943040,
+          "sha256": "3f8c8b4e68209d0098deecb2af7661020b50226694908200ebc0a2ed6aad6da8"
+        },
+        {
+          "file": "tabformer.tar.gz.part002",
+          "bytes": 41943040,
+          "sha256": "e153e9f585528b41d6b1832b6c157bb9dd33e8efcf1a46fbf107d40e95e104f7"
+        },
+        {
+          "file": "tabformer.tar.gz.part003",
+          "bytes": 41943040,
+          "sha256": "abce72fad26bca2ef8a86cb9ef305e779a64c13c6fa4c31daa409b268231b654"
+        },
+        {
+          "file": "tabformer.tar.gz.part004",
+          "bytes": 41943040,
+          "sha256": "f87fc9e78684779582c022b5fe103fb4998558dbab5d605b6cb9411231ee7eba"
+        },
+        {
+          "file": "tabformer.tar.gz.part005",
+          "bytes": 41943040,
+          "sha256": "ca39b2bf794303d3a22b377cb002b5436e22ec4d62777e40db31c3030796f972"
+        },
+        {
+          "file": "tabformer.tar.gz.part006",
+          "bytes": 26989055,
+          "sha256": "7638febf2371f00e9e444fe9226a405b4d77be91044bf5a20e91117185d99c60"
+        }
+      ]
+    },
+    {
+      "source": "tensortrust",
+      "original_files": 10,
+      "archive_sha256": "eb13a6146b34ac460315a5f64e509c81f6fa621cd128db6ea6d57e9ef2c59485",
+      "parts": [
+        {
+          "file": "tensortrust.tar.gz.part000",
+          "bytes": 41943040,
+          "sha256": "d175a0fbb6dbe8ed51d5d0b3ae6a4dacaa1fadf73b38d779c2cc0013c9e9dd29"
+        },
+        {
+          "file": "tensortrust.tar.gz.part001",
+          "bytes": 41943040,
+          "sha256": "cb59e1255c15a4f44624552e990a242779fe91bbb67923fa7446528a5525cdd8"
+        },
+        {
+          "file": "tensortrust.tar.gz.part002",
+          "bytes": 23181294,
+          "sha256": "9c136b67e52ecd6a76488d128d568d2915caa92b591c2047d2cee4758cc3c279"
+        }
+      ]
+    },
+    {
+      "source": "threatfox",
+      "original_files": 2,
+      "archive_sha256": "d126246dab7514c9aaeb9e02b7d64e108ea047246cfdc3fe096a85caa9562645",
+      "parts": [
+        {
+          "file": "threatfox.tar.gz.part000",
+          "bytes": 273186,
+          "sha256": "d126246dab7514c9aaeb9e02b7d64e108ea047246cfdc3fe096a85caa9562645"
+        }
+      ]
+    },
+    {
+      "source": "tranco",
+      "original_files": 2,
+      "archive_sha256": "560a45f1f8b6b7647c2d15f2dee6e3684f319d9dacb022bf759940414995bcf6",
+      "parts": [
+        {
+          "file": "tranco.tar.gz.part000",
+          "bytes": 9724537,
+          "sha256": "560a45f1f8b6b7647c2d15f2dee6e3684f319d9dacb022bf759940414995bcf6"
+        }
+      ]
+    },
+    {
+      "source": "ulb_creditcard",
+      "original_files": 2,
+      "archive_sha256": "c95e4ce06c7accace9dadb538c3d3017573db8e2084af07900d05d24600b9723",
+      "parts": [
+        {
+          "file": "ulb_creditcard.tar.gz.part000",
+          "bytes": 41943040,
+          "sha256": "3205632cde02f42dc9dda88e17fc3a90c4aced4ffcebe705a736fda8d118f73c"
+        },
+        {
+          "file": "ulb_creditcard.tar.gz.part001",
+          "bytes": 28443580,
+          "sha256": "1e3bbd533a50306aa06158e5c2d2d325a82e9002768f7f4d2c90b73a9fe1bd16"
+        }
+      ]
+    },
+    {
+      "source": "urlhaus",
+      "original_files": 2,
+      "archive_sha256": "c0c75ac3ab87a50051b378ab0522287f4541c214ae69ac9cd2263cffe733459d",
+      "parts": [
+        {
+          "file": "urlhaus.tar.gz.part000",
+          "bytes": 443751,
+          "sha256": "c0c75ac3ab87a50051b378ab0522287f4541c214ae69ac9cd2263cffe733459d"
+        }
+      ]
+    },
+    {
+      "source": "viseca",
+      "original_files": 2,
+      "archive_sha256": "ad1789dd82da2dae4a9bad9e93b22b95017c8f376230b0a80e3ca3bbdd37298e",
+      "parts": [
+        {
+          "file": "viseca.tar.gz.part000",
+          "bytes": 252474,
+          "sha256": "ad1789dd82da2dae4a9bad9e93b22b95017c8f376230b0a80e3ca3bbdd37298e"
+        }
+      ]
+    }
+  ]
+}

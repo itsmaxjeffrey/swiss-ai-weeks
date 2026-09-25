@@ -1,0 +1,59 @@
+{
+ "query": "Bakery and cakes online shop Switzerland",
+ "kl": "ch-en",
+ "category": "bakery-cake",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:22:04.799Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.confiserie.ch/en/",
+   "title": "Online shop for pralines, cakes, gifts and aperitifs - Confiserie"
+  },
+  {
+   "rank": 1,
+   "url": "https://cakelicious.ch/de/",
+   "title": "Backzubehör Schweiz online kaufen | Cakelicious"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.confiserie.ch/",
+   "title": "Online Shop für Pralinen, Torten, Geschenke und Aperos | Confiserie ..."
+  },
+  {
+   "rank": 3,
+   "url": "https://www.arisbakehouse.com/en/collections/produktsortiment",
+   "title": "Cookies, Cakes & Sweets in Switzerland | ARI&#x27;S Bakehouse"
+  },
+  {
+   "rank": 4,
+   "url": "https://swissgastrobakery.com/",
+   "title": "Shop - SwissGastroBakery"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.confiserie-bachmann.ch/shop.html",
+   "title": "shop | Confiserie Bachmann"
+  },
+  {
+   "rank": 6,
+   "url": "https://cakelicious.ch/en/",
+   "title": "Baking Supplies Online Switzerland | Cakelicious"
+  },
+  {
+   "rank": 7,
+   "url": "https://christiesbakery.ch/",
+   "title": "Home - Christie&#x27;s bakery"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.rosencakes.com/sub-category/international/cake-delivery-in-switzerland",
+   "title": "Cake Delivery in Switzerland - Rose n Cakes"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.bakeacake.ch/",
+   "title": "bake-a-cake - bake-a-cake / alles rund ums Backen"
+  }
+ ]
+}

@@ -1,5 +1,7 @@
 # LEASH — Wallet Control
 
+Current corrections and limitations: [priority fixes](docs/priority-fixes-2026-09-25.md). Optional [TypeSafe Jev integration](docs/jev.md) adds typed advisory assessments; confirmed rules remain authoritative.
+
 **Agent on a Leash** (Swiss AI Weeks × Viseca): a customer-managed wallet control layer that decides whether an AI shopping agent may spend a customer's money — `approve`, `decline`, or `step_up` (ask the customer) — with plain-language explanations for every decision.
 
 ```
@@ -14,7 +16,7 @@ Agent ──proposed purchase──▶ [2] Decision engine ──approve/decline
 
 ## Design principles
 
-1. **No model decides.** The core is deterministic rules over extracted facts: identical input → identical output, sub-millisecond evaluation (budget is 8 s), and nothing for a prompt injection to hijack. Merchant text is *data*, never instructions. The only statistical components are two advisory detectors (the prompt-injection text scorer and the user-behavior deviation model), which can NEVER approve, decline, or loosen anything — they add evidence and can only route a strong signal to the human, same as the regex scan.
+1. **Confirmed spending rules remain authoritative.** The core evaluates deterministic rules over purchase facts. The local injection and behavior detectors and optional TypeSafe Jev assessments add evidence and can require customer review; they cannot loosen permissions or override a hard-rule failure. Untrusted merchant text never becomes policy.
 2. **The customer confirms before anything is active.** The compiler proposes permissions in plain language; activation, tightening, and revocation are explicit customer actions.
 3. **Tightening only.** Mandate updates can add rules or switch uncertainty to `decline` — never loosen (platform PATCH rules; engine ANDs all rules).
 4. **Missing evidence is uncertainty, never permission.** Unknown facts, unknown rule fields, and unstated seller terms route to the customer's uncertainty policy (default: ask).
@@ -35,7 +37,7 @@ Agent ──proposed purchase──▶ [2] Decision engine ──approve/decline
 | `sim/local-api.js` | Offline implementation of the challenge API (mandates, runs, long-poll, decision, resolve, reset) backed by the data pack — full end-to-end demo with **no team key**. |
 | `web/` | Customer UI (Swiss editorial): policy review & confirm, tighten/revoke, live decision feed with evidence, step-up inbox with 120 s countdown. |
 | `cli.js` | Offline replay: `node cli.js [SCENxxxx] [--resolve=approve|decline|auto]` prints the full decision table. |
-| `test/` | 95 invariant/parity tests (engine+compiler 25, injection battery 29, injection model 5, behavior model 11, Trusted Shops checker+engine-integration 25). Run: `npm test`. |
+| `test/` | 265 checks across engine/compiler, advisory models, retry/restart/quantity regressions, Jev contract/fallback behavior, isolated customer HTTP flows, and category discovery. Run: `npm test`. |
 
 ## Decision pipeline (per purchase)
 
@@ -101,6 +103,34 @@ Measured: 5 merchants across all 12 country sites in ~5 s cold (77 requests), **
 ## The LEASH merchant-trust dataset
 
 `data/leash_trust.json` is a compact export of our separate `merchant-trust-data` pipeline (5,484 confirmed-malicious domains from OpenPhish/URLhaus + 5,922 GLEIF-registered Swiss companies). The engine checks merchant names/domains against it for known-bad infrastructure and registry corroboration; absence of the file degrades gracefully to history-based signals only. Licensing: attribution feeds only, documented in that project.
+
+## Category discovery pipeline (weekly)
+
+`scripts/refresh-category-sites.mjs` searches the web for the top shops in 84
+product categories (2 queries each: DE + EN) and writes a deterministic,
+reproducible ranking for viseca-shopper:
+
+- `data/category-sites/category-sites.json` — the artifact: top 20 domains per
+category, position-weighted score (Σ 1/(1+rank), curated seed +1.0 once,
+alphabetical tie-break). Rebuilding from the same raw run is byte-identical.
+- `data/category-sites/manifest.json` — sha256 of the artifact and every raw
+evidence file, per-query ok/failed, run report. Raw runs are archived under
+`data/category-sites/raw/<date>/` (5 kept). Failed queries are never written as
+stubs, so a rerun resumes exactly where it stopped.
+- Served at `GET /api/shopping/categories` (503 until first build); best-effort
+mirror to `../viseca-shopper-ui/data/category-sites.json`.
+
+Ops: `--dry-run` · `--list-categories` · `--build --date D` (offline rebuild) ·
+`--only id1,id2 --limit-queries N` (smoke; writes `*.partial.json`, never
+touches the live artifact) · `--emit-pending` + `--ingest-staged DIR` (gap-fill
+when DuckDuckGo throttles: stage search results as `<category>__q<qi>.json`
+with provider `openclaw-web-search`). Exit code 2 = query success rate < 60 %,
+live artifact left untouched. DDG serves HTTP 202 challenge pages when
+throttled — the script paces ~5 s/query, backs off on a cooldown ladder, and
+retries missing queries in a second pass.
+
+Weekly run: automation `shopper-category-sites-weekly` (Sat 05:10 Europe/Zurich,
+after the 04:30 merchant-evidence job).
 
 ## Latency & failure behaviour
 

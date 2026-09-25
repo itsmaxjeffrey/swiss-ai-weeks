@@ -7,10 +7,12 @@ let currentDraft = null;
 let seenFeedIds = new Set();
 
 async function api(path, method = 'GET', body) {
-  const res = await fetch(path, {
+  const raw = body ? JSON.stringify(body) : '';
+  const signed = window.walletHeaders ? await window.walletHeaders(path, method, raw) : {};
+  const res = await fetch((location.pathname.startsWith('/wallet/') ? '/wallet' : '') + path, {
     method,
-    headers: body ? { 'Content-Type': 'application/json' } : {},
-    body: body ? JSON.stringify(body) : undefined,
+    headers: { ...signed, ...(body ? { 'Content-Type': 'application/json' } : {}) },
+    body: raw || undefined,
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || res.statusText);
@@ -71,6 +73,7 @@ async function compile() {
   const instruction = $('instruction').value.trim();
   if (!instruction) return alert('Write an instruction first.');
   currentDraft = await api('/api/policy/compile', 'POST', { instruction });
+  window.dispatchEvent(new CustomEvent('wallet:draft', { detail: currentDraft }));
   const u = $('understood');
   u.innerHTML = currentDraft.understood.map(p =>
     `<div class="permission"><span class="p-label">${esc(p.label)}</span><span class="p-plain">${esc(p.plain)}</span></div>`
@@ -93,6 +96,7 @@ async function confirmMandate() {
     uncertainty_policy: currentDraft.uncertainty_policy,
     guidance: currentDraft.guidance,
     open_questions: currentDraft.open_questions,
+    draft_proof: currentDraft.draft_proof,
   });
   await api(`/api/mandates/${created.draft_id}/confirm`, 'POST', { confirmed: true });
   $('draft').classList.add('hidden');
@@ -347,6 +351,7 @@ let state = null;
 async function refresh() {
   try {
     state = await api('/api/state');
+    window.dispatchEvent(new CustomEvent('wallet:state', { detail: state }));
     setChips(state);
     renderSusToggle(state);
     renderScenarios(state);
@@ -427,7 +432,8 @@ async function compareOffers() {
       item: $('offers-item').value.trim(),
       merchants: raw.split(/[,,;\n]/).map(s => s.trim()).filter(Boolean),
     });
-    $('offers-status').textContent = `${out.count} shop${out.count === 1 ? '' : 's'} compared${out.item ? ` — ${out.item}` : ''}`;
+    const total = out.total_candidates ?? out.count;
+    $('offers-status').textContent = `${out.count} shop${out.count === 1 ? '' : 's'} compared — top ${out.count} of ${total} by our score${out.item ? ` — ${out.item}` : ''}`;
     $('offers-result').innerHTML = renderOffers(out);
   } catch (e) { $('offers-status').textContent = `error: ${e.message}`; }
   finally { $('btn-compare-offers').disabled = false; }
@@ -445,3 +451,12 @@ $('btn-auto-decline').onclick = autoDecline;
 $('btn-revoke').onclick = revoke;
 $('btn-run').onclick = startRun;
 $('btn-reset').onclick = async () => { if (confirm('Reset session (mandates, runs, feed)?')) { await api('/api/reset', 'POST'); location.reload(); } };
+
+// Keep action failures visible instead of dropping rejected promises.
+for (const button of document.querySelectorAll('button')) {
+  const action = button.onclick;
+  if (action) button.onclick = async function(event) {
+    try { await action.call(this, event); }
+    catch (error) { alert(error.message || 'The action could not be completed.'); }
+  };
+}

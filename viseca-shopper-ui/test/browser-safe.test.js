@@ -1,0 +1,9 @@
+const {test}=require('node:test');const assert=require('node:assert/strict');const {spawn}=require('node:child_process');const fs=require('node:fs');const os=require('node:os');const path=require('node:path');
+const wrapper=process.env.BROWSER_SAFE_SCRIPT || '/home/coffee/.openclaw/workspace/viseca-shopper/scripts/browser-safe.js';
+function run(script,args,env){return new Promise(resolve=>{const p=spawn(process.execPath,[script,...args],{env:{...process.env,...env},stdio:['ignore','pipe','pipe']});let out='',err='';p.stdout.on('data',x=>out+=x);p.stderr.on('data',x=>err+=x);p.on('close',code=>resolve({code,out,err}));});}
+test('browser wrapper bounds hangs, stops plugin errors and preserves successful replies',{timeout:10000},async()=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'browser-safe-test-'));const stub=path.join(dir,'cli');
+ fs.writeFileSync(stub,`#!/usr/bin/env node
+const mode=process.argv[3];if(mode==='hang'){setInterval(()=>{},1000);}else if(mode==='broken'){console.log(JSON.stringify({ok:false,error:{message:'PluginInstanceUnavailableError'}}));}else{console.log(JSON.stringify({ok:true,marker:'successful-read',args:process.argv.slice(2)}));}`,{mode:0o700});
+ try{const env={OPENCLAW_BIN:stub,SHOPPER_BROWSER_TIMEOUT_MS:'1000'};const t=Date.now();const hung=await run(wrapper,['hang'],env);assert.equal(hung.code,2);assert.ok(Date.now()-t<3000);assert.match(hung.err,/BROWSER_UNAVAILABLE/);const broken=await run(wrapper,['broken'],env);assert.equal(broken.code,2);assert.match(broken.err,/Stop this shopping attempt/);const ok=await run(wrapper,['status'],env);assert.equal(ok.code,0);assert.equal(JSON.parse(ok.out).marker,'successful-read');const snap=await run(wrapper,['snapshot','t1'],env);assert.deepEqual(JSON.parse(snap.out).args,['browser','snapshot','--target-id','t1']);const stop=await run(wrapper,['stop'],env);assert.equal(stop.code,2);}finally{fs.rmSync(dir,{recursive:true,force:true});}
+});

@@ -1,0 +1,59 @@
+{
+ "query": "Pet supplies online shop Switzerland",
+ "kl": "ch-en",
+ "category": "pet-supplies",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:37:13.647Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.happypaws.ch/",
+   "title": "Switzerland online pet shop for quality pet products. — Happy Paws"
+  },
+  {
+   "rank": 1,
+   "url": "https://pet-swiss.com/de",
+   "title": "PetSwiss - Tierbedarf Schweiz | Hundefutter, Katzenfutter & Zubehör"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.zooplus.ch/",
+   "title": "Tierbedarf, Tierfutter, Tiernahrung günstig kaufen bei zooplus.ch"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.fressnapf.ch/de/",
+   "title": "Tierbedarf und Tiernahrung im Online-Shop | FRESSNAPF"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.petshopping.ch/en-ch",
+   "title": "Online Pet Shop Switzerland | Petshopping"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.galaxus.ch/en/s15/sector/pet-supplies-15",
+   "title": "Buy Pet supplies products online - Galaxus"
+  },
+  {
+   "rank": 6,
+   "url": "https://www.petfriends.ch/",
+   "title": "Tierbedarf & Tierfutter online kaufen | petfriends.ch"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.petcenter.ch/",
+   "title": "Tierbedarf » Tierfutter » Tiernahrung günstig kaufen petcenter.ch"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.peranimal.swiss/",
+   "title": "Tierbedarf Schweiz für Hund, Katze & Pferd | PerAnimal"
+  },
+  {
+   "rank": 9,
+   "url": "https://netpet.ch/de/eshop/",
+   "title": "Shop | Swiss Pet Supplies"
+  }
+ ]
+}

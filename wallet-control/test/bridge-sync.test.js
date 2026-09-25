@@ -103,7 +103,7 @@ await test('resolveStepUp with whitelist mirrors the trusted domain to the bridg
   const f = stubFetch(() => jsonResponse(201, { ok: true, added: 'example.com', already: false }));
   const w = new Worker({ client, store, profiles: {}, trust: null, bridgeSync: { url: 'http://127.0.0.1:8794', token: 't', user: 'u@x.ch', fetchImpl: f } });
 
-  const out = await w.resolveStepUp('run_1', 'AU_1', 'approve', 'ok', { whitelist: true });
+  const out = await w.resolveChecked('run_1', 'AU_1', 'approve', 'ok', { whitelist: true });
 
   assert.deepEqual(resolved, [{ id: 'AU_1', body: { decision: 'approve', customer_message: 'ok' } }]);
   assert.deepEqual(added, [{ d: 'https://www.example.com/checkout', note: 'customer approved during purchase review' }]);
@@ -125,7 +125,7 @@ await test('bridge sync failure never fails the approval (best-effort)', async (
   const f = stubFetch(() => { throw new Error('ECONNREFUSED'); });
   const w = new Worker({ client, store, profiles: {}, trust: null, bridgeSync: { url: 'http://127.0.0.1:8794', token: 't', user: 'u@x.ch', fetchImpl: f } });
 
-  const out = await w.resolveStepUp('run_1', 'AU_1', 'approve', null, { whitelist: true });
+  const out = await w.resolveChecked('run_1', 'AU_1', 'approve', null, { whitelist: true });
 
   assert.equal(out.ok, true, 'approval still ok');
   assert.equal(out.bridge_sync.ok, false);
@@ -139,7 +139,7 @@ await test('unconfigured sync still records the trust feed entry with skip outco
     addTrustedDomain: (d) => d,
   };
   const w = new Worker({ client: { resolve: async () => {} }, store, profiles: {}, trust: null, bridgeSync: null });
-  const out = await w.resolveStepUp('run_1', 'AU_1', 'approve', null, { whitelist: true });
+  const out = await w.resolveChecked('run_1', 'AU_1', 'approve', null, { whitelist: true });
   assert.equal(out.ok, true);
   assert.ok(out.bridge_sync.skipped);
   const trust = w.feed.find((e) => e.kind === 'trust');
@@ -153,7 +153,7 @@ await test('decline never touches the bridge', async () => {
     addTrustedDomain: () => { throw new Error('must not be called'); },
   };
   const w = new Worker({ client: { resolve: async () => {} }, store, profiles: {}, trust: null, bridgeSync: { url: 'http://x', token: 't', user: 'u', fetchImpl: f } });
-  const out = await w.resolveStepUp('run_1', 'AU_1', 'decline', null, { whitelist: true });
+  const out = await w.resolveChecked('run_1', 'AU_1', 'decline', null, { whitelist: true });
   assert.equal(out.ok, true);
   assert.equal(out.whitelist_added, null);
   assert.equal(out.bridge_sync, null);

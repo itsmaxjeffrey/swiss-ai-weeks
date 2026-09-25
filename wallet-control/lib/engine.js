@@ -22,6 +22,7 @@ import {
 import { requestedItemSpec } from './policy-compiler.js';
 import { scanInjectionModel, getInjectionModel } from './injection-model.js';
 import { scoreBehavior, getBehaviorModel } from './behavior-model.js';
+import { jevNeedsReview } from './jev.js';
 import { qtyCap, statCap } from './item-classes.js';
 import { describeResult, normalizeDomain } from './trustedshops.js';
 
@@ -251,6 +252,35 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
         if (!ok) addFail('PERIOD_LIMIT_EXCEEDED', `this purchase would take your rolling ${days}-day total to ${fmtChf(total)} — over the ${fmtChf(rule.value)} cap (${fmtChf(counted)} already approved)`);
         ev(`Rolling ${days}d spend`, `${fmtChf(counted)} approved + ${fmtChf(F.billing)} = ${fmtChf(total)} / ${fmtChf(rule.value)}`);
       }
+    } else if (f === 'policy.requires_review' && String(rule.value) === 'true') {
+      res = check(rule, 'uncertain', 'some customer instructions require review');
+      addUnc('POLICY_UNRESOLVED', 'Your instruction contains unresolved requirements. Review the original instruction before approving this purchase.');
+    } else if (f === 'booking.nightly_amount_chf') {
+      const prices = [];
+      let complete = F.lines.length > 0;
+      for (const line of F.lines) {
+        const matches = [...String(line.raw.item_details || '').matchAll(/\b(CHF|EUR|GBP|USD)\s*(\d+(?:\.\d{1,2})?)\s*(?:per night|\/night)\b/gi)];
+        if (!matches.length) complete = false;
+        for (const m of matches) prices.push(toChf(Number(m[2]), m[1].toUpperCase()));
+      }
+      if (prices.some(price => !cmp(price, op, rule.value))) {
+        res = check(rule, 'fail', 'a stated nightly rate exceeds the cap');
+        addFail('LIMIT_EXCEEDED', `a nightly rate exceeds your ${fmtChf(rule.value)} per-night limit`);
+      } else if (!complete) {
+        res = check(rule, 'uncertain', 'nightly rates are not explicitly stated for every booking line');
+        addUnc('NIGHTLY_PRICE_UNKNOWN', 'Cannot verify every nightly rate; the total price is not a per-night price.');
+      } else res = check(rule, 'pass', `all stated nightly rates are within ${fmtChf(rule.value)}`);
+    } else if (f === 'basket.total_quantity') {
+      const quantities = F.lines.map(l => l.raw.quantity);
+      if (!quantities.length || quantities.some(q => !Number.isInteger(q) || q < 1)) {
+        res = check(rule, 'uncertain', 'item quantities are missing or invalid');
+        addUnc('QUANTITY_UNKNOWN', 'Cannot verify the number of units in this basket.');
+      } else {
+        const total = quantities.reduce((a, b) => a + b, 0);
+        const ok = cmp(total, op, rule.value);
+        res = check(rule, ok ? 'pass' : 'fail', `${total} units vs limit ${rule.value}`);
+        if (!ok) addFail('QUANTITY_EXCEEDED', `basket contains ${total} units; your permission covers ${rule.value}`);
+      }
     } else if (f === 'basket.line_count') {
       const n = F.lines.length;
       const ok = cmp(n, op, rule.value);
@@ -286,9 +316,10 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
       const basis = trusted && !hist.familiar && !inRun
         ? `on your trusted merchant list since ${new Date(trustedMeta.addedAt).toISOString().slice(0, 10)}`
         : `${hist.approvedCount || 'run'} approved purchase(s) on record`;
-      res = check(rule, familiar ? 'pass' : 'fail', familiar ? `${a.merchant?.merchant_name}: ${basis}` : `${a.merchant?.merchant_name}: no purchases on record for you`);
-      ev('Merchant familiarity', familiar ? `${a.merchant?.merchant_name} — ${basis}` : `${a.merchant?.merchant_name} — never bought here before`);
-      if (!familiar) addFail('MERCHANT_UNFAMILIAR', `${a.merchant?.merchant_name} (${a.merchant?.merchant_city ?? a.merchant?.merchant_country ?? 'unknown'}) is not a shop you have bought from before`);
+      res = check(rule, familiar ? 'pass' : hist.available === false ? 'uncertain' : 'fail', familiar ? `${a.merchant?.merchant_name}: ${basis}` : `${a.merchant?.merchant_name}: no purchases on record for you`);
+      ev('Merchant familiarity', familiar ? `${a.merchant?.merchant_name} — ${basis}` : `${a.merchant?.merchant_name} — familiarity not established from available records`);
+      if (!familiar && hist.available === false) addUnc('MERCHANT_HISTORY_UNAVAILABLE', 'No purchase history is available for this customer; merchant familiarity needs confirmation.');
+      else if (!familiar) addFail('MERCHANT_UNFAMILIAR', `${a.merchant?.merchant_name} (${a.merchant?.merchant_city ?? a.merchant?.merchant_country ?? 'unknown'}) is not a shop you have bought from before`);
     } else if (f === 'basket.return_window_days_min') {
       const need = rule.value;
       const structured = a.order_returnable;
@@ -369,11 +400,17 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
 
   // -- 6. Session-integrity & behavioural signals ---------------------------------
   const dev = profiles.deviceKnown(customerId, a.customer_device_id);
-  cv(); // device-history lookup returned a definitive answer
-  ev('Device', dev.known ? `${a.customer_device_id} — known from your history` : `${a.customer_device_id} — never seen in your history`);
-  if (!dev.known) {
-    const d = { code: 'DEVICE_NOVELTY', detail: `purchase initiated from device ${a.customer_device_id}, which appears nowhere in your history` };
-    integrityMonitoring ? flags.integrity.push(d) : addUnc(d.code, d.detail);
+  if (dev.available === false) {
+    co();
+    ev('Device', 'Customer device history unavailable; novelty cannot be established.');
+    if (integrityMonitoring) addUnc('DEVICE_HISTORY_UNAVAILABLE', 'Device history is unavailable; confirm session integrity.');
+  } else {
+    cv();
+    ev('Device', dev.known ? `${a.customer_device_id} — known from your history` : `${a.customer_device_id} — not present in available device history`);
+    if (!dev.known) {
+      const d = { code: 'DEVICE_NOVELTY', detail: `device ${a.customer_device_id} is absent from the available history` };
+      integrityMonitoring ? flags.integrity.push(d) : addUnc(d.code, d.detail);
+    }
   }
   const vel = a.recent_attempt_count_10m ?? 0;
   if (a.recent_attempt_count_10m != null) cv(); else co(); // velocity counter present?
@@ -549,7 +586,7 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
     ev('Merchant trust status', `${merchantDomain} — on your trusted list since ${new Date(trustedMeta.addedAt).toISOString().slice(0, 10)}`);
     flags.positive.push({ code: 'MERCHANT_TRUSTED', detail: `${merchantDomain} is on your trusted merchant list (added ${new Date(trustedMeta.addedAt).toISOString().slice(0, 10)})` });
   } else if (merchantDomain && !histFam.familiar && !blacklistedMerchant) {
-    addUnc('MERCHANT_UNREVIEWED', `the shop's domain ${merchantDomain} is on neither your trusted list nor any known-bad list, and you have never bought there — a merchant dossier is prepared for your review`);
+    addUnc('MERCHANT_UNREVIEWED', `the shop's domain ${merchantDomain} is on neither your trusted list nor any known-bad list, and prior purchases there have not been established — a merchant dossier is prepared for your review`);
     ev('Merchant trust status', `${merchantDomain} — unreviewed (yellow)`);
   }
 
@@ -566,6 +603,16 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
   }
   cv(); // description-vs-basket consistency scan completed
 
+  // Jev adds typed semantic evidence; it never clears a failed rule or grants permission.
+  if (extras.jev) {
+    if (extras.jev.status === 'ok') {
+      for (const [name, answer] of Object.entries(extras.jev.answers || {})) {
+        ev(`Jev ${name}`, `${answer.choice}; confidence ${Math.round(answer.confidence * 100)}%; model ${extras.jev.model}`);
+        if (jevNeedsReview(answer)) addUnc('JEV_REVIEW', `Jev flagged ${name} for customer review; this is advisory model evidence.`);
+      }
+    } else ev('Jev', `${extras.jev.status}; deterministic rules remain active`);
+  }
+
   // -- 10. Aggregate -------------------------------------------------------------------
   fails.sort((x, y) => codeRank(x.code) - codeRank(y.code));
   const policy = mandate.uncertainty_policy || 'ask';
@@ -574,7 +621,7 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
   const integrityBreach = integrityMonitoring && flags.integrity.length > 0;
 
   if (fails.length) decision = 'decline';
-  else if (manipulationPresent || integrityBreach || flags.behavior.length) decision = policy === 'decline' ? 'decline' : 'step_up';
+  else if (manipulationPresent || integrityBreach || flags.behavior.length || uncert.some(u => u.code === 'POLICY_UNRESOLVED' || u.code === 'JEV_REVIEW')) decision = policy === 'decline' ? 'decline' : 'step_up';
   else if (uncert.length) decision = policy === 'ask' ? 'step_up' : policy;
   else decision = 'approve';
 
@@ -635,6 +682,7 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
     confidence,
     evidence,
     uncertainties: uncert.map(u => ({ code: u.code, detail: u.detail })),
+    hard_failures: fails,
     rule_results: ruleResults,
     flags,
     signature,

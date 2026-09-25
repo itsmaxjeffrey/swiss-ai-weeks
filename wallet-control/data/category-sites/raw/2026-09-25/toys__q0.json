@@ -1,0 +1,59 @@
+{
+ "query": "Spielzeug online shop Schweiz",
+ "kl": "ch-de",
+ "category": "toys",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:34:35.510Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.meinspielzeug.ch/",
+   "title": "Spielzeug Shop - über 60&#x27;000 Spielwaren günstig online kaufen."
+  },
+  {
+   "rank": 1,
+   "url": "https://kidz.ch/",
+   "title": "Schweizer Spielzeug Shop - Spielwaren günstig kaufen! - Kidz.ch"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.smythstoys.com/ch/de-ch",
+   "title": "Spielzeug & Spielwaren | Smyths Toys Superstores Schweiz"
+  },
+  {
+   "rank": 3,
+   "url": "https://spielzeug24.ch/",
+   "title": "Spielwaren online kaufen bei Spielzeug24"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.mueller.ch/c/spielwaren/",
+   "title": "Spielzeug & Spielwaren einfach online bestellen | MÜLLER"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.smythstoys.com/ch/de-ch/spielzeug",
+   "title": "Kinderspielzeug & Kinderspiele | Smyths Toys Schweiz"
+  },
+  {
+   "rank": 6,
+   "url": "https://www.spielwarenzauber.ch/",
+   "title": "Ihr Schweizer Online Shop mit Spielwaren und Spielzeug online"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.vertbaudet.ch/De/spielzeug.htm",
+   "title": "Spielzeug - Spielzeuge & Puppen für Babys und Kinder Online finden ..."
+  },
+  {
+   "rank": 8,
+   "url": "https://www.spielwiese24.ch/",
+   "title": "Spielzeug, das Kinder lieben - Spielzeug mit Freude-Garantie ..."
+  },
+  {
+   "rank": 9,
+   "url": "https://www.galaxus.ch/de/s5/sector/spielzeug-5",
+   "title": "Spielzeug Produkte online kaufen - Galaxus"
+  }
+ ]
+}

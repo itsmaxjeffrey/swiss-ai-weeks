@@ -1,5 +1,6 @@
 // LEASH wallet-control — platform client. Transparently uses the hosted challenge
 // API when LEASH_BASE_URL + TEAM_API_KEY are set, otherwise the local simulator.
+import { offlinePackPath } from './pack-path.js';
 import { LocalApi } from '../sim/local-api.js';
 
 export class HttpApiClient {
@@ -9,7 +10,7 @@ export class HttpApiClient {
     this.mode = 'live';
   }
 
-  async #call(method, path, body) {
+  async #call(method, path, body, timeoutMs = 35000) {
     const res = await fetch(this.baseUrl + path, {
       method,
       headers: {
@@ -17,7 +18,7 @@ export class HttpApiClient {
         'Content-Type': 'application/json',
       },
       body: body ? JSON.stringify(body) : undefined,
-      signal: AbortSignal.timeout(35000),
+      signal: AbortSignal.timeout(Math.max(1, Math.floor(timeoutMs))),
     });
     if (res.status === 204) return null;
     const text = await res.text();
@@ -44,7 +45,7 @@ export class HttpApiClient {
     const json = await this.#call('GET', `/v1/decision-requests/next?wait=${Math.round(waitMs / 1000)}`);
     return json ? { envelope: json } : null;
   }
-  submitDecision(authId, body) { return this.#call('POST', `/v1/authorizations/${authId}/decision`, body); }
+  submitDecision(authId, body, timeoutMs) { return this.#call('POST', `/v1/authorizations/${authId}/decision`, body, timeoutMs); }
   resolve(authId, body) { return this.#call('POST', `/v1/authorizations/${authId}/resolve`, body); }
 }
 
@@ -54,6 +55,6 @@ export function makeClient(store) {
   if (base && key && process.env.LEASH_MODE !== 'offline') {
     return new HttpApiClient(base, key);
   }
-  const packDir = process.env.PACK_DIR || new URL('../data/pack/', import.meta.url).pathname;
+  const packDir = offlinePackPath();
   return new LocalApi(packDir, store);
 }

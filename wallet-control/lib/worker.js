@@ -5,9 +5,11 @@
 // /resolve with the real customer's answer (never invented by the worker).
 import { evaluate } from './engine.js';
 import { normalizeDomain } from './trustedshops.js';
+import { purchaseDigest, digest, controlChecks, enforceControls, fail } from './wallet-controls.js';
 
 export class Worker {
-  constructor({ client, store, profiles, trust, trustedShops = null, bridgeSync = null, log = console }) {
+  constructor({ client, store, profiles, trust, trustedShops = null, jev = null, bridgeSync = null, log = console }) {
+    this.jev = jev;
     this.client = client;       // HttpApiClient | LocalApi
     this.store = store;
     this.profiles = profiles;
@@ -17,6 +19,7 @@ export class Worker {
     this.log = log;
     this.activeRuns = new Map(); // run_id -> {stop}
     this.feed = [];              // UI event feed (bounded)
+    this.humanWindowMs = 120000;
   }
 
   pushFeed(entry) {
@@ -33,7 +36,7 @@ export class Worker {
     this.#loop(runId, () => stopped).catch(err => {
       this.pushFeed({ kind: 'error', run_id: runId, text: `worker crashed: ${err.message}` });
       this.log.error?.('[worker]', err);
-    });
+    }).finally(() => this.activeRuns.delete(runId));
   }
 
   stopRun(runId) {
@@ -44,7 +47,7 @@ export class Worker {
     let emptyStreak = 0;
     while (!isStopped()) {
       const run = this.store.getRun(runId);
-      if (run && run.status === 'completed') break;
+      if (run && ['completed','revoked'].includes(run.status)) break;
       let res;
       try {
         res = await this.client.nextRequest(runId, 25000);
@@ -53,18 +56,21 @@ export class Worker {
         await sleep(2000);
         continue;
       }
+      if(isStopped() || ['completed','revoked'].includes(this.store.getRun(runId)?.status))break;
       if (!res) {
         emptyStreak++;
         const runNow = this.store.getRun(runId);
         if (runNow && emptyStreak >= 2 && runNow.decisions.size >= (runNow.totalEvents || Infinity)) {
-          runNow.status = 'completed';
-          this.pushFeed({ kind: 'run', run_id: runId, text: 'Run complete — all purchases decided.' });
+          runNow.status = runNow.stepUps.size ? 'awaiting_customers' : 'completed';
+          this.pushFeed({ kind: 'run', run_id: runId, text: runNow.stepUps.size ? 'All purchases evaluated — waiting for customer answers.' : 'Run complete — all purchases decided.' });
           break;
         }
         continue;
       }
       emptyStreak = 0;
-      await this.#handleRequest(runId, res.envelope);
+      const actualRunId = res.envelope.run_id || res.envelope.data?.run_id || runId;
+      if (!this.store.getRun(actualRunId)) { this.pushFeed({kind:'error',text:'Purchase received for an unknown run; no permission issued.'}); continue; }
+      await this.store.exclusive(() => this.#handleRequest(actualRunId, res.envelope));
     }
     this.activeRuns.delete(runId);
   }
@@ -74,10 +80,16 @@ export class Worker {
     const a = event.authorization;
     const run = this.store.getRun(runId);
     const liveId = a.authorization_id;
+    const fingerprint = purchaseDigest(event);
 
     // Repeated delivery of the same live purchase: reconcile with the saved result.
     const prior = this.store.getDecision(runId, liveId);
+    if(prior?.fingerprint && prior.fingerprint!==fingerprint)throw fail('Purchase ID reused with changed facts');
     if (prior && prior.submitted) {
+      if (prior.fingerprint !== fingerprint) {
+        this.store.audit('purchase.conflict',{run_id:runId,authorization_id:liveId});
+        throw fail('An authorization ID was reused with changed purchase facts');
+      }
       this.pushFeed({ kind: 'replay', run_id: runId, authorization_id: liveId, text: `repeated delivery of ${liveId} — saved decision re-confirmed (no double count)` });
       try { await this.client.submitDecision(liveId, this.#decisionBody(prior)); } catch { /* already accepted */ }
       return;
@@ -90,16 +102,23 @@ export class Worker {
     // later events for the same merchant get the evidence instantly.
     const merchantSite = a.merchant?.merchant_url || a.merchant?.website_url || a.merchant?.merchant_domain || a.merchant?.url || null;
     const merchantDomain = normalizeDomain(merchantSite)?.domain?.replace(/^www\./, '') || null;
-    let extras = {};
-    if (this.trustedShops && merchantSite) {
-      extras.trustedShops = await Promise.race([
-        this.trustedShops.checkOne(merchantSite),
-        new Promise(r => setTimeout(() => r(null), 2500)),
-      ]);
-    }
+    const remaining = event.deadline_at ? Date.parse(event.deadline_at) - Date.now() : 8000;
+    const enrichmentBudget = Math.max(0, Math.min(2500, remaining - 2000));
+    const extras = {};
+    await Promise.all([
+      this.trustedShops && merchantSite && enrichmentBudget >= 50
+        ? withinBudget(() => this.trustedShops.checkOne(merchantSite), enrichmentBudget).then(value => { extras.trustedShops = value; })
+        : Promise.resolve(),
+      this.jev ? this.jev.evaluate(event, enrichmentBudget).then(value => { extras.jev = value; }).catch(() => { extras.jev = { status: 'unavailable' }; }) : Promise.resolve(),
+    ]);
 
     // Evaluate (deadline-aware: engine is sub-ms; guard anyway).
-    const evaluation = evaluate(event, this.store.runState(run), this.profiles, this.trust, extras);
+    const report = controlChecks(event,this.store.controls,this.store.ledger(),{run,currentMandate:this.store.getMandate(run.mandate_id)});
+    const snapshot = run.mandateSnapshot;
+    if (snapshot && digest(snapshot.hard_rules || []) !== digest(event.mandate?.hard_rules || [])) report.issues.push({code:'POLICY_MISMATCH',detail:'Purchase policy differs from the confirmed run permission'});
+    const latestPolicy=this.store.getMandate(run.mandate_id);
+    const evaluatedEvent=latestPolicy?{...event,mandate:{...event.mandate,...latestPolicy,customer_id:event.mandate?.customer_id}}:event;
+    const evaluation = enforceControls(evaluate(evaluatedEvent, this.store.runState(run), this.profiles, this.trust, extras), report);
     const record = {
       authorizationId: liveId,
       sourceAuthorizationId: a.source_authorization_id || null,
@@ -124,44 +143,39 @@ export class Worker {
       items: (a.items || []).map(i => ({ name: i.item_name, qty: i.quantity, price: i.unit_price, currency: i.currency, category: i.item_category, details: i.item_details })),
       finalDecision: evaluation.decision === 'approve' || evaluation.decision === 'decline' ? evaluation.decision : null,
       submitted: false,
+      fingerprint, event: structuredClone(event), engine_version:evaluation.engine_version,
+      next_steps:evaluation.next_steps, control_checks:evaluation.control_checks,
     };
 
-    // Submit inside the deadline (leave ≥1.5s margin).
-    const deadlineMs = event.deadline_at ? new Date(event.deadline_at).getTime() : Date.now() + 8000;
-    const budget = deadlineMs - Date.now() - 1500;
-    try {
-      if (budget < 500) throw new Error(`deadline budget exhausted (${Math.round(budget)}ms)`);
-      await this.client.submitDecision(liveId, this.#decisionBody(record));
-      record.submitted = true;
-      record.finalDecision = evaluation.decision === 'step_up' ? null : (evaluation.decision === 'approve' ? 'approved' : 'declined');
-      this.store.recordDecision(runId, liveId, record);
-      if (evaluation.decision === 'step_up') {
-        this.store.addStepUp(runId, liveId, event, evaluation, Date.now() + 120_000);
-      }
-      if (evaluation.decision === 'approve') {
-        run.spend.push({ simTs: record.simTs, amount: record.amount, merchantId: a.merchant?.merchant_id, authorization_id: liveId });
-      }
-      this.pushFeed({
-        kind: 'decision', run_id: runId, authorization_id: liveId,
-        decision: evaluation.decision, merchant: record.merchant, amount: record.amount,
-        reason_codes: evaluation.reason_codes, message: evaluation.customer_message,
-        confidence: evaluation.confidence,
-        evidence: evaluation.evidence, uncertainties: evaluation.uncertainties,
-        manipulation: evaluation.flags.manipulation,
-        items: record.items, replay_order: a.replay_order,
-        evaluation_ms: evaluation.evaluation_ms,
-      });
-    } catch (err) {
-      // Last-resort: never miss a deadline. Re-try once immediately; on failure, record locally.
+    // Retry transport failures, then finalize every accepted response identically.
+    let accepted = false;
+    if (evaluation.decision === 'approve') this.store.reserve(run,event);
+    let submitError;
+    for (let attempt = 0; attempt < 2; attempt++) {
       try {
-        await this.client.submitDecision(liveId, this.#decisionBody(record));
-        record.submitted = true;
-        this.store.recordDecision(runId, liveId, record);
-      } catch (err2) {
-        this.store.recordDecision(runId, liveId, { ...record, submitted: false, submitError: err2.message });
-        this.pushFeed({ kind: 'error', run_id: runId, authorization_id: liveId, text: `decision submit failed: ${err2.message}` });
-      }
+        const remaining = event.deadline_at ? Date.parse(event.deadline_at) - Date.now() : 8000;
+        if (!Number.isFinite(remaining) || remaining <= 50) throw new Error('Decision deadline exhausted');
+        await this.client.submitDecision(liveId, this.#decisionBody(record), Math.max(1, remaining - 50));
+        accepted = true;
+        break;
+      } catch (err) { submitError = err; }
     }
+    if (!accepted) {
+      this.store.recordDecision(runId, liveId, { ...record, submitted: false, submitError: submitError?.message });
+      this.pushFeed({ kind: 'error', run_id: runId, authorization_id: liveId, text: `decision submit failed: ${submitError?.message}` });
+      return;
+    }
+    this.store.acceptDecision(runId, liveId, record, event, evaluation, Date.now() + this.humanWindowMs);
+    this.store.audit('purchase.decided',{run_id:runId,authorization_id:liveId,decision:evaluation.decision,fingerprint});
+    this.onReceipt?.('decision',run,liveId);
+    this.pushFeed({
+      kind: 'decision', run_id: runId, authorization_id: liveId,
+      decision: evaluation.decision, merchant: record.merchant, amount: record.amount,
+      reason_codes: evaluation.reason_codes, message: evaluation.customer_message,
+      confidence: evaluation.confidence, evidence: evaluation.evidence,
+      uncertainties: evaluation.uncertainties, manipulation: evaluation.flags.manipulation,
+      items: record.items, replay_order: a.replay_order, evaluation_ms: evaluation.evaluation_ms,
+    });
   }
 
   #decisionBody(record) {
@@ -209,6 +223,31 @@ export class Worker {
    *  customer explicitly trusted the merchant: the domain joins the persisted
    *  trusted list, so future purchases there skip the yellow-list review. */
   async resolveStepUp(runId, authorizationId, decision, customerMessage, opts = {}) {
+    return this.store.exclusive(async () => {
+      const run=this.store.getRun(runId), pending=run?.stepUps.get(authorizationId), prior=run?.decisions.get(authorizationId);
+      if(!['approve','decline'].includes(decision))throw fail('Choose approve or decline',400);
+      const normalized=decision==='approve'?'approved':'declined';
+      if (!pending) {
+        if (prior?.finalDecision===normalized) return {ok:true,already_resolved:true};
+        throw fail('This purchase is no longer awaiting a decision');
+      }
+      if (opts.fingerprint && opts.fingerprint!==purchaseDigest(pending.event)) throw fail('Purchase details changed. Reload the review.');
+      if (decision==='approve') {
+        if (Date.now()>=pending.deadline) throw fail('The approval window has expired; request a new purchase');
+        const latest=this.store.getMandate(run.mandate_id);
+        const event={...pending.event,mandate:{...pending.event.mandate,...(latest || {}),customer_id:pending.event.mandate?.customer_id}};
+        const reevaluated=enforceControls(evaluate(event,this.store.runState(run),this.profiles,this.trust),controlChecks(event,this.store.controls,this.store.ledger(),{run,currentMandate:latest}));
+        if (reevaluated.decision==='decline') throw fail('Approval is blocked: '+reevaluated.customer_message);
+        this.store.reserve(run,event);
+      }
+      const out=await this.resolveChecked(runId,authorizationId,decision,customerMessage,opts);
+      this.store.audit('purchase.resolved',{run_id:runId,authorization_id:authorizationId,decision});
+      this.onReceipt?.('resolution',run,authorizationId);
+      return out;
+    });
+  }
+
+  async resolveChecked(runId, authorizationId, decision, customerMessage, opts = {}) {
     if (!['approve', 'decline'].includes(decision)) throw new Error('decision must be approve|decline');
     await this.client.resolve(authorizationId, {
       decision,
@@ -238,3 +277,10 @@ export class Worker {
 }
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function withinBudget(fn, ms) {
+  let timer;
+  try { return await Promise.race([Promise.resolve().then(fn), new Promise(resolve => { timer = setTimeout(() => resolve(null), ms); })]); }
+  catch { return null; }
+  finally { clearTimeout(timer); }
+}

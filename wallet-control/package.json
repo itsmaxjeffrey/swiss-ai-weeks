@@ -1,12 +1,12 @@
 {
   "name": "leash-wallet-control",
   "version": "1.0.0",
-  "description": "Agent on a Leash — customer-managed wallet control layer that approves, declines, or escalates AI-agent purchases.",
+  "description": "Agent on a Leash \u2014 customer-managed wallet control layer that approves, declines, or escalates AI-agent purchases.",
   "type": "module",
   "scripts": {
     "start": "node server.js",
     "replay": "node cli.js",
-    "test": "node test/engine.test.js && node test/yellowlist.test.js && node test/injection-model.test.js && node test/behavior-model.test.js && node test/injection-battery.test.js && node test/trustedshops.test.js && node test/bridge-sync.test.js && node test/sustainability.test.js && node test/market-intel.test.js && node test/evstats.test.js"
+    "test": "node test/engine.test.js && node test/yellowlist.test.js && node test/injection-model.test.js && node test/behavior-model.test.js && node test/injection-battery.test.js && node test/trustedshops.test.js && node test/bridge-sync.test.js && node test/sustainability.test.js && node test/market-intel.test.js && node test/evstats.test.js && node --test test/priority-regression.test.js test/policy-coverage.test.js test/jev.test.js test/server-flow.test.js test/wallet-upgrade.test.js && node test/category-sites.test.js"
   },
   "engines": {
     "node": ">=20"

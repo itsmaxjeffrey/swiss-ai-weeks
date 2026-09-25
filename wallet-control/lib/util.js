@@ -38,7 +38,15 @@ export const round2 = (n) => Math.round(n * 100) / 100;
 export const FX = { CHF: 1.0, EUR: 0.95, GBP: 1.12, USD: 0.87 }; // to CHF, rate_date 2026-08-01
 export function toChf(amount, currency) {
   const rate = FX[(currency || 'CHF').toUpperCase()];
-  return round2(amount * (rate ?? 1));
+  // The pack uses decimal half-even rounding, including negative refunds.
+  // Rates have two decimals; integer arithmetic avoids binary half-cent drift.
+  const scaled = Math.round(Number(amount) * 100) * Math.round((rate ?? 1) * 100);
+  if (!Number.isSafeInteger(scaled)) return NaN;
+  const magnitude = Math.abs(scaled);
+  const cents = Math.floor(magnitude / 100);
+  const remainder = magnitude % 100;
+  const rounded = cents + (remainder > 50 || (remainder === 50 && cents % 2 !== 0) ? 1 : 0);
+  return Math.sign(scaled) * rounded / 100;
 }
 
 export function num(v) {

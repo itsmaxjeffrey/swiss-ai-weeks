@@ -1,0 +1,59 @@
+{
+ "query": "Sportartikel online shop Schweiz",
+ "kl": "ch-de",
+ "category": "sports-general",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:28:07.737Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.sportscheck.ch/",
+   "title": "Sportartikel, Sportbekleidung & Sportschuhe bei SportScheck kaufen"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.intersport.ch/",
+   "title": "INTERSPORT Onlineshop | Sportartikel online kaufen - INTERSPORT Schweiz"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.1asport.ch/",
+   "title": "Sportartikel Schweiz online kaufen | 1ASPORT CH"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.sportshop.ch/startseite",
+   "title": "Startseite - sportshop.ch"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.gigasport.ch/",
+   "title": "Gigasport Online Shop I gigasport.ch"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.ochsnersport.ch/de-ch/",
+   "title": "OCHSNER SPORT | Dein Sportgeschäft in der Schweiz"
+  },
+  {
+   "rank": 6,
+   "url": "https://www.sport-thieme.ch/",
+   "title": "Sport-Thieme.ch - Hier Sportgeräte online kaufen!"
+  },
+  {
+   "rank": 7,
+   "url": "https://sportartikel.multimarkt.ch/",
+   "title": "Sportartikel Shop Schweiz"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.sportshop.ch/",
+   "title": "Dein Schweizer Onlineshop für Sportartikel SPORTSHOP.CH"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.galaxus.ch/de/s3/sector/sport-3",
+   "title": "Sport Produkte online kaufen - Galaxus"
+  }
+ ]
+}

@@ -1,0 +1,59 @@
+{
+ "query": "Pharmacy and drugstore online shop Switzerland",
+ "kl": "ch-en",
+ "category": "pharmacy",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:33:27.463Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://vitamister.ch/",
+   "title": "Swiss Online Drugstore for Healthy Families | vitamister"
+  },
+  {
+   "rank": 1,
+   "url": "https://shoppingtotal.ch/en/popular-swiss-online-pharmacies-and-online-drugstores/",
+   "title": "Popular Swiss online pharmacies and online drugstores"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.victoria-apotheke.ch/en/victoria-online-pharmacy/",
+   "title": "Victoria Online Pharmacy | Victoria Pharmacy Zurich"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.vitadrogerie.ch/en",
+   "title": "Vita drugstore"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.benu.ch/en",
+   "title": "BENU Pharmacy | Your online pharmacy in Switzerland"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.css.ch/en/private-customers/my-health/advice/pharmacies-medication/online-pharmacy.html",
+   "title": "Online pharmacies in Switzerland - discount for persons insured with CSS"
+  },
+  {
+   "rank": 6,
+   "url": "https://direkt-apotheke.ch/",
+   "title": "direkt-apotheke.ch - Schweizer Shop für Gesundheit, Pflege, Ernährung"
+  },
+  {
+   "rank": 7,
+   "url": "https://kanela.ch/en/",
+   "title": "Your Swiss online drugstore - Kanela AG"
+  },
+  {
+   "rank": 8,
+   "url": "https://shoppingtotal.ch/en/online-stores/category/pharmacy-drugstore/",
+   "title": "Online stores in Switzerland: Pharmacy & Drugstore | Shopping Total"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.mediservice.ch/en/",
+   "title": "Your speciality pharmacy - mediservice.ch"
+  }
+ ]
+}

@@ -30,3 +30,13 @@ AC0028,CU0018,debit,shared_household,CHF,active,2022-08-20,800,2800
 AC0029,CU0019,debit,daily_spending,CHF,active,2019-09-20,1600,5500
 AC0030,CU0019,prepaid,online,CHF,active,2023-09-21,900,3200
 AC0031,CU0020,credit,daily_spending,CHF,active,2020-10-01,3000,8500
+AC1519,CU1415,debit,daily_spending,CHF,active,2020-05-13,1400,5000
+AC1275,CU1217,debit,daily_spending,CHF,active,2019-11-02,1000,4000
+AC1598,CU1475,debit,daily_spending,CHF,active,2024-04-05,1400,5000
+AC1385,CU1308,debit,daily_spending,CHF,active,2019-10-08,1000,3600
+AC1066,CU1052,debit,daily_spending,CHF,active,2017-02-05,1400,5000
+AC1021,CU1016,credit,daily_spending,CHF,active,2016-01-22,3000,8500
+AC1466,CU1373,credit,daily_spending,CHF,active,2018-08-01,2500,7500
+AC1469,CU1376,credit,daily_spending,CHF,active,2018-01-20,4000,11000
+AC1454,CU1363,debit,family,CHF,active,2021-11-19,800,2800
+AC1564,CU1448,credit,daily_spending,CHF,active,2014-09-22,2000,6500

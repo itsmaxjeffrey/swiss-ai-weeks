@@ -1,0 +1,58 @@
+{
+ "query": "Groceries online shop Switzerland",
+ "kl": "ch-en",
+ "category": "groceries",
+ "fetchedAt": "2026-09-25T06:30:51.728Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.migros.ch/en",
+   "title": "Migros supermarket - Order online and get it delivered to your home ..."
+  },
+  {
+   "rank": 1,
+   "url": "https://www.moneyland.ch/en/online-grocery-shopping-saving-tips",
+   "title": "How To Buy Groceries Online in Switzerland - moneyland.ch"
+  },
+  {
+   "rank": 2,
+   "url": "https://rappn.ch/en/online-grocery-shopping-switzerland",
+   "title": "Online Grocery Shopping Switzerland 2026: Every Fee Listed"
+  },
+  {
+   "rank": 3,
+   "url": "https://swissfood.store/",
+   "title": "Swiss Food Online — Authentic Swiss Grocery Store"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.migros.ch/en/category/home",
+   "title": "Migros supermarket - Order online and get it delivered to your home ..."
+  },
+  {
+   "rank": 5,
+   "url": "https://swissfood.store/shop/",
+   "title": "Swiss Grocery Online | Authentic Swiss Food Shipped Worldwide"
+  },
+  {
+   "rank": 6,
+   "url": "https://seelanmarket.ch/home/",
+   "title": "Seelan Market All your daily need items! | Online Grocery Store."
+  },
+  {
+   "rank": 7,
+   "url": "https://www.ecopromo.ch/en",
+   "title": "Online supermarket - 100% Hard Discount | Ecopromo"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.swissglam.ch/online-food-shopping-switzerland/",
+   "title": "Online Food Shopping in Switzerland - SwissGlam.ch"
+  },
+  {
+   "rank": 9,
+   "url": "https://swissmade.direct/",
+   "title": "Swiss Made Direct - Shop for Authentic Origin Swiss Products"
+  }
+ ]
+}

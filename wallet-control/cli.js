@@ -8,13 +8,14 @@ import { HistoryProfiles } from './lib/history.js';
 import { evaluate } from './lib/engine.js';
 import { buildTrustIndex, hydrateMarketIntel } from './lib/signals.js';
 import { compilePolicy } from './lib/policy-compiler.js';
+import { offlinePackPath } from './lib/pack-path.js';
 import { PackData } from './sim/events.js';
 import { readJsonIfExists } from './lib/util.js';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
-const PACK_DIR = process.env.PACK_DIR || path.join(ROOT, 'data/pack');
+const PACK_DIR = offlinePackPath();
 const args = process.argv.slice(2);
 const resolveArg = (args.find(a => a.startsWith('--resolve=')) || '--resolve=auto').split('=')[1];
 const scenarios = args.filter(a => !a.startsWith('--'));

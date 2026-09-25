@@ -1,0 +1,59 @@
+{
+ "query": "E-scooters and e-bikes online shop Switzerland",
+ "kl": "ch-en",
+ "category": "e-mobility",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:38:59.157Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://swiss-scoots.ch/en",
+   "title": "Buy E-Scooters Switzerland | Swiss Scoots"
+  },
+  {
+   "rank": 1,
+   "url": "https://emovemotors.ch/en/",
+   "title": "Buy electric scooters in Switzerland | E-scooters, e-bikes & electric ..."
+  },
+  {
+   "rank": 2,
+   "url": "https://twheels.ch/en/collections/e-bikes-e-scooter",
+   "title": "Buy E-Bikes & E-Scooters - Swiss Shop | TWHEELS"
+  },
+  {
+   "rank": 3,
+   "url": "https://erides.ch/",
+   "title": "eRides.ch | E-Bikes, E-Roller & Elektromobilität"
+  },
+  {
+   "rank": 4,
+   "url": "https://swiss-scoots.ch/",
+   "title": "E-Scooter Schweiz kaufen | Swiss Scoots"
+  },
+  {
+   "rank": 5,
+   "url": "https://twheels.ch/collections/e-bikes-e-scooter",
+   "title": "E-Bikes & E-Scooter kaufen - Schweizer Shop | TWHEELS"
+  },
+  {
+   "rank": 6,
+   "url": "https://swisselectricbikes.com/",
+   "title": "Electric Bikes Switzerland | Buy Electric Bikes in Switzerland"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.etrix.ch/en/electric-scooter/",
+   "title": "Buy e-scooter Switzerland | Speed 20 - 125 km/h electric scooter"
+  },
+  {
+   "rank": 8,
+   "url": "https://erollers.ch/en-ch",
+   "title": "Buy E-Scooter Switzerland | erollers.ch - E-Roller Schweiz"
+  },
+  {
+   "rank": 9,
+   "url": "https://swisscore-shop.ch/",
+   "title": "SWISSCORE | Dein Händler für E-Motos und E-Scooter in der Schweiz"
+  }
+ ]
+}

@@ -3,8 +3,9 @@
 // mandate (compilePolicy) -> confirm -> scenario-run -> long-poll decision
 // requests -> evaluate() -> POST decision within the 8 s deadline.
 //
-// Usage: node scripts/saw26-driver.mjs [SCENxxxx] [--resolve=auto|approve|decline]
+// Usage: node scripts/saw26-driver.mjs [SCENxxxx] (interactive policy confirmation; human step-ups remain pending)
 // Network: curl --noproxy '*' (egress proxy 502s on this host; see docs/saw26-sandbox-api.md).
+import { createInterface } from 'node:readline/promises';
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -20,7 +21,8 @@ const BASE = 'https://saw26api.ashyground-364e1d07.switzerlandnorth.azurecontain
 const KEY = readFileSync(path.join(ROOT, '.saw26-key'), 'utf8').replace(/[\s"]/g, '');
 const args = process.argv.slice(2);
 const SCENARIO = args.find(a => !a.startsWith('--')) || 'SCEN0101';
-const RESOLVE = (args.find(a => a.startsWith('--resolve=')) || '--resolve=auto').split('=')[1];
+if (args.some(a => a.startsWith('--resolve='))) throw new Error('Automatic human resolution is forbidden in the hosted driver. Use cli.js for synthetic offline resolution.');
+if (!process.stdin.isTTY) throw new Error('Use an interactive terminal to review and confirm the wallet policy, or use the customer UI.');
 
 let pkgVersion = '1';
 try { pkgVersion = JSON.parse(readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version || '1'; } catch {}
@@ -48,13 +50,6 @@ function normalize(ev) {
   return { ...ev, authorization: a, items };
 }
 
-// Mirror of cli.js APPROVE_OK auto-resolution policy for step-ups.
-const APPROVE_OK = new Set(['SUBSTITUTION', 'TERRAIN_UNVERIFIED', 'EXTRA_ITEM', 'DUPLICATE_SUSPECT', 'SIZE_UNVERIFIED', 'REQUESTED_ITEM_UNCLEAR', 'RULE_UNVERIFIED', 'AMOUNT_MISSING', 'PRICE_SANITY', 'FULFILMENT_MISMATCH', 'DESCRIPTION_CONTRADICTION', 'ITEM_UNCLEAR']);
-function resolveAuto(codes) {
-  const serious = (codes || []).filter(c => !APPROVE_OK.has(c));
-  return serious.length ? 'declined' : 'approved';
-}
-
 const boot = api('GET', '/v1/bootstrap');
 const scen = boot.scenarios.find(s => s.scenario_id === SCENARIO);
 if (!scen) { console.error(`unknown scenario ${SCENARIO}; have: ${boot.scenarios.map(s => s.scenario_id).join(' ')}`); process.exit(1); }
@@ -75,6 +70,11 @@ const mandateDraft = {
 const created = api('POST', '/v1/mandates', mandateDraft);
 const draftId = created.draft_id || created.id;
 console.log(`  mandate draft: ${draftId} (${mandateDraft.hard_rules.length} rules, uncertainty=${mandateDraft.uncertainty_policy})`);
+console.log(JSON.stringify(mandateDraft, null, 2));
+const terminal = createInterface({ input: process.stdin, output: process.stdout });
+const consent = await terminal.question('Confirm these exact permissions? Type yes: ');
+terminal.close();
+if (consent.trim().toLowerCase() !== 'yes') process.exit(0);
 const confirmed = api('POST', `/v1/mandates/${draftId}/confirm`, { confirmed: true });
 const mandateId = confirmed.mandate_id || confirmed.id || draftId;
 console.log(`  mandate confirmed: ${mandateId}`);
@@ -154,12 +154,7 @@ while (empty < 4) {
   seen.add(authId);
 
   if (out.decision === 'step_up') {
-    final = RESOLVE === 'auto' ? resolveAuto(out.reason_codes)
-      : RESOLVE === 'approve' ? 'approved' : 'declined';
-    const resolution = final === 'approved' ? 'approve' : 'decline';
-    try {
-      api('POST', `/v1/authorizations/${authId}/resolve`, { decision: resolution });
-    } catch (e) { console.error(`  resolve POST failed for ${authId}: ${e.message}`); }
+    console.log(`  HUMAN REVIEW REQUIRED: ${authId}; left pending. No automated resolution submitted.`);
   } else {
     final = out.decision === 'approve' ? 'approved' : 'declined';
   }

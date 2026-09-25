@@ -1,0 +1,59 @@
+{
+ "query": "Chocolate and sweets online shop Switzerland",
+ "kl": "ch-en",
+ "category": "chocolate-sweets",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:21:17.702Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.swisschocolate-online.com/en/",
+   "title": "Welcome to the specialist of chocolate from Switzerland"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.swissolates.com/",
+   "title": "Swissolates - Chocolates Delivered Worldwide | Swiss chocolate online shop"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.sweets.ch/",
+   "title": "Schweizer Onlineshop für Süssigkeiten | Candyshop | Sweets.ch"
+  },
+  {
+   "rank": 3,
+   "url": "https://swissmade.direct/products/swiss-food-and-drink/chocolate/",
+   "title": "Swiss Chocolate from Switzerland - Swiss Made Direct"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.sweets.ch/kategorie/schokolade/",
+   "title": "Schokolade Online-Shop Schweiz | Sweets.ch"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.sweetzerland.net/en/",
+   "title": "Chocolatier Genève - Handmade Swiss Chocolate - Sweetzerland"
+  },
+  {
+   "rank": 6,
+   "url": "https://swissfood.store/",
+   "title": "Swiss Food Online — Authentic Swiss Grocery Store"
+  },
+  {
+   "rank": 7,
+   "url": "https://swissfood.store/product-category/chocolate/",
+   "title": "Chocolate - Swiss Food - Online Grocery Store"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.lindt.ch/de/shop",
+   "title": "Schokolade von Lindt online kaufen - Lindt CH"
+  },
+  {
+   "rank": 9,
+   "url": "https://confiserie-madeleine.com/en/",
+   "title": "Confiserie Madeleine | Chocolates of Switzerland"
+  }
+ ]
+}

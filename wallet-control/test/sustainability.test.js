@@ -29,7 +29,7 @@ await test('URL-shaped and www-prefixed inputs resolve to the bare domain', () =
   const index = loadSustainabilityIndex(REAL_FILE);
   for (const input of ['https://www.brack.ch/whatever?x=1', 'WWW.BRACK.CH', 'http://brack.ch']) {
     const r = lookupSustainability(input, index);
-    assert.equal(r.score, 68, `input ${input}`);
+    assert.equal(r.score, 58, `input ${input}`);
     assert.equal(r.band, 'medium', `input ${input}`);
   }
 });
@@ -130,6 +130,31 @@ await test('rankOffers does not mutate the input array', () => {
   ];
   rankOffers(offers, { prefer: true });
   assert.equal(offers[0].merchant, 'a.ch');
+});
+
+// ---- Demo cap: comparisons return only the top N offers (server passes 3) ----
+
+await test('rankOffers limit=3 keeps only the top 3, in rank order', () => {
+  const offers = [
+    { merchant: 'a.ch', risk: scoreMerchantRisk({ trusted: true }), sustainability: { score: null, band: 'unknown' } },
+    { merchant: 'b.ch', risk: scoreMerchantRisk({}), sustainability: { score: null, band: 'unknown' } },
+    { merchant: 'c.ch', risk: scoreMerchantRisk({}), sustainability: { score: 80, band: 'good' } },
+    { merchant: 'd.ch', risk: scoreMerchantRisk({ malicious: true }), sustainability: { score: null, band: 'unknown' } },
+    { merchant: 'e.ch', risk: scoreMerchantRisk({}), sustainability: { score: null, band: 'unknown' } },
+  ];
+  const ranked = rankOffers(offers, { prefer: true, limit: 3 });
+  assert.equal(ranked.length, 3);
+  assert.deepEqual(ranked.map((o) => o.merchant), ['a.ch', 'c.ch', 'b.ch']);
+  assert.equal(offers.length, 5, 'input array not mutated');
+});
+
+await test('rankOffers limit beyond list length, or absent, returns everything', () => {
+  const offers = [
+    { merchant: 'a.ch', risk: scoreMerchantRisk({ trusted: true }), sustainability: { score: null, band: 'unknown' } },
+    { merchant: 'b.ch', risk: scoreMerchantRisk({}), sustainability: { score: null, band: 'unknown' } },
+  ];
+  assert.equal(rankOffers(offers, { limit: 9 }).length, 2);
+  assert.equal(rankOffers(offers, {}).length, 2);
 });
 
 console.log(`\nsustainability: ${passed} passed, ${failed} failed`);

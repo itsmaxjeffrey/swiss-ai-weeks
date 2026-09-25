@@ -1,0 +1,59 @@
+{
+ "query": "Home decor online shop Switzerland",
+ "kl": "ch-en",
+ "category": "home-decor",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:30:58.779Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.globus.ch/en/home/decoration",
+   "title": "Order Decoration from GLOBUS in the online store"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.theroamingchair.com/",
+   "title": "The Roaming Chair • Home Decor & Vintage Furniture"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.ikea.com/ch/en/cat/decoration-de001/",
+   "title": "Decoration - IKEA Switzerland"
+  },
+  {
+   "rank": 3,
+   "url": "https://andreadecor.ch/",
+   "title": "Home Andrea Decor - Andrea Decor | Dein Schweizer Dekoshop"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.beliani.ch/accessories-decor/",
+   "title": "Home Accessories & Décor Up to 50% OFF | Beliani.ch"
+  },
+  {
+   "rank": 5,
+   "url": "https://homeloft.ch/",
+   "title": "HomeLoft - Switzerland - Rethink your space"
+  },
+  {
+   "rank": 6,
+   "url": "https://www.xxxlutz.ch/dekoration-C22",
+   "title": "Dekorationen online kaufen - XXXLutz.ch"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.interismo.ch/en-CH",
+   "title": "Interismo Onlineshop - Your Home Accessories Shop"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.songes.ch/",
+   "title": "Magasin de meuble design scandinave & objets déco maison | Songes"
+  },
+  {
+   "rank": 9,
+   "url": "https://nordichaus.ch/",
+   "title": "Nordic living & Kids Interior - Nordichaus.ch"
+  }
+ ]
+}

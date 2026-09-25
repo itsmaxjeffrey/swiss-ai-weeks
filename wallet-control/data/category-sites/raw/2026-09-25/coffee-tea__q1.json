@@ -1,0 +1,59 @@
+{
+ "query": "Coffee and tea online shop Switzerland",
+ "kl": "ch-en",
+ "category": "coffee-tea",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:21:05.500Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://espressa.ch/en/",
+   "title": "Buy Coffee Online | Espressa.ch - Fast Delivery from Switzerland"
+  },
+  {
+   "rank": 1,
+   "url": "https://mokaefti.ch/en/buy-coffee-online-in-switzerland/",
+   "title": "buy coffee online in switzerland - Moka Efti"
+  },
+  {
+   "rank": 2,
+   "url": "https://espressa.ch/",
+   "title": "Kaffee kaufen online | Espressa.ch - schnell geliefert aus der Schweiz"
+  },
+  {
+   "rank": 3,
+   "url": "https://swissfood.store/de/produktkategorie/kaffee-tee/",
+   "title": "Kaffee & Tee - Schweizer Lebensmittel - Online-Grocery Store"
+  },
+  {
+   "rank": 4,
+   "url": "https://dalchinii.ch/collections/tea-coffee",
+   "title": "Tea & Coffee | Buy Tea & Coffee at the Best Price - Dalchini"
+  },
+  {
+   "rank": 5,
+   "url": "https://myspecialtycoffee.ch/de/",
+   "title": "MY SPECIALTY COFFEE shop Switzerland Schweiz Suisse Svizzera"
+  },
+  {
+   "rank": 6,
+   "url": "https://www.schwarzenbach.ch/",
+   "title": "H. Schwarzenbach - Zürich - Kaffee, Tee, Gewürze, Honig, Schokolade ..."
+  },
+  {
+   "rank": 7,
+   "url": "https://icaffe.ch/en/tea/",
+   "title": "Tea Online Shop | Premium Tea Selection at iCaffè Switzerland"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.swissfinehouse.ch/",
+   "title": "Online-Shop für Kaffee & Wein: swissfinehouse"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.blasercafe.ch/en",
+   "title": "Blasercafé | Kaffee online kaufen | für Zuhause, Büro & Gastronomie ..."
+  }
+ ]
+}

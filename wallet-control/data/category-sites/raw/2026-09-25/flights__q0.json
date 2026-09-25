@@ -1,0 +1,59 @@
+{
+ "query": "Flüge online shop Schweiz",
+ "kl": "ch-de",
+ "category": "flights",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:37:34.286Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.skyscanner.ch/",
+   "title": "Billige Flüge vergleichen und Tickets an alle Orte buchen | Skyscanner"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.swoodoo.ch/",
+   "title": "Flüge günstig buchen | Billigflüge | Flugtickets | SWOODOO"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.cheaptickets.ch/",
+   "title": "Günstige Flüge buchen | CheapTickets.ch"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.skyscanner.ch/fluge",
+   "title": "Finde die besten Angebote für Flüge und Flugbuchungen | Skyscanner"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.momondo.ch/",
+   "title": "Billigflüge - Finde günstige Flüge im momondo Schweiz Flugvergleich"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.swiss.com/ch/de/homepage",
+   "title": "Flüge buchen mit SWISS - Ihre Reise beginnt hier"
+  },
+  {
+   "rank": 6,
+   "url": "https://www.swoodoo.com/",
+   "title": "Flüge günstig buchen | Billigflüge | Flugtickets | SWOODOO"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.swoodoo.ch/flug-von/Schweiz-CH0",
+   "title": "CHF 28+ Günstige Flüge ab Schweiz | SWOODOO"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.swiss.com/ch/de/prepare/overview-flights",
+   "title": "Flüge - Ihre Reise beginnt hier | SWISS"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.opodo.ch/billigfluege/",
+   "title": "Günstige Flüge finden und zum Bestpreis buchen | Opodo Schweiz"
+  }
+ ]
+}

@@ -1,0 +1,59 @@
+{
+ "query": "Toys online shop Switzerland",
+ "kl": "ch-en",
+ "category": "toys",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:34:41.755Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://toyscentral.ch/",
+   "title": "ToysCentral - Switzerland - Playtime Fun Begins Here"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.smythstoys.com/ch/de-ch",
+   "title": "Spielzeug & Spielwaren | Smyths Toys Superstores Schweiz"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.galaxus.ch/en/s5/sector/toys-5",
+   "title": "Buy Toys products online - Galaxus"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.globus.ch/en/kids/toys",
+   "title": "Order Toys from GLOBUS in the online store"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.meinspielzeug.ch/",
+   "title": "Spielzeug Shop - über 60&#x27;000 Spielwaren günstig online kaufen."
+  },
+  {
+   "rank": 5,
+   "url": "https://www.galaxus.ch/en",
+   "title": "galaxus.ch - pretty much everything"
+  },
+  {
+   "rank": 6,
+   "url": "https://kidz.ch/",
+   "title": "Schweizer Spielzeug Shop - Spielwaren günstig kaufen! - Kidz.ch"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.smythstoys.com/ch/de-ch/spielzeug",
+   "title": "Kinderspielzeug & Kinderspiele | Smyths Toys Schweiz"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.mueller.ch/c/spielwaren/",
+   "title": "Spielzeug & Spielwaren einfach online bestellen | MÜLLER"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.trauffer.ch/en/shop",
+   "title": "Trauffer Online-Shop | Trauffer"
+  }
+ ]
+}

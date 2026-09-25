@@ -1,0 +1,59 @@
+{
+ "query": "Computers and laptops online shop Switzerland",
+ "kl": "ch-en",
+ "category": "computers",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:23:20.291Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.digitec.ch/en/s1/producttype/notebooks-6",
+   "title": "Notebooks · Laptop - buy at Digitec"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.digitec.ch/en",
+   "title": "digitec.ch - the online shop for all things digital"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.hp.com/ch-en/shop/",
+   "title": "Official HP® Store | Laptops, PCs, Monitors, Printers"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.swisscom.ch/en/residential/products/notebooks.html",
+   "title": "Buy Laptops: Overview & Comparison | Swisscom"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.store.ch/laptops/",
+   "title": "Store.ch - Notebooks und Laptops"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.mediamarkt.ch/de/category/laptop-notebooks-750532.html",
+   "title": "Laptop / Notebooks kaufen | MediaMarkt"
+  },
+  {
+   "rank": 6,
+   "url": "https://www.swisscom.ch/de/privatkunden/produkte/notebooks.html",
+   "title": "Laptops kaufen: Übersicht & Vergleich | Swisscom"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.lenovo.com/ch/en/",
+   "title": "Lenovo Official CH Website | Laptops, PCs, Tablets, Smartphones, Data ..."
+  },
+  {
+   "rank": 8,
+   "url": "https://www.galaxus.ch/en/s1/producttype/notebooks-6",
+   "title": "Notebooks · Laptop - buy at Galaxus"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.galaxus.ch/en",
+   "title": "galaxus.ch - pretty much everything"
+  }
+ ]
+}

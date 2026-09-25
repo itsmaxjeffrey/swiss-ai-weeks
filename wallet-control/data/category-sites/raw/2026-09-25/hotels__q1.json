@@ -1,0 +1,59 @@
+{
+ "query": "Hotels online shop Switzerland",
+ "kl": "ch-en",
+ "category": "hotels",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:38:00.908Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.top-hotels-switzerland.com/en/",
+   "title": "Switzerland hotels & apartments, all accommodations in Switzerland"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.booking.com/country/ch.html",
+   "title": "The best Switzerland hotels - Where to stay in Switzerland"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.swisshotels.com/",
+   "title": "Hotels in Switzerland: Book easily & with no fees"
+  },
+  {
+   "rank": 3,
+   "url": "https://hotelshop.one/en/",
+   "title": "HOTELSHOP.one | Produkte aus den Top-Hotels für Ihr Zuhause"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.kayak.com/Switzerland-Hotels.233.dc.html",
+   "title": "Switzerland Hotels: Compare Hotels in Switzerland from $93 ... - KAYAK"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.hotels.com/co10233167/hotels-in-switzerland/",
+   "title": "Best Hotels in Switzerland | Hotels.com"
+  },
+  {
+   "rank": 6,
+   "url": "https://www.hotelbedarf-schweiz.ch/",
+   "title": "Hotelbedarf Schweiz - Matratzen, Bettwaren & Möbel für Profis"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.swisshotelsupply.ch/",
+   "title": "Home | SwissHotelSupply"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.booking.com/city/ch/zurich.html",
+   "title": "10 Best Zurich Hotels, Switzerland (From US$117) - Booking.com"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.groupon.com/travel/switzerland/hotels",
+   "title": "Switzerland Hotel Deals | Affordable Hotels in Switzerland - Groupon"
+  }
+ ]
+}

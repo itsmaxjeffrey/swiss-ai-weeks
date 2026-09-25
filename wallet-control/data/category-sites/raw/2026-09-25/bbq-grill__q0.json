@@ -1,0 +1,59 @@
+{
+ "query": "Grill und BBQ online shop Schweiz",
+ "kl": "ch-de",
+ "category": "bbq-grill",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:33:03.224Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://grillundbbq.ch/",
+   "title": "Gasgrill, Pelletgrill, Grillzubehör u.v.m. unter Grill und BBQ Shop"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.grill24.ch/",
+   "title": "grill24 | Kaufen Sie online Grills und Grillgeräte"
+  },
+  {
+   "rank": 2,
+   "url": "https://grilljack.ch/de",
+   "title": "Grilljack - Schweizer Anbieter für Grills und Grillzubehör"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.grillspass.ch/",
+   "title": "GRILLSPASS.ch"
+  },
+  {
+   "rank": 4,
+   "url": "https://grillshop.ch/",
+   "title": "Grillshop - Grills, Weber, Napoleon & Grillzubehör | Schweiz"
+  },
+  {
+   "rank": 5,
+   "url": "https://grillundbbq.ch/c/grillgeraete-komplett",
+   "title": "Grillgeräte komplett - Grill und BBQ Shop"
+  },
+  {
+   "rank": 6,
+   "url": "https://www.grillfuerst.ch/",
+   "title": "XXL Grill Shop - Grillen"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.fust.ch/kuechengeraete/grill/c/f_grill",
+   "title": "Grill kaufen | Fust"
+  },
+  {
+   "rank": 8,
+   "url": "https://grillshop.ch/grillshop/",
+   "title": "Grillershop.ch - Hier schlägt das Grillherz höher!"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.grillsheriff.ch/",
+   "title": "Grills und Zubehör für BBQ Experten | Grill Sheriff"
+  }
+ ]
+}

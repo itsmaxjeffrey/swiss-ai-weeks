@@ -16,6 +16,28 @@ export class LocalApi {
     this.stepUps = new Map();   // live authorization_id -> true
     this.events = [];           // feed
     this.drafts = new Map();
+    // Restore the simulator's accepted decisions and pending human requests from
+    // the same ledger the worker persists. Restart must not erase the inbox.
+    for (const m of store.mandates.values()) {
+      if (m.draft_id) this.drafts.set(m.draft_id, m);
+    }
+    for (const run of store.runs.values()) {
+      const queue = this.pack.byScenario.get(run.scenario_id);
+      if (!queue) continue;
+      const mandate = run.mandateSnapshot;
+      if (!mandate) continue;
+      let cursor = 0;
+      for (const row of queue) {
+        const id = this.liveIdFor(run.run_id, row.authorization_id);
+        const decision = run.decisions.get(id);
+        if (!decision?.submitted) break;
+        cursor++;
+        this.decisions.set(id, { decision: decision.finalDecision === 'approved' ? 'approve' : decision.finalDecision === 'declined' ? 'decline' : decision.decision });
+        if (run.stepUps.has(id) && !decision.finalDecision) this.stepUps.set(id, true);
+      }
+      this.runs.set(run.run_id, { queue, cursor, mandate, scenario_id: run.scenario_id });
+    }
+
   }
 
   bootstrap() {

@@ -1,0 +1,59 @@
+{
+ "query": "Konzerttickets online shop Schweiz",
+ "kl": "ch-de",
+ "category": "event-tickets",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:37:19.927Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.ticketmaster.ch/",
+   "title": "Tickets, Events, Konzerte & Sport bei Ticketmaster.ch - offizieller ..."
+  },
+  {
+   "rank": 1,
+   "url": "https://www.ticketcorner.ch/",
+   "title": "Tickets, Events, Konzerte, Skitickets @ Ticketcorner"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.ticketmaster.ch/category/konzerte-tickets/10001",
+   "title": "Konzerte - Tickets, Events und Infos @Tickemaster.ch"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.seetickets.com/ch/music-tickets",
+   "title": "See Tickets (CH) - Musik"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.starticket.ch/de",
+   "title": "Tickets für Events, Parties, Festivals, Konzerte und Theater ..."
+  },
+  {
+   "rank": 5,
+   "url": "https://www.starticket.ch/de/konzerte",
+   "title": "Konzerte in der Schweiz | Tickets | starticket.ch"
+  },
+  {
+   "rank": 6,
+   "url": "https://www.ticketcorner.ch/top-events/",
+   "title": "Ticketcorner Tickets, Events, Konzerte, Skitickets"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.ticketbande.ch/",
+   "title": "ticketbande - Tickets für Konzerte, Shows, Sport, Bundesliga und mehr ..."
+  },
+  {
+   "rank": 8,
+   "url": "https://www.alltickets.ch/",
+   "title": "Tickets für Konzerte, Shows, Festival, Sport Events und mehr ..."
+  },
+  {
+   "rank": 9,
+   "url": "https://www.ticketswap.ch/concert-tickets/l/switzerland",
+   "title": "Schweiz: Konzerte-Tickets | Kommende Events | TicketSwap"
+  }
+ ]
+}

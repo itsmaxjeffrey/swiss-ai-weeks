@@ -1,0 +1,59 @@
+{
+ "query": "Hotels online shop Schweiz",
+ "kl": "ch-de",
+ "category": "hotels",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:37:51.442Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.hotelbedarf-schweiz.ch/",
+   "title": "Hotelbedarf Schweiz - Matratzen, Bettwaren & Möbel für Profis"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.lusini.com/de-ch/category/hotelbedarf/",
+   "title": "Hotelbedarf & Hotelausstattung › jetzt online bestellen | LUSINI"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.hotelbedarf-schweiz.ch/pages/bettwaren-fur-hotels",
+   "title": "Hotel-Bettwaren kaufen - Matratzen, Duvets & Kissen Schweiz"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.intergastro.ch/hotel/",
+   "title": "Hotelbedarf für Zimmer, Housekeeping & Rezeption | Intergastro Schweiz"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.lusini.com/de-ch/category/moebel/moebel-nach-themen/hotelmoebel/",
+   "title": "Hotelmöbel & Hoteleinrichtung › online kaufen | LUSINI"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.gastro-held.ch/Geschaeftstyp/Hotelbedarf/",
+   "title": "Online-Shop GASTRO-HELD Schweiz"
+  },
+  {
+   "rank": 6,
+   "url": "https://www.gastro-held.ch/pages/hotel",
+   "title": "Hotelbedarf günstig kaufen: Profi-Ausstattung | GastroHeld"
+  },
+  {
+   "rank": 7,
+   "url": "https://kochshop.ch/html/hotelbedarf.html",
+   "title": "Hotelbedarf dank KochShop online vergleichen und gleich bestellen"
+  },
+  {
+   "rank": 8,
+   "url": "https://cash-hotel.ch/de/",
+   "title": "Gastronomie und Geschirr | Cash Hôtel Services"
+  },
+  {
+   "rank": 9,
+   "url": "https://www.goin.ch/indoor-moebel/moebel-nach-themen/hotelmoebel/",
+   "title": "Hotelmöbel online kaufen | Indoor-Möbel für Lobby ... - GO IN"
+  }
+ ]
+}

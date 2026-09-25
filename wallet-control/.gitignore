@@ -6,3 +6,11 @@ node_modules/
 
 # saw26 sandbox key (plaintext fallback, owner-approved)
 .saw26-key
+
+# Optional TypeSafe credential file (prefer TYPESAFE_API_KEY_FILE outside repo)
+.typesafe-key
+.jev-key
+
+# Private wallet signing authority and enrolled devices
+.wallet-private/
+data/.wallet-private/

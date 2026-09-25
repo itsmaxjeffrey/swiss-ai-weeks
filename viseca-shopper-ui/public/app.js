@@ -495,7 +495,7 @@
         const r = await fetch("/api/policy/sign", {
           method: "POST",
           headers: authHeaders({ "Content-Type": "application/json" }),
-          body: JSON.stringify({ policy }),
+          body: JSON.stringify({ policy, sessionId: currentSessionId }),
         });
         const j = await r.json().catch(() => ({}));
         if (r.ok && j.ok) {
@@ -506,6 +506,7 @@
           result.innerHTML = `
             <p><strong>Signed &amp; frozen.</strong> authority <code>${esc(j.signed_by || "")}</code></p>
             <p class="mono-dim">${esc(j.signed_path || "")}</p>
+            <p>${j.wallet_review?.status === "ok" ? "Jev reviewed this order against your instructions and account controls." : "Jev review: " + esc(j.wallet_review?.status || "not available") + ". Your spending and shop restrictions are still enforced."}</p>
             <p>Telling the agent to run the gate checks…</p>`;
           setTimeout(() => send(`Policy ${policy.policy_id} is approved and signed — run the gate check and proceed.`), 700);
         } else if (r.status === 422) {
@@ -514,7 +515,10 @@
           result.hidden = false;
           const missing = (j.missing || []).map((m) => `<li><code>${esc(m)}</code></li>`).join("");
           const violations = (j.violations || []).map((v) => `<li>${esc(v)}</li>`).join("");
-          if (violations) {
+          if (j.wallet_review?.review_required) {
+            state.textContent = "paused — Jev review";
+            result.innerHTML = `<p><strong>Jev flagged a possible conflict with your instructions.</strong></p><ul>${violations}</ul><p class="form-note">Ask the shopper to revise the order to match your request, then review the new proposal.</p>`;
+          } else if (violations) {
             state.textContent = "refused — settings conflict";
             result.innerHTML = `<p><strong>The authority refused to sign — this order conflicts with your shopping settings.</strong></p><ul>${violations}</ul><p class="form-note">Open Account → Shopping settings to fix the cap or whitelist, then have the agent re-propose.</p>`;
           } else {
@@ -732,6 +736,29 @@
     }
   }
 
+  /* After a failed turn, watch for the late pickup: the gateway-side run may
+     finish after the bridge gave up; the bridge captures it and this polls it
+     home (~10 min window). A new turn flushes it server-side too, so stop
+     polling once this user is busy again. */
+  function pollLateDelivery() {
+    let tries = 0;
+    const timer = setInterval(async () => {
+      tries += 1;
+      if (tries > 40 || busy) { clearInterval(timer); return; }
+      try {
+        const r = await fetch(`/api/chat/late?sessionId=${encodeURIComponent(currentSessionId || "")}`, { headers: authHeaders() });
+        if (!r.ok) return;
+        const j = await r.json().catch(() => ({ late: null }));
+        if (j && j.late && j.late.text) {
+          clearInterval(timer);
+          addMessage("system", "The interrupted task finished in the background:");
+          addMessage("agent", j.late.text);
+          loadSessions();
+        }
+      } catch { /* bridge unreachable — keep polling */ }
+    }, 15000);
+  }
+
   async function send(text) {
     if (busy || !text.trim()) return;
     addMessage("user", text.trim());
@@ -794,7 +821,12 @@
             if (!frame.startsWith("data: ")) continue;
             let ev;
             try { ev = JSON.parse(frame.slice(6)); } catch { continue; }
-            if (ev.type === "progress") {
+            if (ev.type === "start") {
+              // Pin the conversation id even when this turn later fails —
+              // done frames are the only other carrier, and a failed first
+              // turn would strand follow-ups in a new conversation.
+              if (ev.sessionId && ev.sessionId !== currentSessionId) currentSessionId = ev.sessionId;
+            } else if (ev.type === "progress") {
               lastProgress = ev;
               renderBusyLine();
             } else if (ev.type === "activity") {
@@ -810,6 +842,9 @@
               });
               tickPlan("order policy signed");
               renderBusyLine();
+            } else if (ev.type === "late") {
+              addMessage("system", "The interrupted task finished in the background:");
+              addMessage("agent", ev.text);
             } else if (ev.type === "done") {
               settled = true;
               if (Array.isArray(ev.trail) && ev.trail.length) addTrailCard(ev.trail);
@@ -822,6 +857,7 @@
               settled = true;
               if (activityTrail.length) addTrailCard(activityTrail, { interrupted: true });
               addMessage("error", ev.error || "Agent error.");
+              pollLateDelivery();
             }
           }
         }

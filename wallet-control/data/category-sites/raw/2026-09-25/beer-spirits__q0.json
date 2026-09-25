@@ -1,0 +1,59 @@
+{
+ "query": "Bier und Spirituosen online shop Schweiz",
+ "kl": "ch-de",
+ "category": "beer-spirits",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:20:36.997Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.drinks.ch/de/startseite",
+   "title": "Der grösste Online Spirituosen Shop der Schweiz | Drinks.ch"
+  },
+  {
+   "rank": 1,
+   "url": "https://www.drinks.ch/de/",
+   "title": "Der grösste Online Spirituosenshop in der Schweiz | Drinks.ch"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.drink-shop.ch/",
+   "title": "Drink-Shop - Der coolste Getränkeshop der Schweiz"
+  },
+  {
+   "rank": 3,
+   "url": "https://bieronlineshop.ch/",
+   "title": "Sortimente | Bieronlineshop.ch"
+  },
+  {
+   "rank": 4,
+   "url": "https://www.myspirits.ch/",
+   "title": "Spirituosen online kaufen bei mySpirits.ch | Top Online Shop"
+  },
+  {
+   "rank": 5,
+   "url": "https://www.pepillo.ch/",
+   "title": "Pepillo.ch"
+  },
+  {
+   "rank": 6,
+   "url": "https://liquitaste.ch/",
+   "title": "Spirituosen Onlineshop Schweiz | Gin, Rum, Tequila & mehr"
+  },
+  {
+   "rank": 7,
+   "url": "https://www.drinkdirect.ch/",
+   "title": "drinkdirect.ch | dein Onlineshop für Spirituosen"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.migros.ch/de/category/wein-bier-spirituosen?context=ecommerce",
+   "title": "Wein, Bier & Spirituosen • Migros Online"
+  },
+  {
+   "rank": 9,
+   "url": "https://bieronlineshop.ch/biere/",
+   "title": "Biere | Bieronlineshop.ch"
+  }
+ ]
+}

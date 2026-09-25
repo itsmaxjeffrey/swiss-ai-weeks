@@ -57,3 +57,23 @@ ME0058,Cobalt Coatworks,clothing,5651,CH,Chur,store_and_online,false
 ME0059,PixelHarbour,electronics,5732,CH,Zurich,online,false
 ME0060,Thames Weave,clothing,5651,GB,London,online,false
 ME0061,Cascade Outfitters,sporting_goods,5941,US,Portland,online,false
+ME0102,Rhine Fresh,groceries,5411,CH,Winterthur,store_and_online,false
+ME0198,Chip Works,electronics,5732,CH,Lucerne,store_and_online,false
+ME0110,Meadow Grocer,groceries,5411,CH,Vevey,store_and_online,false
+ME0280,Euro Routes,travel,4722,NL,Amsterdam,online,false
+ME0115,Terrace Market,groceries,5411,CH,Olten,store_and_online,false
+ME0170,Plate Box,food_delivery,5812,CH,Biel,online,false
+ME0287,Silver Lab,photography,7221,CH,Bern,store_and_online,false
+ME0221,Vertical Athletics,sporting_goods,5941,DE,Konstanz,store_and_online,false
+ME0108,Valley Fresh,groceries,5411,CH,Lucerne,store_and_online,false
+ME0339,Signall Hub,electronics,5732,GB,London,online,false
+ME0109,Alpine Corner Store,groceries,5411,CH,Vevey,store_and_online,false
+ME0223,Vertical Werk Sport,sporting_goods,5941,CH,Interlaken,online,false
+ME0228,Glacier Werk Sport,sporting_goods,5941,CH,Sion,store_and_online,false
+ME0284,Silver Works,photography,7221,FR,Mulhouse,store_and_online,false
+ME0177,Bright Press Digital,subscriptions,5815,CH,Aarau,online,true
+ME0226,Trek Supply,sporting_goods,5941,AT,Vienna,online,false
+ME0181,Loop Media,subscriptions,5815,GB,Manchester,online,true
+ME0172,Night Owl Kitchen,food_delivery,5812,CH,Sion,online,false
+ME0196,Byte and Pine,electronics,5732,CH,Fribourg,online,false
+ME0194,Quartz and Pine,electronics,5732,CH,Thun,online,false

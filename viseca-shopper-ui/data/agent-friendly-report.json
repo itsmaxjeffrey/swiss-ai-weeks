@@ -1,0 +1,307 @@
+{
+  "checked_at": "2026-09-25T07:09:09.750Z",
+  "counts": {
+    "blocked_generic": 22,
+    "ok": 15,
+    "blocked_datadome": 4,
+    "blocked_cloudflare": 3
+  },
+  "results": [
+    {
+      "domain": "migros.ch",
+      "verdict": "blocked_generic",
+      "http_status": 403,
+      "marker": "http 403"
+    },
+    {
+      "domain": "coop.ch",
+      "verdict": "blocked_generic",
+      "http_status": 403,
+      "marker": "thin page in browser (0 chars): \"coop.ch\"",
+      "source": "browser"
+    },
+    {
+      "domain": "aldi-suisse.ch",
+      "verdict": "blocked_generic",
+      "http_status": 403,
+      "marker": "http 403"
+    },
+    {
+      "domain": "lidl.ch",
+      "verdict": "ok",
+      "http_status": 200,
+      "marker": null,
+      "bytes": 310898
+    },
+    {
+      "domain": "volg.ch",
+      "verdict": "ok",
+      "http_status": 200,
+      "marker": null,
+      "bytes": 52998
+    },
+    {
+      "domain": "farmy.ch",
+      "verdict": "blocked_generic",
+      "http_status": 502,
+      "marker": "page never loaded in managed browser (navigation timeout)",
+      "source": "browser"
+    },
+    {
+      "domain": "digitec.ch",
+      "verdict": "blocked_generic",
+      "http_status": 403,
+      "marker": "http 403"
+    },
+    {
+      "domain": "galaxus.ch",
+      "verdict": "blocked_generic",
+      "http_status": 403,
+      "marker": "http 403"
+    },
+    {
+      "domain": "brack.ch",
+      "verdict": "ok",
+      "http_status": 200,
+      "marker": null,
+      "bytes": 310717
+    },
+    {
+      "domain": "interdiscount.ch",
+      "verdict": "blocked_datadome",
+      "http_status": 403,
+      "marker": "captcha-delivery.com"
+    },
+    {
+      "domain": "microspot.ch",
+      "verdict": "blocked_datadome",
+      "http_status": 403,
+      "marker": "captcha-delivery.com"
+    },
+    {
+      "domain": "fust.ch",
+      "verdict": "blocked_generic",
+      "http_status": 403,
+      "marker": "http 403"
+    },
+    {
+      "domain": "melectronics.ch",
+      "verdict": "blocked_generic",
+      "http_status": 403,
+      "marker": "maintenance page (browser): \"maintenance\" — re-check later",
+      "source": "browser"
+    },
+    {
+      "domain": "zalando.ch",
+      "verdict": "blocked_generic",
+      "http_status": 403,
+      "marker": "thin page in browser (184 chars): \"\"",
+      "source": "browser"
+    },
+    {
+      "domain": "aboutyou.ch",
+      "verdict": "ok",
+      "http_status": 200,
+      "marker": null,
+      "bytes": 304329
+    },
+    {
+      "domain": "hm.com",
+      "verdict": "blocked_generic",
+      "http_status": 403,
+      "marker": "challenge in managed browser: \"Access Denied\"",
+      "source": "browser"
+    },
+    {
+      "domain": "zara.com",
+      "verdict": "blocked_generic",
+      "http_status": 200,
+      "marker": "challenge in managed browser: \"Access Denied\"",
+      "source": "browser"
+    },
+    {
+      "domain": "uniqlo.com",
+      "verdict": "blocked_generic",
+      "http_status": 403,
+      "marker": "challenge in managed browser: \"Access Denied\"",
+      "source": "browser"
+    },
+    {
+      "domain": "snoooze.ch",
+      "verdict": "blocked_generic",
+      "http_status": 502,
+      "marker": "thin page in browser (0 chars): \"\"",
+      "source": "browser"
+    },
+    {
+      "domain": "ricardo.ch",
+      "verdict": "blocked_generic",
+      "http_status": 403,
+      "marker": "challenge in managed browser: \"Just a moment...\"",
+      "source": "browser"
+    },
+    {
+      "domain": "ebay.ch",
+      "verdict": "blocked_generic",
+      "http_status": 403,
+      "marker": "thin page in browser (193 chars): \"Error Page | eBay\"",
+      "source": "browser"
+    },
+    {
+      "domain": "amazon.de",
+      "verdict": "ok",
+      "http_status": 202,
+      "marker": "browser-pass: \"Amazon.de: Low Prices in Electronics, Books, Sports Equipmen\" (12680 chars)",
+      "source": "browser"
+    },
+    {
+      "domain": "etsy.com",
+      "verdict": "blocked_datadome",
+      "http_status": 403,
+      "marker": "captcha-delivery.com"
+    },
+    {
+      "domain": "shein.com",
+      "verdict": "ok",
+      "http_status": 200,
+      "marker": null,
+      "bytes": 309526
+    },
+    {
+      "domain": "temu.com",
+      "verdict": "ok",
+      "http_status": 200,
+      "marker": "browser-pass: \"Temu Switzerland | Explore the Latest Clothing, Beauty, Home\" (8308 chars)",
+      "source": "browser"
+    },
+    {
+      "domain": "ubereats.com",
+      "verdict": "blocked_generic",
+      "http_status": 403,
+      "marker": "challenge in managed browser: \"Just a moment...\"",
+      "source": "browser"
+    },
+    {
+      "domain": "justeat.ch",
+      "verdict": "blocked_cloudflare",
+      "http_status": 403,
+      "marker": "Just a moment..."
+    },
+    {
+      "domain": "smood.ch",
+      "verdict": "blocked_generic",
+      "http_status": 403,
+      "marker": "challenge in managed browser: \"Smood Security\"",
+      "source": "browser"
+    },
+    {
+      "domain": "deliveroo.ch",
+      "verdict": "blocked_generic",
+      "http_status": 502,
+      "marker": "thin page in browser (0 chars): \"\"",
+      "source": "browser"
+    },
+    {
+      "domain": "lieferando.ch",
+      "verdict": "blocked_cloudflare",
+      "http_status": 403,
+      "marker": "Just a moment..."
+    },
+    {
+      "domain": "manor.ch",
+      "verdict": "ok",
+      "http_status": 200,
+      "marker": null,
+      "bytes": 310913
+    },
+    {
+      "domain": "jumbo.ch",
+      "verdict": "blocked_datadome",
+      "http_status": 403,
+      "marker": "captcha-delivery.com"
+    },
+    {
+      "domain": "hornbach.ch",
+      "verdict": "ok",
+      "http_status": 200,
+      "marker": null,
+      "bytes": 304277
+    },
+    {
+      "domain": "oto.ch",
+      "verdict": "blocked_generic",
+      "http_status": 200,
+      "marker": "thin page in browser (0 chars): \"\"",
+      "source": "browser"
+    },
+    {
+      "domain": "zurrose.ch",
+      "verdict": "ok",
+      "http_status": 200,
+      "marker": null,
+      "bytes": 126454
+    },
+    {
+      "domain": "shop-apotheke.ch",
+      "verdict": "ok",
+      "http_status": 200,
+      "marker": null,
+      "bytes": 305739
+    },
+    {
+      "domain": "dm.ch",
+      "verdict": "blocked_generic",
+      "http_status": 502,
+      "marker": "thin page in browser (0 chars): \"\"",
+      "source": "browser"
+    },
+    {
+      "domain": "exlibris.ch",
+      "verdict": "ok",
+      "http_status": 200,
+      "marker": null,
+      "bytes": 303635
+    },
+    {
+      "domain": "orellfuessli.ch",
+      "verdict": "blocked_cloudflare",
+      "http_status": 403,
+      "marker": "cf_chl_"
+    },
+    {
+      "domain": "dds.ch",
+      "verdict": "ok",
+      "http_status": 200,
+      "marker": null,
+      "bytes": 31742
+    },
+    {
+      "domain": "pizza-hut.ch",
+      "verdict": "blocked_generic",
+      "http_status": 502,
+      "marker": "thin page in browser (182 chars): \"www.pizza-hut.ch\"",
+      "source": "browser"
+    },
+    {
+      "domain": "mcdonalds.ch",
+      "verdict": "blocked_generic",
+      "http_status": 403,
+      "marker": "challenge in managed browser: \"Access Denied\"",
+      "source": "browser"
+    },
+    {
+      "domain": "dominos.ch",
+      "verdict": "ok",
+      "http_status": 200,
+      "marker": null,
+      "bytes": 40689
+    },
+    {
+      "domain": "aliexpress.com",
+      "verdict": "ok",
+      "http_status": 200,
+      "marker": null,
+      "bytes": 311068
+    }
+  ]
+}

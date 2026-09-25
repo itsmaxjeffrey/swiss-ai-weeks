@@ -1,0 +1,59 @@
+{
+ "query": "Food delivery online shop Switzerland",
+ "kl": "ch-en",
+ "category": "food-delivery",
+ "provider": "duckduckgo-html",
+ "fetchedAt": "2026-09-25T09:22:18.059Z",
+ "results": [
+  {
+   "rank": 0,
+   "url": "https://www.switto.ch/",
+   "title": "Switto - Order food online from switzerland"
+  },
+  {
+   "rank": 1,
+   "url": "https://switto.ch/home/company",
+   "title": "Switto - Order food online from switzerland"
+  },
+  {
+   "rank": 2,
+   "url": "https://www.just-eat.ch/en/takeaway",
+   "title": "Food delivery, groceries and more straight to your door | Just Eat"
+  },
+  {
+   "rank": 3,
+   "url": "https://www.just-eat.ch/en",
+   "title": "Just Eat | Food delivery & Takeaway in Switzerland"
+  },
+  {
+   "rank": 4,
+   "url": "https://allcook.ch/",
+   "title": "Artisanal Food Delivery Service in Switzerland | Allcook Kitchen"
+  },
+  {
+   "rank": 5,
+   "url": "https://swedishness.ch/",
+   "title": "Swedishness - Scandinavian Food Online"
+  },
+  {
+   "rank": 6,
+   "url": "https://weekly-food.ch/en/home-meal-delivery/",
+   "title": "Home meal delivery in Switzerland - Weekly Food"
+  },
+  {
+   "rank": 7,
+   "url": "https://weekly-food.ch/en/",
+   "title": "Weekly Food | Prepared Meals Delivery for your week"
+  },
+  {
+   "rank": 8,
+   "url": "https://www.migros.ch/en",
+   "title": "Migros supermarket - Order online and get it delivered to your home ..."
+  },
+  {
+   "rank": 9,
+   "url": "https://switzerlandhandbook.com/meal-kit-and-food-delivery-apps-in-switzerland-compared/",
+   "title": "Meal Kit and Food Delivery Apps in Switzerland Compared"
+  }
+ ]
+}

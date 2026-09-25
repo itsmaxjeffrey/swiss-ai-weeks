@@ -266,3 +266,16 @@ Account sheet; parents get per-child spend bars and limits editing in theirs.
   signed policies with receipt status (the agent files
   `policies/<policy_id>.receipt.json` after checkout). Shown under
   **Account → Purchases**. Policies are strictly per-account.
+
+
+## Reliability safeguards (2026-09-25)
+
+- Every CLI agent call passes `--timeout` derived from the bridge budget, leaving up to 10 seconds for delivery. With the deployed 890-second bridge budget the agent gets 880 seconds; it no longer silently uses the 600-second default.
+- Deadline cleanup scans for the exact per-turn environment marker before killing the launcher group, covering detached CLI descendants. This is process cleanup, not proof that a merchant transaction was cancelled.
+- Automatic retry and model-driven late pickup are disabled by default. Legacy test/recovery paths require explicit `OPENCLAW_ALLOW_AUTOMATIC_RETRY=1` or `OPENCLAW_LATE_PICKUP_ENABLED=1`; do not enable them for unattended purchases. A customer must establish the previous order status before retrying.
+- Runtime failures and timeouts return clear messages. The shopper is instructed to end a blocked turn immediately, preserve the policy approval gate, and never repair shared plugins or reconstruct checkout APIs.
+- The shopper agent denies the `plugins` and `gateway` administration tools. This is a tool restriction, not filesystem/host isolation: the agent still has exec.
+- `viseca-shopper/scripts/browser-safe.js` bounds individual browser CLI calls to 20 seconds (maximum configurable 30 seconds), cleans up marked subprocesses, and reports `BROWSER_UNAVAILABLE` on timeout/runtime failure. It is a instructed workflow guard, not an OS-level ban on raw commands.
+- Run `npm test` for bridge coverage; `npm run test:browser-safety` also exercises the companion agent wrapper (override `BROWSER_SAFE_SCRIPT` when that workspace lives elsewhere).
+
+The browser/gateway must still be healthy. After operator recovery, verify an actual page open and snapshot, not just HTTP health. A restored service does not imply an order was placed.
