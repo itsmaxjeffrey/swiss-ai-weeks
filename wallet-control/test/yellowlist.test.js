@@ -10,7 +10,7 @@ import { Store } from '../lib/store.js';
 import { Worker } from '../lib/worker.js';
 import {
   extractSocials, extractPayments, brandHintFromHtml, zefixQuery,
-  compareImprintToRegistry, summarize, tsShopRating,
+  compareImprintToRegistry, summarize, tsShopRating, zefixAuthHeader,
 } from '../lib/yellowlist.js';
 
 let passed = 0, failed = 0;
@@ -160,6 +160,15 @@ test('summarize flags registry miss and imprint miss as negatives', () => {
   assert.ok(s.negatives.some(p => p.includes('No Swiss commercial-register entry')));
   assert.ok(s.negatives.some(p => p.includes('No readable Impressum')));
   assert.ok(s.negatives.some(p => p.includes('Based in DE')));
+});
+
+test('zefixAuthHeader: split username+password or combined token, else null', () => {
+  const split = zefixAuthHeader({ LEASH_ZEFIX_USERNAME: 'me@example.ch', LEASH_ZEFIX_PASSWORD: 'tok123' });
+  assert.equal(split, 'Basic ' + Buffer.from('me@example.ch:tok123').toString('base64'));
+  const combined = zefixAuthHeader({ LEASH_ZEFIX_TOKEN: 'me@example.ch:tok123' });
+  assert.equal(combined, split);
+  assert.equal(zefixAuthHeader({ LEASH_ZEFIX_USERNAME: 'me@example.ch' }), null);
+  assert.equal(zefixAuthHeader({}), null);
 });
 
 // ---------------------------------------------------------------------------

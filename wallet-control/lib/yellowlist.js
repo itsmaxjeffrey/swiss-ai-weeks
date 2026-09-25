@@ -290,17 +290,18 @@ export class MerchantDossier {
     }));
   }
 
-  /** Registration date/age via the Zefix REST API — needs the free token. */
+  /** Registration date/age via the Zefix REST API — needs the free credentials.
+   *  Accepted env shapes: LEASH_ZEFIX_TOKEN="***" or
+   *  LEASH_ZEFIX_USERNAME + LEASH_ZEFIX_PASSWORD (secret store). */
   async #registryAge(zefix) {
-    const tok = process.env.LEASH_ZEFIX_TOKEN;
-    if (!tok) {
+    const auth = zefixAuthHeader(process.env);
+    if (!auth) {
       return {
         registration_date: null, age_years: null,
-        note: 'company age needs the free Zefix API token (LEASH_ZEFIX_TOKEN) — the open register extract carries no registration dates',
+        note: 'company age needs Zefix API credentials (LEASH_ZEFIX_USERNAME + LEASH_ZEFIX_PASSWORD, or combined LEASH_ZEFIX_TOKEN) — the open register extract carries no registration dates',
       };
     }
     try {
-      const auth = 'Basic ' + Buffer.from(tok).toString('base64');
       const headers = { 'Authorization': auth, 'Accept': 'application/json', 'Content-Type': 'application/json' };
       let detail = null;
       if (zefix.uid) {
@@ -461,6 +462,18 @@ function pickBestRow(rows, wantName) {
     if (s > bestScore) { best = r; bestScore = s; }
   }
   return best;
+}
+
+/** Basic-auth header for the Zefix REST API from the environment. Accepts the
+ *  combined LEASH_ZEFIX_TOKEN ("***") or the split
+ *  LEASH_ZEFIX_USERNAME + LEASH_ZEFIX_PASSWORD pair. Returns "Basic …" or null. */
+export function zefixAuthHeader(env = process.env) {
+  const tok = env.LEASH_ZEFIX_TOKEN;
+  if (tok) return 'Basic ' + Buffer.from(String(tok).trim()).toString('base64');
+  const user = String(env.LEASH_ZEFIX_USERNAME || '').trim();
+  const pass = String(env.LEASH_ZEFIX_PASSWORD || '').trim();
+  if (user && pass) return 'Basic ' + Buffer.from(`${user}:${pass}`).toString('base64');
+  return null;
 }
 
 function formatUid(raw) {
