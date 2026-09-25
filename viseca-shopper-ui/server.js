@@ -107,11 +107,12 @@ const activityTokens = new Map(); // per-turn token -> userId (agent activity re
 const ACTIVITY_MAX = 40; // trail entries kept per turn
 
 /** System note appended to the shopper's prompt so it reports progress steps
- *  live; the token scopes reports to exactly this turn. */
+ *  live; the token scopes reports to exactly this turn. The customer reads
+ *  every label verbatim, so labels must name the real query or domain. */
 function activityNote(token) {
-  return "\n\n(System: the customer watches progress live. Each time you START a step, immediately run:\n" +
-    `curl -s -X POST http://127.0.0.1:${PORT}/api/chat/activity -H "X-Activity-Token: ${token}" -H "Content-Type: application/json" -d '{"label":"..."}'\n` +
-    "Steps: every web search → \"Searching the web for <topic>\"; every shop site you open → \"Visiting <domain>\"; comparing offers → \"Comparing prices at <domains>\"; drafting the order policy → \"Preparing order policy\"; payment/filing → \"Filing payment\". Keep labels short and plain.)";
+  return "\n\n(System: the customer watches a LIVE checklist while you work — your labels appear verbatim on their screen. Within your first tool calls, report the plan; after that, EVERY time you START a step, immediately run exactly:\n" +
+    `curl -s --noproxy '*' -X POST http://127.0.0.1:${PORT}/api/chat/activity -H "X-Activity-Token: ${token}" -H "Content-Type: application/json" -d '{"label":"..."}'\n` +
+    "Required labels, always with the REAL query or domain: plan → \"Plan: search Swiss shops, compare prices, order\"; every web search → \"Searching the web for <actual query>\"; every site you open → \"Visiting <domain>\"; reading offers → \"Reading <domain> results\"; comparing → \"Comparing prices: <domain1> vs <domain2>\"; cart/checkout → \"Checking out at <domain>\"; policy → \"Preparing your order policy\"; payment → \"Filing payment\". One curl per step, the moment it starts — never batch, never invent domains.)";
 }
 
 /** Record one agent-reported activity step for the in-flight turn. */
@@ -1031,6 +1032,7 @@ async function handle(req, res) {
       agent: AGENT,
       session: SESSION,
       bridge: "openclaw-cli",
+      build: "activity-live-2",
       busy: activeTurns >= MAX_CONCURRENT,
       activeTurns,
       maxConcurrent: MAX_CONCURRENT,
@@ -1326,6 +1328,7 @@ async function handle(req, res) {
     const label = body && typeof body.label === "string" ? body.label.trim() : "";
     if (!label) return sendJson(res, 400, { error: "Field 'label' is required." });
     recordActivity(userId, label);
+    console.log(`[chat] activity user=${userId}: ${label.slice(0, 100)}`);
     return sendJson(res, 200, { ok: true });
   }
 

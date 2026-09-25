@@ -100,15 +100,7 @@
   let currentUser = null;
   let plansCache = null;
 
-  const THINKING_WORDS = [
-    "thinking…",
-    "browsing offers…",
-    "comparing prices…",
-    "checking Swiss shops…",
-    "almost there…",
-  ];
-  let thinkingTimer = null;
-  let thinkingStep = 0;
+  let thinkingTimer = null; // 1 s re-render tick so elapsed time stays live
   let lastProgress = null;
   let activityTrail = []; // live steps: {kind, label, ts, ok, durationMs?}
   let trailHost = null;
@@ -134,29 +126,25 @@
     return n >= 1000 ? `${(n / 1000).toFixed(1)}k tok` : `${n} tok`;
   }
 
-  /** Renders the live status area: the growing activity trail (real steps
-   *  reported by the agent: searches, sites visited, gate events) with the
-   *  current step pulsing, plus a footer readout with elapsed + tokens.
-   *  Before the first real step arrives it falls back to friendly words. */
+  /** Renders the live status area. The headline names the agent's CURRENT
+   *  step verbatim (e.g. "Visiting digitec.ch"), so the customer always sees
+   *  what is happening right now; the growing ✓ checklist sits above it.
+   *  Before the first real step arrives it falls back to a plain "thinking…". */
   function renderBusyLine() {
     renderTrailLive();
     const bits = [];
-    if (activityTrail.length) {
-      if (lastProgress) {
-        bits.push(fmtElapsed(lastProgress.elapsedMs));
-        const tok = fmtTokens(lastProgress.totalTokens);
-        if (tok) bits.push(tok);
-      }
-    } else {
-      bits.push(THINKING_WORDS[thinkingStep % THINKING_WORDS.length]);
-      if (lastProgress) {
-        bits.push(fmtElapsed(lastProgress.elapsedMs));
-        const tok = fmtTokens(lastProgress.totalTokens);
-        if (tok) bits.push(tok);
-        if (lastProgress.status && lastProgress.status !== "running") bits.push(lastProgress.status);
+    bits.push(activityTrail.length
+      ? activityTrail[activityTrail.length - 1].label
+      : "thinking…");
+    if (lastProgress) {
+      bits.push(fmtElapsed(lastProgress.elapsedMs));
+      const tok = fmtTokens(lastProgress.totalTokens);
+      if (tok) bits.push(tok);
+      if (!activityTrail.length && lastProgress.status && lastProgress.status !== "running") {
+        bits.push(lastProgress.status);
       }
     }
-    typingText.textContent = bits.join(" · ") || "thinking…";
+    typingText.textContent = bits.join(" · ");
   }
 
   /** Live trail panel: earlier steps ✓ with per-step time, current pulsing. */
@@ -487,13 +475,9 @@
     if (btnStopTurn) btnStopTurn.hidden = !on;
     if (!on) { activeController = null; stopRequested = false; }
     if (on) {
-      thinkingStep = 0;
       lastProgress = null;
       renderBusyLine();
-      thinkingTimer = setInterval(() => {
-        thinkingStep += 1;
-        renderBusyLine();
-      }, 1000);
+      thinkingTimer = setInterval(renderBusyLine, 1000);
     } else if (thinkingTimer) {
       clearInterval(thinkingTimer);
       thinkingTimer = null;
