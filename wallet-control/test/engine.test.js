@@ -311,5 +311,19 @@ test('decline with manipulation note still carries confidence and basis', () => 
   assert.ok(out.customer_message.includes('attempted to manipulate'), out.customer_message);
 });
 
+test('implausible basket quantity (500 shoes) forces step-up even with approve policy', () => {
+  const ev = baseEvent({ authorization: { billing_amount_chf: 50000, amount: 50000, items_subtotal: 50000, purchase_description: 'running shoes', items: [{ line_no: 1, item_id: 'IT9', item_name: 'Trail running shoes', item_category: 'clothing', quantity: 500, unit_price: 100, currency: 'CHF', item_details: 'shoes' }] }, mandate: { uncertainty_policy: 'approve' } });
+  const out = evaluate(ev, emptyState, knownProfiles, trust);
+  assert.equal(out.decision, 'step_up');
+  assert.ok(out.reason_codes.includes('ITEM_QTY_ANOMALY'), JSON.stringify(out.reason_codes));
+});
+
+test('plausible bulk quantity (500 gloves) is not flagged', () => {
+  const ev = baseEvent({ authorization: { billing_amount_chf: 50, amount: 50, items_subtotal: 50, purchase_description: 'nitrile gloves', items: [{ line_no: 1, item_id: 'IT10', item_name: 'Nitrile gloves', item_category: 'household', quantity: 500, unit_price: 0.1, currency: 'CHF', item_details: 'box of 500' }] }, mandate: { uncertainty_policy: 'approve' } });
+  const out = evaluate(ev, emptyState, knownProfiles, trust);
+  assert.ok(!out.reason_codes.includes('ITEM_QTY_ANOMALY'), JSON.stringify(out.reason_codes));
+  assert.equal(out.decision, 'approve');
+});
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

@@ -44,6 +44,17 @@ by wallet-control/test/behavior-model.test.js against parity_vectors.json):
   11 customer_log_total   log1p(total prior approved purchases)
   12 night_hour           1 when UTC hour is in 21:00-06:59 (generic night
                           window, NOT personalized; 0 when hour unreadable)
+  13 log_item_qty_max     log1p(max line quantity in the basket); 0 when the
+                          event carries no item lines. Zero-variance in the
+                          history training rows (authorization_history has no
+                          item lines), so it ships with weight exactly 0 and
+                          only gains weight when retrained on data with real
+                          quantity variance.
+  14 qty_over_class_cap   1 when the max line quantity exceeds the category's
+                          plausible cap (CATEGORY_CLASS/BASE_CAPS below,
+                          mirrored in wallet-control/lib/item-classes.js;
+                          raised to 3x the customer's observed per-category
+                          max when profile.qty_max_by_category has data)
 
   p95 uses nearest-rank: sorted[idx], idx = clamp(ceil(0.95*n)-1, 0, n-1).
 
@@ -72,11 +83,51 @@ import numpy as np
 
 SEED = 20260924
 NIGHT_HOURS = frozenset({21, 22, 23, 0, 1, 2, 3, 4, 5, 6})
+
+# Category-conditional basket-quantity plausibility — mirrors
+# wallet-control/lib/item-classes.js (keep the two in lockstep).
+CATEGORY_CLASS = {
+    "bulk": ("groceries", "household", "home_improvement"),
+    "gift": ("gift_card", "subscriptions", "membership"),
+    "finite": ("clothing", "electronics", "sporting_goods", "cosmetics", "books"),
+    "service": ("dining", "food_delivery", "fuel", "hotel", "transport"),
+}
+BASE_CAPS = {"bulk": 500.0, "gift": 2.0, "finite": 12.0, "service": 20.0}
+_CLASS_OF = {cat: cls for cls, cats in CATEGORY_CLASS.items() for cat in cats}
+
+
+def base_qty_cap(category):
+    return BASE_CAPS[_CLASS_OF.get(str(category or "").strip().lower(), "finite")]
+
+
+def qty_cap(category, qty_max_by_category):
+    """Adaptive cap: class base, or 3x the customer's observed per-category max."""
+    base = base_qty_cap(category)
+    observed = float((qty_max_by_category or {}).get(category, 0) or 0)
+    return max(base, 3.0 * observed)
+
+
+def qty_features(items, qty_max_by_category):
+    """Features 13-14: log max line quantity + over-cap flag (mirrors JS scorer)."""
+    max_qty, worst_cat = 0.0, None
+    for it in (items or []):
+        try:
+            q = float(it.get("quantity", 1) or 1)
+        except (TypeError, ValueError):
+            q = 1.0
+        q = max(1.0, q)
+        if q > max_qty:
+            max_qty, worst_cat = q, (it.get("item_category") or it.get("category"))
+    if max_qty <= 0:
+        return 0.0, 0.0
+    return (math.log1p(max_qty),
+            1.0 if max_qty > qty_cap(worst_cat, qty_max_by_category) else 0.0)
 FEATURES = [
     "log_amount_z", "amount_p95_ratio", "merchant_log_count", "merchant_unfamiliar",
     "category_unfamiliar", "country_unfamiliar", "channel_unfamiliar",
     "currency_unfamiliar", "device_unfamiliar", "hour_unobserved",
     "velocity_10m", "customer_log_total", "night_hour",
+    "log_item_qty_max", "qty_over_class_cap",
 ]
 FEATURE_LABELS = {
     "log_amount_z": "amount far outside your usual range",
@@ -92,6 +143,8 @@ FEATURE_LABELS = {
     "velocity_10m": "burst of attempts within 10 minutes",
     "customer_log_total": "little overall history",
     "night_hour": "purchase in the middle of the night",
+    "log_item_qty_max": "unusually large quantity of one basket line",
+    "qty_over_class_cap": "quantity beyond what is plausible for this product type",
 }
 
 SCHEMA = "openclaw.behavior-model/1"
@@ -128,9 +181,15 @@ def load_pack(pack_dir: Path):
     # attempts carry only merchant_id: join the merchant catalogue exactly like
     # the live platform event does (merchant_category/country are required
     # authorization fields; parity + friction checks must see them)
+    items_by_auth = {}
+    for it in rows("purchase_attempt_items.csv"):
+        items_by_auth.setdefault(it["authorization_id"], []).append(
+            {"item_name": it.get("item_name"), "item_category": it.get("item_category"),
+             "quantity": it.get("quantity")})
     attempts = [{**a,
                  "merchant_category": merchants.get(a["merchant_id"], {}).get("merchant_category"),
-                 "merchant_country": merchants.get(a["merchant_id"], {}).get("merchant_country")}
+                 "merchant_country": merchants.get(a["merchant_id"], {}).get("merchant_country"),
+                 "items": items_by_auth.get(a["authorization_id"], [])}
                 for a in attempts]
     return history, attempts
 
@@ -190,6 +249,7 @@ def extract_examples(history):
             float(min(3, sum(1 for t in st["card_purchases"] if t is not None and 0 <= ts - t <= 600))),
             math.log1p(st["total_approved"]),
             1.0 if dt is not None and dt.hour in NIGHT_HOURS else 0.0,
+            *qty_features(r.get("items"), None),
         ]
         examples.append({
             "customer_id": cust, "card_id": r["card_id"], "authorization_id": r["authorization_id"],
@@ -226,6 +286,11 @@ def extract_examples(history):
             "devices": sorted(st["devices"]),
             "hours": sorted(st["hours"]),
             "total_approved": st["total_approved"],
+            # Item-line quantity baselines. authorization_history carries no
+            # item lines, so this starts empty; a deployment that records
+            # approved-order line items can fill it (keyed by item_category)
+            # and the engine's quantity caps + feature 14 adapt automatically.
+            "qty_max_by_category": {},
         }
         mu = profiles[cust]["log_mean"]
         n = len(st["log_amounts"])
@@ -263,6 +328,7 @@ def profile_features(auth: dict, profile: dict):
         float(min(3, int(auth.get("recent_attempt_count_10m") or 0))),
         math.log1p(profile["total_approved"]),
         1.0 if hour in NIGHT_HOURS else 0.0,
+        *qty_features(auth.get("items"), profile.get("qty_max_by_category")),
     ]
 
 
@@ -402,11 +468,13 @@ def main():
         {"authorization_id": "PARITY_TINY", "card_id": "CA0001", "billing_amount_chf": "2.00",
          "currency": "CHF", "merchant_id": "ME0001", "merchant_category": "groceries",
          "merchant_country": "CH", "channel": "ecommerce", "customer_device_id": "DVC-13A598",
-         "timestamp": "2026-08-10T10:00:00Z", "recent_attempt_count_10m": "0"},
+         "timestamp": "2026-08-10T10:00:00Z", "recent_attempt_count_10m": "0",
+         "items": [{"item_name": "Fresh produce selection", "item_category": "groceries", "quantity": 2}]},
         {"authorization_id": "PARITY_HUGE", "card_id": "CA0001", "billing_amount_chf": "5000.00",
          "currency": "USD", "merchant_id": "ME9999", "merchant_category": "electronics",
          "merchant_country": "US", "channel": "app", "customer_device_id": "DVC-NEW",
-         "timestamp": "2026-08-10T03:00:00Z", "recent_attempt_count_10m": "4"},
+         "timestamp": "2026-08-10T03:00:00Z", "recent_attempt_count_10m": "4",
+         "items": [{"item_name": "Wireless headphones", "item_category": "electronics", "quantity": 500}]},
     ]
     for a in picks + synthetic:
         a = dict(a)
@@ -418,14 +486,14 @@ def main():
             "case": a["authorization_id"], "customer_id": cust_by_card[a["card_id"]],
             "inputs": {k: a.get(k) for k in ("billing_amount_chf", "currency", "merchant_id",
                         "merchant_category", "merchant_country", "channel", "customer_device_id",
-                        "timestamp", "recent_attempt_count_10m", "ts_hour_utc")},
+                        "timestamp", "recent_attempt_count_10m", "ts_hour_utc", "items")},
             "features": [round(v, 12) for v in f],
             "expected_score": s,
         })
 
     artifact = {
         "schema": SCHEMA,
-        "version": "behavior-model-v2",
+        "version": "behavior-model-v3",
         "trained_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "semantics": "advisory-only: may add evidence/uncertainty and escalate to the customer; never approves, declines, or loosens",
         "label_caveat": "trained on historical authorization outcomes, which are not fraud labels and not an answer key for attempts",

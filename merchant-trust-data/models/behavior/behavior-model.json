@@ -1,7 +1,7 @@
 {
  "schema": "openclaw.behavior-model/1",
- "version": "behavior-model-v2",
- "trained_at": "2026-09-24T16:19:58+00:00",
+ "version": "behavior-model-v3",
+ "trained_at": "2026-09-25T04:36:43+00:00",
  "semantics": "advisory-only: may add evidence/uncertainty and escalate to the customer; never approves, declines, or loosens",
  "label_caveat": "trained on historical authorization outcomes, which are not fraud labels and not an answer key for attempts",
  "features": [
@@ -17,7 +17,9 @@
   "hour_unobserved",
   "velocity_10m",
   "customer_log_total",
-  "night_hour"
+  "night_hour",
+  "log_item_qty_max",
+  "qty_over_class_cap"
  ],
  "feature_labels": {
   "log_amount_z": "amount far outside your usual range",
@@ -32,24 +34,28 @@
   "hour_unobserved": "hour of day you never buy at",
   "velocity_10m": "burst of attempts within 10 minutes",
   "customer_log_total": "little overall history",
-  "night_hour": "purchase in the middle of the night"
+  "night_hour": "purchase in the middle of the night",
+  "log_item_qty_max": "unusually large quantity of one basket line",
+  "qty_over_class_cap": "quantity beyond what is plausible for this product type"
  },
  "weights": {
-  "log_amount_z": 0.13731604240443865,
-  "amount_p95_ratio": 0.20742938975054392,
-  "merchant_log_count": -0.02628728379834223,
-  "merchant_unfamiliar": -0.008662986009278154,
-  "category_unfamiliar": 0.04964477342637623,
-  "country_unfamiliar": 0.2385168163320507,
-  "channel_unfamiliar": 0.006417133859996251,
-  "currency_unfamiliar": 0.26032771911650954,
-  "device_unfamiliar": -0.14863075133150802,
-  "hour_unobserved": 0.16873079889928622,
-  "velocity_10m": 0.4275282687659703,
-  "customer_log_total": -0.05332115632602377,
-  "night_hour": 0.32019989398383897
+  "log_amount_z": 0.13731604412301152,
+  "amount_p95_ratio": 0.20742939120417805,
+  "merchant_log_count": -0.026287282441794048,
+  "merchant_unfamiliar": -0.008662987183439545,
+  "category_unfamiliar": 0.04964477213113053,
+  "country_unfamiliar": 0.23851681579760012,
+  "channel_unfamiliar": 0.006417132106038708,
+  "currency_unfamiliar": 0.26032771856701176,
+  "device_unfamiliar": -0.1486307529561156,
+  "hour_unobserved": 0.1687307972691926,
+  "velocity_10m": 0.4275282688702352,
+  "customer_log_total": -0.05332115464717347,
+  "night_hour": 0.320199893271676,
+  "log_item_qty_max": 0.0,
+  "qty_over_class_cap": 0.0
  },
- "intercept": -0.5106341347805636,
+ "intercept": -0.5106341347668334,
  "standardization": {
   "mean": [
    0.0026438985990605724,
@@ -64,7 +70,9 @@
    0.10580503833515882,
    0.10733844468784227,
    4.381146572151401,
-   0.15531215772179627
+   0.15531215772179627,
+   0.0,
+   0.0
   ],
   "std": [
    1.0825490430746052,
@@ -79,12 +87,14 @@
    0.30758792596276835,
    0.43840899300598407,
    0.972141826679303,
-   0.3622020035637441
+   0.3622020035637441,
+   1e-08,
+   1e-08
   ]
  },
  "thresholds": {
-  "escalate": 0.7629404320505624,
-  "suspect": 0.41961723762780934
+  "escalate": 0.76294043312922,
+  "suspect": 0.41961723822107105
  },
  "profiles": {
   "CU0009": {
@@ -174,6 +184,7 @@
     23
    ],
    "total_approved": 205,
+   "qty_max_by_category": {},
    "n_amount_samples": 205
   },
   "CU0003": {
@@ -271,6 +282,7 @@
     22
    ],
    "total_approved": 204,
+   "qty_max_by_category": {},
    "n_amount_samples": 204
   },
   "CU0002": {
@@ -363,6 +375,7 @@
     22
    ],
    "total_approved": 235,
+   "qty_max_by_category": {},
    "n_amount_samples": 235
   },
   "CU0007": {
@@ -459,6 +472,7 @@
     22
    ],
    "total_approved": 219,
+   "qty_max_by_category": {},
    "n_amount_samples": 219
   },
   "CU0014": {
@@ -558,6 +572,7 @@
     23
    ],
    "total_approved": 245,
+   "qty_max_by_category": {},
    "n_amount_samples": 245
   },
   "CU0017": {
@@ -653,6 +668,7 @@
     22
    ],
    "total_approved": 200,
+   "qty_max_by_category": {},
    "n_amount_samples": 200
   },
   "CU0018": {
@@ -746,6 +762,7 @@
     22
    ],
    "total_approved": 251,
+   "qty_max_by_category": {},
    "n_amount_samples": 251
   },
   "CU0010": {
@@ -844,6 +861,7 @@
     22
    ],
    "total_approved": 207,
+   "qty_max_by_category": {},
    "n_amount_samples": 207
   },
   "CU0005": {
@@ -935,6 +953,7 @@
     22
    ],
    "total_approved": 186,
+   "qty_max_by_category": {},
    "n_amount_samples": 186
   },
   "CU0016": {
@@ -1017,6 +1036,7 @@
     22
    ],
    "total_approved": 207,
+   "qty_max_by_category": {},
    "n_amount_samples": 207
   },
   "CU0008": {
@@ -1108,6 +1128,7 @@
     22
    ],
    "total_approved": 223,
+   "qty_max_by_category": {},
    "n_amount_samples": 223
   },
   "CU0001": {
@@ -1208,6 +1229,7 @@
     22
    ],
    "total_approved": 229,
+   "qty_max_by_category": {},
    "n_amount_samples": 229
   },
   "CU0013": {
@@ -1296,6 +1318,7 @@
     20
    ],
    "total_approved": 177,
+   "qty_max_by_category": {},
    "n_amount_samples": 177
   },
   "CU0020": {
@@ -1390,6 +1413,7 @@
     23
    ],
    "total_approved": 222,
+   "qty_max_by_category": {},
    "n_amount_samples": 222
   },
   "CU0004": {
@@ -1481,6 +1505,7 @@
     23
    ],
    "total_approved": 260,
+   "qty_max_by_category": {},
    "n_amount_samples": 260
   },
   "CU0011": {
@@ -1567,6 +1592,7 @@
     22
    ],
    "total_approved": 203,
+   "qty_max_by_category": {},
    "n_amount_samples": 203
   },
   "CU0015": {
@@ -1654,6 +1680,7 @@
     22
    ],
    "total_approved": 176,
+   "qty_max_by_category": {},
    "n_amount_samples": 176
   },
   "CU0006": {
@@ -1745,6 +1772,7 @@
     21
    ],
    "total_approved": 212,
+   "qty_max_by_category": {},
    "n_amount_samples": 212
   },
   "CU0019": {
@@ -1841,6 +1869,7 @@
     21
    ],
    "total_approved": 201,
+   "qty_max_by_category": {},
    "n_amount_samples": 201
   },
   "CU0012": {
@@ -1934,6 +1963,7 @@
     23
    ],
    "total_approved": 245,
+   "qty_max_by_category": {},
    "n_amount_samples": 245
   }
  },
@@ -1944,7 +1974,7 @@
   "approved_escalation_rate": 0.03018342233573253,
   "declined_escalation_rate": 0.4263565891472868,
   "auc_insample": 0.8077606672390177,
-  "auc_leave_customer_out": 0.7849665138597164,
+  "auc_leave_customer_out": 0.7848846208533791,
   "attempt_bands": {
    "normal": 28,
    "suspect": 15,

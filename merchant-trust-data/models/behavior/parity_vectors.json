@@ -12,7 +12,14 @@
    "customer_device_id": "DVC-13A598",
    "timestamp": "2026-08-09T10:04:00Z",
    "recent_attempt_count_10m": "0",
-   "ts_hour_utc": 10
+   "ts_hour_utc": 10,
+   "items": [
+    {
+     "item_name": "Fresh produce selection",
+     "item_category": "groceries",
+     "quantity": "1"
+    }
+   ]
   },
   "features": [
    -0.910311087869,
@@ -27,9 +34,11 @@
    0.0,
    0.0,
    5.438079308923,
+   0.0,
+   0.69314718056,
    0.0
   ],
-  "expected_score": 0.22937051563280383
+  "expected_score": 0.22937051654561402
  },
  {
   "case": "AU0006",
@@ -44,7 +53,19 @@
    "customer_device_id": "DVC-13A598",
    "timestamp": "2026-08-13T17:26:00Z",
    "recent_attempt_count_10m": "1",
-   "ts_hour_utc": 17
+   "ts_hour_utc": 17,
+   "items": [
+    {
+     "item_name": "Breakfast supplies",
+     "item_category": "groceries",
+     "quantity": "1"
+    },
+    {
+     "item_name": "Fresh produce selection",
+     "item_category": "groceries",
+     "quantity": "1"
+    }
+   ]
   },
   "features": [
    0.776181707276,
@@ -59,9 +80,11 @@
    0.0,
    1.0,
    5.438079308923,
+   0.0,
+   0.69314718056,
    0.0
   ],
-  "expected_score": 0.5374793799038666
+  "expected_score": 0.537479382213667
  },
  {
   "case": "AU0013",
@@ -76,7 +99,14 @@
    "customer_device_id": "DVC-89CB09",
    "timestamp": "2026-08-11T14:40:00Z",
    "recent_attempt_count_10m": "0",
-   "ts_hour_utc": 14
+   "ts_hour_utc": 14,
+   "items": [
+    {
+     "item_name": "Road-running shoes",
+     "item_category": "sporting_goods",
+     "quantity": "1"
+    }
+   ]
   },
   "features": [
    1.27979183714,
@@ -91,9 +121,11 @@
    0.0,
    0.0,
    5.361292165709,
+   0.0,
+   0.69314718056,
    0.0
   ],
-  "expected_score": 0.34283539636189314
+  "expected_score": 0.3428353986082529
  },
  {
   "case": "AU0021",
@@ -108,7 +140,14 @@
    "customer_device_id": "DVC-89CB09",
    "timestamp": "2026-08-17T11:00:00Z",
    "recent_attempt_count_10m": "0",
-   "ts_hour_utc": 11
+   "ts_hour_utc": 11,
+   "items": [
+    {
+     "item_name": "Road-running shoes",
+     "item_category": "sporting_goods",
+     "quantity": "1"
+    }
+   ]
   },
   "features": [
    1.65042462527,
@@ -123,9 +162,11 @@
    0.0,
    0.0,
    5.361292165709,
+   0.0,
+   0.69314718056,
    0.0
   ],
-  "expected_score": 0.38482641232674564
+  "expected_score": 0.3848264150496524
  },
  {
   "case": "AU0029",
@@ -140,7 +181,14 @@
    "customer_device_id": "DVC-4C0E9B",
    "timestamp": "2026-08-18T02:21:00Z",
    "recent_attempt_count_10m": "2",
-   "ts_hour_utc": 2
+   "ts_hour_utc": 2,
+   "items": [
+    {
+     "item_name": "Everyday jacket",
+     "item_category": "clothing",
+     "quantity": "1"
+    }
+   ]
   },
   "features": [
    2.0858351596,
@@ -155,9 +203,11 @@
    0.0,
    2.0,
    5.505331535932,
-   1.0
+   1.0,
+   0.69314718056,
+   0.0
   ],
-  "expected_score": 0.8172127953853884
+  "expected_score": 0.8172127940932171
  },
  {
   "case": "AU0037",
@@ -172,7 +222,14 @@
    "customer_device_id": "DVC-785971",
    "timestamp": "2026-08-12T14:05:00Z",
    "recent_attempt_count_10m": "0",
-   "ts_hour_utc": 14
+   "ts_hour_utc": 14,
+   "items": [
+    {
+     "item_name": "27-inch computer monitor",
+     "item_category": "electronics",
+     "quantity": "1"
+    }
+   ]
   },
   "features": [
    3.036465809543,
@@ -187,9 +244,11 @@
    0.0,
    0.0,
    5.308267697401,
+   0.0,
+   0.69314718056,
    0.0
   ],
-  "expected_score": 0.6129001185299501
+  "expected_score": 0.6129001225018269
  },
  {
   "case": "AU0045",
@@ -204,7 +263,14 @@
    "customer_device_id": "DVC-785971",
    "timestamp": "2026-08-20T17:05:00Z",
    "recent_attempt_count_10m": "0",
-   "ts_hour_utc": 17
+   "ts_hour_utc": 17,
+   "items": [
+    {
+     "item_name": "27-inch computer monitor",
+     "item_category": "electronics",
+     "quantity": "1"
+    }
+   ]
   },
   "features": [
    2.718117755075,
@@ -219,9 +285,11 @@
    0.0,
    0.0,
    5.308267697401,
+   0.0,
+   0.69314718056,
    0.0
   ],
-  "expected_score": 0.5356763643301977
+  "expected_score": 0.5356763678870413
  },
  {
   "case": "PARITY_TINY",
@@ -236,7 +304,14 @@
    "customer_device_id": "DVC-13A598",
    "timestamp": "2026-08-10T10:00:00Z",
    "recent_attempt_count_10m": "0",
-   "ts_hour_utc": 10
+   "ts_hour_utc": 10,
+   "items": [
+    {
+     "item_name": "Fresh produce selection",
+     "item_category": "groceries",
+     "quantity": 2
+    }
+   ]
   },
   "features": [
    -3.776148890234,
@@ -251,9 +326,11 @@
    0.0,
    0.0,
    5.438079308923,
+   0.0,
+   1.098612288668,
    0.0
   ],
-  "expected_score": 0.16184391662192152
+  "expected_score": 0.16184391663951578
  },
  {
   "case": "PARITY_HUGE",
@@ -268,7 +345,14 @@
    "customer_device_id": "DVC-NEW",
    "timestamp": "2026-08-10T03:00:00Z",
    "recent_attempt_count_10m": "4",
-   "ts_hour_utc": 3
+   "ts_hour_utc": 3,
+   "items": [
+    {
+     "item_name": "Wireless headphones",
+     "item_category": "electronics",
+     "quantity": 500
+    }
+   ]
   },
   "features": [
    7.149855433023,
@@ -283,8 +367,10 @@
    0.0,
    3.0,
    5.438079308923,
+   1.0,
+   6.216606101085,
    1.0
   ],
-  "expected_score": 0.9999372686590261
+  "expected_score": 0.9999372686590008
  }
 ]

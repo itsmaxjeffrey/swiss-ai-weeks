@@ -1,9 +1,38 @@
-# Behavior model v2 — training & calibration report
+# Behavior model v3 — training & calibration report
 
-Trained 2026-09-24 · `train_behavior.py` · artifact `behavior-model.json` (~33 KB)
+Trained 2026-09-25 (v3) · `train_behavior.py` · artifact `behavior-model.json` (~34 KB)
 Data: challenge pack `wallet-control/data/pack/` (per-file sha256 in the artifact's
 `provenance.pack_files`). numpy 2.5.2, pure-numpy Adam (no sklearn on this host),
 seed 20260924. Feature search harness: `experiment.py` (reproduces v1 exactly).
+
+## v3 (2026-09-25): basket-quantity features 13–14
+
+Owner request: an order that is *behaviorally strange* (500 pairs of shoes) must
+raise risk and ask the customer, while a plausible bulk order (500 disposable
+gloves, category `household`) must not — including at whitelisted merchants.
+Two mechanisms shipped together:
+
+- **Deterministic engine check** `ITEM_QTY_ANOMALY` (`lib/engine.js` §6c, caps in
+  `lib/item-classes.js`): category-conditional plausibility caps — bulk
+  (groceries/household/home_improvement) 500, gift (gift_card/subscriptions/
+  membership) 2, finite (clothing/electronics/…) 12, service 20; unknown
+  categories fall back to finite. Caps adapt to the customer via
+  `profile.qty_max_by_category` (cap = max(base, 3 × observed max)). A severe
+  excess (>3× cap) forces step_up like detected manipulation — even under
+  `uncertainty_policy: approve` (only `decline` suppresses).
+- **Trained features** 13 `log_item_qty_max`, 14 `qty_over_class_cap` — the
+  pack's authorization_history carries no item lines, so both columns are
+  zero-variance in training and ship with weight **exactly 0.0** (verified in
+  the artifact); they gain weight only when retrained over quantity-bearing
+  data. Profiles carry an empty `qty_max_by_category` seam for live quantity
+  baselines.
+
+Numbers identical to v2 within float noise: LOCO **0.7849** (v2: 0.7850 —
+last-digit drift from two extra zero columns' summation order; weights 0.0),
+in-sample 0.8078, τ 0.7629, friction 3.02 %, attempt bands 28/15/2 (unchanged).
+Parity vectors: same 9 cases, `items` added to inputs (PARITY_TINY qty 2
+groceries, PARITY_HUGE qty 500 electronics → exercises both new features).
+Replay regression 2026-09-25: decision lines identical to baseline.
 
 ## Scope & honest caveat
 
@@ -96,7 +125,7 @@ All numbers are LOCO AUC on fold-internal standardization unless noted
   absent. **Refresh the copy after retraining** — the parity test anchors the
   deployed artifact to the trainer-emitted vectors, so a stale copy fails CI.
 - `parity_vectors.json` (9 cases): feature parity ±1e-9, score parity ±1e-6,
-  asserted in `wallet-control/test/behavior-model.test.js` (13 features).
+  asserted in `wallet-control/test/behavior-model.test.js` (15 features).
 - Replay regression 2026-09-24: all decision lines identical to the v1 baseline
   (`node cli.js` diff after stripping timings); only behavior-model evidence
   rows changed.
@@ -109,6 +138,11 @@ policy (default `ask` → step_up; `approve` → approves with the evidence note
 the model never overrides the customer upward). Band `suspect` is evidence-only.
 Inert without artifact or unknown customer. Like the injection detector, this
 layer can NEVER approve, decline, or loosen anything.
+
+Companion deterministic check (v3): engine §6c `ITEM_QTY_ANOMALY` — see the v3
+section above. Unlike the trained score it enforces immediately: over-cap
+quantity → uncertainty; severe (>3× cap) → forced step_up unless the customer's
+policy is `decline`.
 
 ## Regeneration
 

@@ -21,7 +21,8 @@ import {
 } from './signals.js';
 import { requestedItemSpec } from './policy-compiler.js';
 import { scanInjectionModel, getInjectionModel } from './injection-model.js';
-import { scoreBehavior } from './behavior-model.js';
+import { scoreBehavior, getBehaviorModel } from './behavior-model.js';
+import { qtyCap } from './item-classes.js';
 import { describeResult, normalizeDomain } from './trustedshops.js';
 
 const INTEGRITY_SIGNAL_CODES = new Set(['DEVICE_NOVELTY', 'VELOCITY_BURST', 'UNUSUAL_HOUR']);
@@ -119,7 +120,7 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
   const fails = [];        // hard violations -> decline
   const uncert = [];       // uncertainties -> per uncertainty_policy
   const evidence = [];
-  const flags = { manipulation: [], integrity: [], positive: [] };
+  const flags = { manipulation: [], integrity: [], behavior: [], positive: [] };
 
   const addFail = (code, detail) => fails.push({ code, detail });
   const addUnc = (code, detail) => uncert.push({ code, detail });
@@ -407,6 +408,37 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
     }
   }
 
+  // -- 6c. Basket quantity sanity (deterministic, advisory-only) -----------------
+  // Category-conditional plausibility: 500 disposable gloves is a household
+  // purchase, 500 pairs of shoes is not (lib/item-classes.js). Caps self-adjust
+  // upward to the customer's own observed per-category maximum, so buyers who
+  // genuinely order in bulk are not flagged at their normal volumes. Like the
+  // behavior model this can only add an uncertainty; a severe excess (>3x cap)
+  // additionally forces a step-up exactly like detected manipulation — even at
+  // a whitelisted merchant and even under uncertainty_policy "approve" (only a
+  // "decline" policy suppresses it). Inert when the attempt has no item lines.
+  if (F.lines.length) {
+    const qtyMax = getBehaviorModel()?.profiles?.[customerId]?.qty_max_by_category || {};
+    let worst = null;
+    for (const l of F.lines) {
+      const qty = Math.max(1, Number(l.raw.quantity) || 1);
+      const cat = l.raw.item_category ?? l.raw.category ?? null;
+      const { cap, adaptive } = qtyCap(cat, qtyMax);
+      if (qty > cap && (!worst || qty / cap > worst.qty / worst.cap)) {
+        worst = { name: l.raw.item_name || cat || 'an item', cat, qty, cap, adaptive };
+      }
+    }
+    if (worst) {
+      const severe = worst.qty > worst.cap * 3;
+      const limitTxt = worst.adaptive
+        ? `${worst.cap} — you have bought up to ${Math.round(worst.cap / 3)} of these before`
+        : `${worst.cap} (plausible maximum for ${worst.cat || 'this category'})`;
+      addUnc('ITEM_QTY_ANOMALY', `basket line “${worst.name}” × ${worst.qty} exceeds a plausible quantity — limit ${limitTxt}; confirm this is intentional`);
+      ev('Basket quantity', `✗ ${worst.name} × ${worst.qty} (cap ${worst.cap}${worst.cat ? `, ${worst.cat}` : ''})${severe ? ' — severe' : ''}`);
+      if (severe) flags.behavior.push({ code: 'ITEM_QTY_ANOMALY', detail: `“${worst.name}” × ${worst.qty} far exceeds any plausible quantity for ${worst.cat || 'this category'}` });
+    }
+  }
+
   // -- 7. Lookalike merchant --------------------------------------------------------
   const histFam = profiles.merchantFamiliar(customerId, a.merchant?.merchant_id);
   if (!histFam.familiar) {
@@ -493,7 +525,7 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
   const integrityBreach = integrityMonitoring && flags.integrity.length > 0;
 
   if (fails.length) decision = 'decline';
-  else if (manipulationPresent || integrityBreach) decision = policy === 'decline' ? 'decline' : 'step_up';
+  else if (manipulationPresent || integrityBreach || flags.behavior.length) decision = policy === 'decline' ? 'decline' : 'step_up';
   else if (uncert.length) decision = policy === 'ask' ? 'step_up' : policy;
   else decision = 'approve';
 
@@ -526,7 +558,9 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
       ? `⚠️ Manipulation attempt detected in ${merchantName}'s product text — the purchase is paused for your review; the embedded instructions were NOT followed.`
       : integrityBreach
         ? `Paused for you: this purchase shows session signals that don't look like you (${flags.integrity.map(i => i.detail).join('; ')}).`
-        : uncert.some(u => u.code === 'MERCHANT_UNREVIEWED')
+        : flags.behavior.length
+          ? `Paused for you: this order contains an implausible basket quantity (${flags.behavior.map(b => b.detail).join('; ')}) — confirm it is really yours.`
+          : uncert.some(u => u.code === 'MERCHANT_UNREVIEWED')
           ? `Paused for your review — ${merchantName}, ${amountStr}. This shop is on neither your trusted list nor a known-bad list; its merchant dossier (registry, imprint, reviews) is shown below so you can decide whether to trust it.`
           : `Paused for your review — ${merchantName}, ${amountStr}.`;
     const lead2 = /[.!?…]/.test(lead.trim().slice(-1)) ? lead.trim().replace(/[.!?…]+$/, '') : lead.trim();

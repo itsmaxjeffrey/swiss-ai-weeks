@@ -13,6 +13,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { evaluate } from '../lib/engine.js';
 import { scoreBehavior, behaviorFeatures, getBehaviorModel } from '../lib/behavior-model.js';
+import { qtyCap } from '../lib/item-classes.js';
 import { HistoryProfiles } from '../lib/history.js';
 import { buildTrustIndex } from '../lib/signals.js';
 
@@ -42,7 +43,7 @@ const model = getBehaviorModel();
 test('artifact deployed and schema-valid', () => {
   assert.ok(model, 'no behavior-model artifact found (deploy lib/behavior-model.json)');
   assert.equal(model.schema, 'openclaw.behavior-model/1');
-  assert.equal(model.features.length, 13);
+  assert.equal(model.features.length, 15);
   assert.ok(model.thresholds.escalate > model.thresholds.suspect);
   assert.ok(model.profiles.CU0001, 'pack customer CU0001 has a learned profile');
 });
@@ -169,6 +170,37 @@ test('layer inert for unknown-customer mandate (no profile)', () => {
   const out = evaluate(baseEvent({}, { customer_id: 'CU_NOBODY', uncertainty_policy: 'approve' }), emptyState, profiles, trust);
   assert.ok(!out.evidence.some(e => e.label === 'Behavior model'));
   assert.ok(!out.reason_codes.includes('BEHAVIOR_ANOMALY'));
+  assert.equal(out.decision, 'approve');
+});
+
+console.log('\n— basket quantity caps (item-classes) —');
+test('caps: bulk loose, gift tight, adaptive to observed per-customer maxima', () => {
+  assert.equal(qtyCap('household', {}).cap, 500);
+  assert.equal(qtyCap('groceries', {}).cap, 500);
+  assert.equal(qtyCap('clothing', {}).cap, 12);
+  assert.equal(qtyCap('gift_card', {}).cap, 2);
+  assert.equal(qtyCap('gift_card', { gift_card: 1 }).cap, 3);
+  assert.equal(qtyCap('clothing', { clothing: 40 }).cap, 120);
+  assert.equal(qtyCap('some_new_category', {}).cap, 12, 'unknown category falls back to finite');
+});
+
+test('500 pairs of shoes force a step-up even under approve policy at a trusted merchant', () => {
+  const out = evaluate(baseEvent({
+    billing_amount_chf: 50000, amount: 50000, items_subtotal: 50000,
+    purchase_description: 'running shoes',
+    items: [{ line_no: 1, item_id: 'IT9', item_name: 'Trail running shoes', item_category: 'clothing', quantity: 500, unit_price: 100, currency: 'CHF', item_details: 'one pair per box' }],
+  }, { uncertainty_policy: 'approve' }), emptyState, profiles, trust);
+  assert.ok(out.reason_codes.includes('ITEM_QTY_ANOMALY'), JSON.stringify(out.reason_codes));
+  assert.equal(out.decision, 'step_up');
+});
+
+test('500 disposable gloves stay a normal household order (approve policy)', () => {
+  const out = evaluate(baseEvent({
+    billing_amount_chf: 50, amount: 50, items_subtotal: 50,
+    purchase_description: 'nitrile gloves',
+    items: [{ line_no: 1, item_id: 'IT10', item_name: 'Nitrile gloves', item_category: 'household', quantity: 500, unit_price: 0.10, currency: 'CHF', item_details: 'box of 500' }],
+  }, { uncertainty_policy: 'approve' }), emptyState, profiles, trust);
+  assert.ok(!out.reason_codes.includes('ITEM_QTY_ANOMALY'), JSON.stringify(out.reason_codes));
   assert.equal(out.decision, 'approve');
 });
 

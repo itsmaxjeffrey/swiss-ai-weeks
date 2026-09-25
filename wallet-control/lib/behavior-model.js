@@ -29,11 +29,22 @@
 //   11 customer_log_total    log1p(total_approved)
 //   12 night_hour            1 when UTC hour in 21:00-06:59 (generic night
 //                            window, NOT personalized; 0 when unreadable)
+//   13 log_item_qty_max      log1p(max line quantity in the basket); 0 when
+//                            the event carries no item lines. Zero-variance
+//                            in the history training rows (authorization
+//                            history has no item lines), so it ships with
+//                            weight exactly 0 and only gains weight when
+//                            retrained over quantity-bearing data.
+//   14 qty_over_class_cap    1 when the max line quantity exceeds the
+//                            category's plausible cap (lib/item-classes.js;
+//                            raised to 3x the customer's observed per-category
+//                            max when profile.qty_max_by_category has data)
 //
 // p95 = nearest-rank; amounts are billing_amount_chf; auth fields resolve from
 // the flat attempt shape or the live event's merchant{} object.
 
 import { readFileSync } from 'node:fs';
+import { qtyCap } from './item-classes.js';
 
 // Mirrors NIGHT_HOURS in train_behavior.py — keep in lockstep.
 const NIGHT_HOURS = new Set([21, 22, 23, 0, 1, 2, 3, 4, 5, 6]);
@@ -106,6 +117,16 @@ export function behaviorFeatures(auth, profile) {
   // 12 night_hour (generic window; 0 when timestamp unreadable — parity cases
   // always carry a valid timestamp, so this only affects degenerate callers)
   f.push(hour != null && !Number.isNaN(hour) && NIGHT_HOURS.has(hour) ? 1.0 : 0.0);
+
+  // 13 log_item_qty_max, 14 qty_over_class_cap — basket line quantities
+  // (resolve both the flat attempt shape and live {qty, category} items)
+  let maxQty = 0, worstCat = null;
+  for (const it of Array.isArray(auth?.items) ? auth.items : []) {
+    const q = Math.max(1, Number(it?.quantity ?? it?.qty) || 1);
+    if (q > maxQty) { maxQty = q; worstCat = it?.item_category ?? it?.category ?? null; }
+  }
+  f.push(maxQty > 0 ? Math.log1p(maxQty) : 0.0);
+  f.push(maxQty > 0 && maxQty > qtyCap(worstCat, profile.qty_max_by_category).cap ? 1.0 : 0.0);
 
   return f;
 }
