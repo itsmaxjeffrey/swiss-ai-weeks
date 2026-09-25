@@ -42,6 +42,13 @@ Last updated: 2026-09-24. Proven by viseca-shopper UI go-live.
   Questions go out as plain chat text ending the turn (rule added to
   viseca-shopper AGENTS.md, Sep 24, after the 19:00 shoe-order timeout).
   <!-- project: github-swiss-ai-weeks/itsmaxjeffrey/swiss-ai-weeks -->
+- Shopper per-customer data (build `per-user-data-1`, Sep 25): every bridge
+  account has its own delivery address; the sign gate refuses to sign without
+  one and injects the customer block into every signed envelope; chat turns
+  open with the same per-customer context note. The shopper agent repo's
+  USER.md must NEVER carry a customer address/email again — per-customer data
+  rides the envelope + turn context only.
+  <!-- project: github-swiss-ai-weeks/itsmaxjeffrey/swiss-ai-weeks -->
 - Stopping a bridge turn (stop-v4, `846e321`, Sep 25): the bridge's direct
   `openclaw` child is only a LAUNCHER — the real CLI runs as an anchored
   grandchild in a supervisor-owned process group, so child.kill, group kills,
