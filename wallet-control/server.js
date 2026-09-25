@@ -28,7 +28,8 @@ const trustRaw = readJsonIfExists(path.join(ROOT, 'data/leash_trust.json'));
 const trust = buildTrustIndex(trustRaw);
 const client = makeClient(store);
 const trustedShops = new TrustedShopsChecker();
-const dossierService = new MerchantDossier({ trustedShops });
+const gleifAges = readJsonIfExists(path.join(ROOT, 'data', 'gleif_ch_ages.json'));
+const dossierService = new MerchantDossier({ trustedShops, gleifAges });
 // Shopper-bridge whitelist mirror: when the customer approves with "trust
 // merchant", the worker best-effort POSTs the domain to the bridge's internal
 // sync endpoint so sign-time whitelist enforcement there passes too. The token

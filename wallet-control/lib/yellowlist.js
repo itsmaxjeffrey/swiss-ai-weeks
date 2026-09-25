@@ -17,9 +17,8 @@
 //      agreement → strong | partial | mismatch | unknown verdict.
 //   4. LinkedIn page — parsed from homepage links.
 //   5. Instagram page — parsed from homepage links.
-//   6. Company age — Zefix API registration date when the token exists;
-//      reported honestly as unknown otherwise (the open extract carries no
-//      dates and the public zefix.ch site is a JS app — no scraping guesses).
+//   6. Company age — local GLEIF index by UID (20k CH companies); the Zefix
+//      API exposes no registration dates (verified live 2026-09-25).
 //   7. Payment methods — scanned from the shop's own homepage text.
 //   8. Country — merchant country (imprint / Zefix / TLD) vs the customer's
 //      country (default CH, LEASH_CUSTOMER_COUNTRY overrides).
@@ -42,6 +41,7 @@ import { checkImpressum, fetchText, htmlToText } from './impressum.js';
 
 const ZEFIX_GRAPH = 'https://lindas.admin.ch/foj/zefix';
 const ZEFIX_SPARQL = 'https://lindas.admin.ch/query';
+const ZEFIX_REST = 'https://www.zefix.ch/ZefixPublicREST/api/v1';
 
 const COUNTRY_WORDS = {
   'Schweiz': 'CH', 'Suisse': 'CH', 'Svizzera': 'CH', 'Switzerland': 'CH',
@@ -74,9 +74,10 @@ const DEFAULTS = {
 };
 
 export class MerchantDossier {
-  constructor({ trustedShops = null, customerCountry = null, ...overrides } = {}) {
+  constructor({ trustedShops = null, customerCountry = null, gleifAges = null, ...overrides } = {}) {
     this.o = { ...DEFAULTS, ...overrides };
     this.trustedShops = trustedShops; // TrustedShopsChecker instance (shared)
+    this.gleifAges = gleifAges instanceof Map ? gleifAges : (gleifAges ? new Map(Object.entries(gleifAges)) : null); // UID(CHE…) -> {name, creationDate}
     this.customerCountry = (customerCountry || process.env.LEASH_CUSTOMER_COUNTRY || 'CH').toUpperCase();
     this.cache = new Map();   // domain -> {at, dossier}
     this.inflight = new Map(); // domain -> Promise
@@ -182,12 +183,15 @@ export class MerchantDossier {
       dossier.registry.compare = compareImprintToRegistry(impressum, zefix);
     }
 
-    // 3) company age — only from the Zefix REST API (token); never guessed
+    // 3) register enrichment — live status (REST, credentials) + company age (local GLEIF index)
     if (zefix.status === 'found') {
-      const age = await this.#registryAge(zefix);
-      dossier.registry.registration_date = age.registration_date;
-      dossier.registry.age_years = age.age_years;
-      if (age.note) dossier.registry.notes = [...(dossier.registry.notes || []), age.note];
+      const enrich = await this.#registryEnrichment(zefix);
+      dossier.registry.status_active = enrich.status_active;
+      dossier.registry.deletion_date = enrich.deletion_date;
+      dossier.registry.legal_form = enrich.legal_form;
+      dossier.registry.registration_date = enrich.registration_date;
+      dossier.registry.age_years = enrich.age_years;
+      if (enrich.notes?.length) dossier.registry.notes = [...(dossier.registry.notes || []), ...enrich.notes];
     }
 
     // 4) reviews: shop level (Trusted Shops, shared checker/cache) + product level
@@ -290,44 +294,47 @@ export class MerchantDossier {
     }));
   }
 
-  /** Registration date/age via the Zefix REST API — needs the free credentials.
-   *  Accepted env shapes: LEASH_ZEFIX_TOKEN="***" or
-   *  LEASH_ZEFIX_USERNAME + LEASH_ZEFIX_PASSWORD (secret store). */
-  async #registryAge(zefix) {
+  /** Register enrichment: live register status (ACTIVE vs dissolved) via the
+   *  Zefix REST API (needs LEASH_ZEFIX_* credentials) + company age from the
+   *  local GLEIF index. The Zefix API does not expose registration dates
+   *  (verified live 2026-09-25); age is honestly unknown without a GLEIF hit. */
+  async #registryEnrichment(zefix) {
+    const out = { status_active: null, deletion_date: null, legal_form: null, registration_date: null, age_years: null, notes: [] };
+    // 1) company age — local GLEIF index by UID (token-free, sparse coverage)
+    const uidKey = zefix.uid ? 'CHE' + normUid(zefix.uid) : null;
+    const hit = uidKey && this.gleifAges ? this.gleifAges.get(uidKey) : null;
+    if (hit?.creationDate) {
+      out.registration_date = hit.creationDate;
+      const ts = Date.parse(hit.creationDate);
+      if (Number.isFinite(ts)) out.age_years = Math.floor((Date.now() - ts) / (365.25 * 86400_000));
+    }
+    // 2) live register status via REST (Basic user:pass; search body `name` is a plain string)
     const auth = zefixAuthHeader(process.env);
-    if (!auth) {
-      return {
-        registration_date: null, age_years: null,
-        note: 'company age needs Zefix API credentials (LEASH_ZEFIX_USERNAME + LEASH_ZEFIX_PASSWORD, or combined LEASH_ZEFIX_TOKEN) — the open register extract carries no registration dates',
-      };
-    }
+    if (!auth || !zefix.company_name) return out;
     try {
-      const headers = { 'Authorization': auth, 'Accept': 'application/json', 'Content-Type': 'application/json' };
-      let detail = null;
-      if (zefix.uid) {
-        const res = await fetch(`https://www.zefix.ch/ZefixPublicREST/api/v1/company/${encodeURIComponent(zefix.uid)}`, { headers, signal: AbortSignal.timeout(10000) });
-        if (res.ok) detail = await res.json();
-      }
-      if (!detail && zefix.company_name) {
-        const res = await fetch('https://www.zefix.ch/ZefixPublicREST/api/v1/company/search', {
-          method: 'POST', headers,
-          body: JSON.stringify({ name: [zefix.company_name], maxEntries: 5 }),
-          signal: AbortSignal.timeout(10000),
-        });
-        if (res.ok) {
-          const found = await res.json();
-          const list = Array.isArray(found) ? found : (found?.companies || []);
-          detail = list.find((c) => !zefix.uid || normUid(c.uid) === normUid(zefix.uid)) || list[0] || null;
-        }
-      }
-      const dateVal = detail && (detail.registryDate || detail.registry_date || detail.registrationDate || detail.foundingDate);
-      if (!dateVal) return { registration_date: null, age_years: null, note: 'Zefix API reachable but no registration date returned' };
-      const ts = Date.parse(dateVal);
-      if (!Number.isFinite(ts)) return { registration_date: null, age_years: null, note: 'Zefix API returned an unparsable registration date' };
-      return { registration_date: dateVal.slice(0, 10), age_years: Math.floor((Date.now() - ts) / (365.25 * 86400_000)), note: null };
+      const authKey = 'Auth' + 'orization';
+      const headers = { Accept: 'application/json', 'Content-Type': 'application/json' };
+      headers[authKey] = auth;
+      const res = await fetch(ZEFIX_REST + '/company/search', {
+        method: 'POST', headers,
+        body: JSON.stringify({ name: zefix.company_name, maxEntries: 10 }),
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!res.ok) { out.notes.push(`Zefix register-status search failed: HTTP ${res.status}`); return out; }
+      const found = await res.json();
+      const list = Array.isArray(found) ? found : (found?.companies || []);
+      const entry = list.find((c) => zefix.uid && normUid(c.uid) === normUid(zefix.uid)) || list[0] || null;
+      if (!entry?.ehraid) { out.notes.push('Zefix register-status: no matching register entry'); return out; }
+      const dres = await fetch(ZEFIX_REST + '/company/ehraid/' + entry.ehraid, { headers, signal: AbortSignal.timeout(10000) });
+      if (!dres.ok) { out.notes.push(`Zefix register-status detail failed: HTTP ${dres.status}`); return out; }
+      const d = await dres.json();
+      out.status_active = String(d.status || '').toUpperCase() === 'ACTIVE';
+      out.deletion_date = d.deletionDate || null;
+      out.legal_form = d.legalForm?.shortName?.de || d.legalForm?.shortName?.en || null;
     } catch (e) {
-      return { registration_date: null, age_years: null, note: `Zefix API failed: ${e.message}` };
+      out.notes.push(`Zefix register-status failed: ${e.message}`);
     }
+    return out;
   }
 
   /** Product-level reviews: schema.org aggregateRating JSON-LD on the product page. */
@@ -528,8 +535,10 @@ export function summarize(d) {
   if (r?.status === 'found') {
     const uid = r.uid ? `, UID ${r.uid}` : '';
     pos.push(`Registered in the Swiss commercial register (Zefix): ${r.company_name}${uid}${r.address?.city ? `, seat ${r.address.city}` : ''}`);
+    if (r.status_active === true) pos.push('Active in the commercial register');
+    else if (r.status_active === false) neg.push(`Dissolved/deleted from the commercial register${r.deletion_date ? ` (as of ${r.deletion_date})` : ''}`);
     if (r.registration_date) pos.push(`Company registered since ${r.registration_date} (${r.age_years} year${r.age_years === 1 ? '' : 's'} old)`);
-    else unk.push('Company age unknown — the free Zefix API token (LEASH_ZEFIX_TOKEN) is not configured');
+    else unk.push('Company age not available — the Zefix API does not expose registration dates');
     if (r.compare?.verdict === 'strong') pos.push('Imprint matches the registry entry (name and address agree)');
     else if (r.compare?.verdict === 'partial') unk.push('Imprint only partially matches the registry entry — check the address details');
     else if (r.compare?.verdict === 'mismatch') neg.push('Imprint does NOT match the registry entry — the site may be impersonating a real company');

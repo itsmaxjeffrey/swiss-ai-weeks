@@ -176,6 +176,20 @@ test('zefixAuthHeader: split username+password or combined token, else null', ()
   assert.equal(zefixAuthHeader({}), null);
 });
 
+test('summarize: dissolved company is a hard negative; active is positive', () => {
+  const base = {
+    domain: 'old.ch', imprint: { status: 'found', company_name: 'Old AG', address: { street: 'A 1', postal_code: '1000', city: 'X' } },
+    social: {}, payments: { methods: [] }, error: null, product_url: null, summary: null,
+    country: { same_country: true, merchant_country: 'CH', customer_country: 'CH' },
+    reviews: { shop: null, product: null },
+  };
+  const dissolved = summarize({ ...base, registry: { status: 'found', company_name: 'Old AG', uid: 'CHE100000001', status_active: false, deletion_date: '2024-01-01', registration_date: null, age_years: null, compare: { verdict: 'strong' } } });
+  assert.ok(dissolved.negatives.some(p => p.includes('Dissolved')), dissolved.negatives.join('|'));
+  const active = summarize({ ...base, registry: { status: 'found', company_name: 'Old AG', uid: 'CHE100000001', status_active: true, deletion_date: null, registration_date: null, age_years: null, compare: { verdict: 'strong' } } });
+  assert.ok(active.positives.some(p => p.includes('Active in the commercial register')), active.positives.join('|'));
+  assert.ok(active.unknowns.some(u => u.includes('Zefix API does not expose registration dates')));
+});
+
 // ---------------------------------------------------------------------------
 console.log('\n— trusted-domain store —');
 
