@@ -18,11 +18,13 @@ Use one directive per entry:
 
 ## Directives
 
-Replace the example below with a real directive and a real observation date before you save this file. Never leave a placeholder directive `active`.
+<!-- observed: 2026-09-24 | status: active -->
 
-<!-- observed: YYYY-MM-DD | status: active -->
+- Always break non-trivial tasks into explicit numbered steps before starting, announce which step is in progress as work advances, and briefly explain how each step is done (tool, command, or method and why) — keep explanations short, not essays.
 
-- Prefer ...
+<!-- observed: 2026-09-24 | status: active -->
+
+- For multi-step work, always maintain a progress card (`progress_card`) with an ordered plan checklist (pending/in_progress/completed) and update it as each step completes, so progress stays visible outside the chat transcript.
 
 ## Related
 

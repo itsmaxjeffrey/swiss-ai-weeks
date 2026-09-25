@@ -34,5 +34,23 @@ Last updated: 2026-09-24. Proven by viseca-shopper UI go-live.
   background:true (instances got reaped, Sep 23).
 - GitHub pushes from this repo: deploy-key path (PAT is API-only, basic auth
   dead) — see workshop skill github-repo-publish.
-- Big ingests on this 2GB host must stream (chunked CSV, explicit pyarrow
-  schemas).
+- Big ingests must stream (2GB host at time of writing; free -h showed 9.2 GiB
+  on Sep 24 — re-check before assuming).
+- Shopper UI bridge (8794 → agent `viseca-shopper`, turn budget 590s): a turn
+  that calls `ask_user` ALWAYS dies as a bridge timeout — webui customers can't
+  see or answer structured questions, so the call blocks ~15 min past budget.
+  Questions go out as plain chat text ending the turn (rule added to
+  viseca-shopper AGENTS.md, Sep 24, after the 19:00 shoe-order timeout).
+  <!-- project: github-swiss-ai-weeks/itsmaxjeffrey/swiss-ai-weeks -->
+- Stopping a bridge turn (stop-v4, `846e321`, Sep 25): the bridge's direct
+  `openclaw` child is only a LAUNCHER — the real CLI runs as an anchored
+  grandchild in a supervisor-owned process group, so child.kill, group kills,
+  and exitCode checks all miss it, and the gateway-side run orphans and keeps
+  working. chat.abort / sessions.abort RPCs refuse cross-connection aborts of
+  CLI-spawned runs ("unauthorized"); a "stop" chat message just queues a
+  phantom turn. Working mechanism: each turn spawns the CLI with a unique
+  VISECA_TURN_TOKEN env var; /api/chat/stop scans /proc/*/environ for the
+  token and SIGKILLs every match — turn settles in seconds (live-verified).
+  Also: turnWithRetry must skip its continuation retry when the customer
+  stopped the turn (a stop-abort looks exactly like a no-reply failure).
+  <!-- project: github-swiss-ai-weeks/itsmaxjeffrey/swiss-ai-weeks -->
