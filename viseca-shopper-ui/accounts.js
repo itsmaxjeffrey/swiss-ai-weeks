@@ -442,7 +442,7 @@ module.exports = {
   PLANS, PLAN_IDS, REGISTRATION_OPEN, MAX_CHILDREN,
   SESSION_COOKIE,
   load, pruneSessions, ensureDemoAccount, ensureDummyAccount,
-  createUser, createChildAccount, deleteChildAccount, childrenOf, findUserById, verifyLogin,
+  createUser, createChildAccount, deleteChildAccount, childrenOf, findUserById, findUserByEmail, verifyLogin,
   createSession, destroySession, userBySessionToken,
   parseCookies, sessionCookieHeader, clearedSessionCookieHeader,
   createApiKey, userByApiKey, revokeApiKey,

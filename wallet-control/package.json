@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "replay": "node cli.js",
-    "test": "node test/engine.test.js && node test/yellowlist.test.js && node test/injection-model.test.js && node test/behavior-model.test.js && node test/injection-battery.test.js && node test/trustedshops.test.js"
+    "test": "node test/engine.test.js && node test/yellowlist.test.js && node test/injection-model.test.js && node test/behavior-model.test.js && node test/injection-battery.test.js && node test/trustedshops.test.js && node test/bridge-sync.test.js"
   },
   "engines": {
     "node": ">=20"

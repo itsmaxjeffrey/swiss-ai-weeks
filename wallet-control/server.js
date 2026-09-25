@@ -29,7 +29,16 @@ const trust = buildTrustIndex(trustRaw);
 const client = makeClient(store);
 const trustedShops = new TrustedShopsChecker();
 const dossierService = new MerchantDossier({ trustedShops });
-const worker = new Worker({ client, store, profiles, trust, trustedShops });
+// Shopper-bridge whitelist mirror: when the customer approves with "trust
+// merchant", the worker best-effort POSTs the domain to the bridge's internal
+// sync endpoint so sign-time whitelist enforcement there passes too. The token
+// is never logged. Unset vars => sync reports { skipped: 'not configured' }.
+const bridgeSync = {
+  url: (process.env.SHOPPER_BRIDGE_URL || '').trim(),
+  token: process.env.SHOPPER_BRIDGE_SYNC_TOKEN || '',
+  user: (process.env.SHOPPER_BRIDGE_USER || '').trim(),
+};
+const worker = new Worker({ client, store, profiles, trust, trustedShops, bridgeSync });
 const pack = {
   scenarios: loadCsv(path.join(PACK_DIR, 'scenario_catalogue.csv')),
 };
@@ -37,6 +46,7 @@ const pack = {
 const mode = client.mode === 'live' ? 'LIVE PLATFORM' : 'OFFLINE SIMULATOR';
 console.log(`[leash] mode: ${mode}`);
 console.log(`[leash] history profiles: ${profiles.purchaseCount.size} customers, trust dataset: ${trust ? Object.keys(trust.malicious_domains).length + ' malicious domains / ' + (trust.legit_companies?.length || 0) + ' legit companies' : 'not loaded'}`);
+console.log(`[leash] shopper bridge sync: ${bridgeSync.url ? `${bridgeSync.url} (account ${bridgeSync.user || '??'})` : 'disabled (SHOPPER_BRIDGE_URL not set)'}`);
 
 // ---- Helpers -------------------------------------------------------------------
 function json(res, status, body) {

@@ -7,12 +7,13 @@ import { evaluate } from './engine.js';
 import { normalizeDomain } from './trustedshops.js';
 
 export class Worker {
-  constructor({ client, store, profiles, trust, trustedShops = null, log = console }) {
+  constructor({ client, store, profiles, trust, trustedShops = null, bridgeSync = null, log = console }) {
     this.client = client;       // HttpApiClient | LocalApi
     this.store = store;
     this.profiles = profiles;
     this.trust = trust;
     this.trustedShops = trustedShops;  // TrustedShopsChecker (optional, advisory evidence)
+    this.bridgeSync = bridgeSync;      // { url, token, user, fetchImpl? } — shopper bridge whitelist mirror (optional)
     this.log = log;
     this.activeRuns = new Map(); // run_id -> {stop}
     this.feed = [];              // UI event feed (bounded)
@@ -172,6 +173,36 @@ export class Worker {
     };
   }
 
+  /** Best-effort mirror of a customer-trusted merchant into the shopper
+   *  bridge's per-account website whitelist (viseca-shopper-ui), so the
+   *  agent's signed policies for that domain pass the bridge's sign-time
+   *  enforcement. Config arrives via server.js from SHOPPER_BRIDGE_URL /
+   *  SHOPPER_BRIDGE_SYNC_TOKEN / SHOPPER_BRIDGE_USER. Never throws — the
+   *  customer's approval must never depend on this succeeding. */
+  async syncBridgeWhitelist(domain) {
+    const cfg = this.bridgeSync || {};
+    if (!cfg.url || !cfg.token || !cfg.user) return { skipped: 'not configured' };
+    try {
+      const doFetch = cfg.fetchImpl || fetch;
+      const res = await doFetch(`${String(cfg.url).replace(/\/+$/, '')}/api/internal/shopping/whitelist`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${cfg.token}` },
+        body: JSON.stringify({ email: cfg.user, domain }),
+        signal: AbortSignal.timeout(4000),
+      });
+      const detail = await res.json().catch(() => null);
+      return {
+        ok: Boolean(res.ok),
+        status: res.status,
+        added: detail?.added ?? null,
+        already: Boolean(detail?.already),
+        error: res.ok ? null : (detail?.error || `HTTP ${res.status}`),
+      };
+    } catch (err) {
+      return { ok: false, error: err?.message || String(err) };
+    }
+  }
+
   /** Customer answered a step-up from the UI. When `opts.whitelist` is set the
    *  customer explicitly trusted the merchant: the domain joins the persisted
    *  trusted list, so future purchases there skip the yellow-list review. */
@@ -184,17 +215,23 @@ export class Worker {
     const normalized = decision === 'approve' ? 'approved' : 'declined';
     const { decision: rec } = this.store.recordStepUpResolution(runId, authorizationId, normalized, customerMessage) || {};
     let whitelistAdded = null;
+    let bridgeSync = null;
     if (opts.whitelist && decision === 'approve' && rec?.merchantDomain) {
       whitelistAdded = this.store.addTrustedDomain(rec.merchantDomain, 'customer approved during purchase review');
       if (whitelistAdded) {
-        this.pushFeed({ kind: 'trust', run_id: runId, text: `🤝 ${whitelistAdded} added to your trusted merchants — future purchases there skip the yellow-list review.` });
+        bridgeSync = await this.syncBridgeWhitelist(whitelistAdded);
+        const outcome = bridgeSync.skipped ? 'shopper-bridge sync skipped (not configured)'
+          : bridgeSync.ok ? (bridgeSync.already ? 'also on the shopper-bridge whitelist already'
+            : 'also whitelisted in the shopper bridge')
+          : `shopper-bridge sync failed: ${bridgeSync.error}`;
+        this.pushFeed({ kind: 'trust', run_id: runId, text: `🤝 ${whitelistAdded} added to your trusted merchants — future purchases there skip the yellow-list review.`, bridge_sync: outcome });
       }
     }
     this.pushFeed({
       kind: 'resolution', run_id: runId, authorization_id: authorizationId,
       decision: normalized, text: `Customer ${normalized} the paused purchase${rec?.merchant ? ` at ${rec.merchant}` : ''}.`,
     });
-    return { ok: true, whitelist_added: whitelistAdded };
+    return { ok: true, whitelist_added: whitelistAdded, bridge_sync: bridgeSync };
   }
 }
 

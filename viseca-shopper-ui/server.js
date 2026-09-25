@@ -52,6 +52,13 @@ const TIMEOUT_MS = parseInt(process.env.OPENCLAW_TIMEOUT_MS || "600000", 10);
 const MAX_CONCURRENT = Math.max(1, parseInt(process.env.AGENT_MAX_CONCURRENT || "2", 10));
 const PUBLIC_DIR = path.join(__dirname, "public");
 
+/* wallet-control → bridge whitelist sync: when a customer approves a purchase
+ * with "trust merchant" in the wallet UI, wallet-control mirrors the domain
+ * into this bridge's per-account whitelist via POST /api/internal/shopping/
+ * whitelist. Both processes run on 127.0.0.1; the shared secret keeps the
+ * endpoint unusable by anything else. Unset => endpoint answers 404 (off). */
+const SHOPPING_SYNC_TOKEN = (process.env.SHOPPING_SYNC_TOKEN || "").trim();
+
 /* Order Policy Gate — the bridge is the trusted signing authority.
  * The Ed25519 PRIVATE key lives HERE (outside the agent workspace); the agent
  * only ever gets the public key, so it can verify but never forge a policy.
@@ -1148,6 +1155,40 @@ async function handle(req, res) {
     const auth = authenticate(req);
     if (!auth) return sendJson(res, 401, { error: "Not signed in." });
     return sendJson(res, 200, { ok: true, user: publicUserView(auth.user), via: auth.via });
+  }
+
+  /* ----- internal: wallet-control → whitelist sync (localhost + shared token) -----
+   * Mirrors a customer-trusted merchant into the account's website whitelist so
+   * the agent's signed policies for that domain pass sign-time enforcement.
+   * Guard order: token configured → peer is 127.0.0.1 → constant-time bearer. */
+
+  if (pathname === "/api/internal/shopping/whitelist" && req.method === "POST") {
+    if (!SHOPPING_SYNC_TOKEN) {
+      return sendJson(res, 404, { error: "Internal sync endpoint is disabled (SHOPPING_SYNC_TOKEN not set)." });
+    }
+    const ra = req.socket.remoteAddress || "";
+    if (ra !== "127.0.0.1" && ra !== "::1" && ra !== "::ffff:127.0.0.1") {
+      console.log(`[shopping] internal sync refused: non-local peer ${ra}`);
+      return sendJson(res, 403, { error: "Forbidden." });
+    }
+    const got = String(req.headers.authorization || "").replace(/^Bearer\s+/i, "").trim();
+    const a = Buffer.from(got);
+    const b = Buffer.from(SHOPPING_SYNC_TOKEN);
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+      console.log("[shopping] internal sync refused: bad token");
+      return sendJson(res, 401, { error: "Bad sync token." });
+    }
+    const body = await readJsonBody(req, 4).catch(() => null);
+    if (body === null) return sendJson(res, 413, { error: "Payload too large." });
+    const user = accounts.findUserByEmail(String(body.email || ""));
+    if (!user) return sendJson(res, 404, { error: "Unknown account." });
+    try {
+      const out = shopping.addWhitelist(user.id, body.domain);
+      console.log(`[shopping] internal sync +${out.added} -> ${user.email}${out.already ? " (already covered)" : ""}`);
+      return sendJson(res, out.already ? 200 : 201, { ok: true, added: out.added, already: out.already });
+    } catch (e) {
+      return sendJson(res, e.status || 500, { error: e.message });
+    }
   }
 
   /* ----- account management (session or key auth) ----- */
