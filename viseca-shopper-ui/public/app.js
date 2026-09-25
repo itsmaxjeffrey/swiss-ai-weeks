@@ -799,6 +799,14 @@
 
   function renderShopping() {
     if (!shoppingCache || !shoppingCache.ok) return;
+    const dl = shoppingCache.delivery;
+    if (dl && dl.street) {
+      dlStreet.value = dl.street;
+      dlZip.value = dl.zip || "";
+      dlCity.value = dl.city || "";
+      dlCountry.value = dl.country || "";
+      dlNote.textContent = "On file — every order for this account ships here (per-account, used at checkout).";
+    }
     const cap = shoppingCache.spendCapChf;
     shopCap.value = cap == null ? "" : cap;
     shopCapNote.textContent = cap == null
@@ -885,6 +893,29 @@
       body: JSON.stringify({ capChf: null }),
     }).catch(() => {});
     loadShopping();
+  });
+
+  dlSave.addEventListener("click", async () => {
+    dlError.hidden = true;
+    const body = { street: dlStreet.value.trim(), zip: dlZip.value.trim(), city: dlCity.value.trim(), country: dlCountry.value.trim() };
+    if (!body.street || !body.zip || !body.city) {
+      dlError.textContent = "Street, ZIP and city are required.";
+      dlError.hidden = false;
+      return;
+    }
+    const r = await fetch("/api/account/shopping/delivery", {
+      method: "PUT",
+      headers: authHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify(body),
+    }).catch(() => null);
+    if (r && r.ok) {
+      loadShopping();
+      addMessage("system", "Delivery address saved — orders for this account ship there (the agent can only use this address)." );
+    } else if (r) {
+      const j = await r.json().catch(() => ({}));
+      dlError.textContent = j.error || "Could not save the delivery address.";
+      dlError.hidden = false;
+    }
   });
 
   async function wlAddDomain(domain) {

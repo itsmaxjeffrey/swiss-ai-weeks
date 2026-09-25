@@ -468,6 +468,41 @@ function friendlyTurnError(err) {
 /** Validate + sign via scripts/policy.js, then file the signed envelope as
  *  policies/<policy_id>.signed.json in the agent workspace. The script itself
  *  REFUSES incomplete policies (exit 4) — that is the no-missing-data rule. */
+/** This account's customer block for signed envelopes: identity + delivery
+ *  address on file. Children with no address of their own inherit the parent's
+ *  — mirrors the family-card rule. Per-customer by design: the shared agent
+ *  workspace must never supply a global default identity or address. */
+function customerBlock(user) {
+  let holder = user;
+  let d = shopping.getDelivery(user.id);
+  if (!d && user.parentId) {
+    const parent = accounts.findUserById(user.parentId);
+    if (parent) {
+      d = shopping.getDelivery(parent.id);
+      holder = parent;
+    }
+  }
+  if (!d) return null;
+  return {
+    user_id: user.id,
+    email: user.email,
+    name: user.name || null,
+    delivery_address: shopping.deliveryAddressString(d),
+    delivery_source: user.id === holder.id ? "account" : "parent account",
+    source: "bridge account profile",
+  };
+}
+
+/** Per-customer context prepended to every shopper turn so the agent uses
+ *  THIS web customer's data, never a stored default. */
+function customerContextNote(user) {
+  const cust = customerBlock(user);
+  if (!cust) {
+    return "\n\n(System: this customer has NO delivery address on file. If this request could end in a purchase, tell them to add their address under Account → Shopping → Delivery address in the web UI — the authority refuses to sign without it. Never guess or default an address or email.)";
+  }
+  return `\n\n(System: customer on file — email ${cust.email}, name ${cust.name || "unknown"}, delivery address: ${cust.delivery_address}. Use exactly this identity and address for order policies, merchant checkouts and deliveries — never a different or historical default.)`;
+}
+
 function signPolicy(policy, res, user) {
   const signT0 = Date.now(); // every exit below reports its gate duration
 
@@ -499,6 +534,24 @@ function signPolicy(policy, res, user) {
       missing: [],
     });
   }
+  /* Per-customer data separation: the signed envelope carries THIS account's
+   * identity + on-file delivery address, overriding whatever the agent drafted.
+   * Checked after the shopping/parental gates so their violations surface first. */
+  const cust = customerBlock(user);
+  if (!cust) {
+    console.log(`[policy] sign REFUSED (no delivery address on file) user=${user.email}`);
+    recordTurnStage(user.id, { stage: "policy_sign", ok: false, detail: "refused: no delivery address on file", durationMs: Date.now() - signT0 });
+    return sendJson(res, 422, {
+      ok: false,
+      error: "The authority refused to sign — no delivery address is on file for this account.",
+      violations: ["No delivery address on file — add it under Account → Shopping → Delivery address, then have the agent re-propose the policy."],
+      missing: [],
+    });
+  }
+  policy.delivery = policy.delivery && typeof policy.delivery === "object" && !Array.isArray(policy.delivery) ? policy.delivery : {};
+  policy.delivery.address = cust.delivery_address;
+  policy.customer = cust;
+  console.log(`[policy] customer block injected user=${user.email} -> ${cust.delivery_address}`);
   const tmpIn = path.join(os.tmpdir(), `policy-in-${process.pid}-${Date.now()}.json`);
   const tmpOut = `${tmpIn}.signed`;
   fs.writeFileSync(tmpIn, JSON.stringify(policy, null, 2));
@@ -823,11 +876,11 @@ async function runChatTurn(req, res, user, message, mode, sessionId) {
   turnStageLogs.set(user.id, stageLog);
   // Per-turn activity reporting: the agent POSTs progress steps to the bridge
   // while it works; each one streams to the UI as a live checkmark trail.
-  let fullMessage = message;
+  let fullMessage = message + customerContextNote(user);
   if (process.env.ACTIVITY_REPORTING !== "off") {
     stageLog.activityToken = crypto.randomBytes(16).toString("hex");
     activityTokens.set(stageLog.activityToken, user.id);
-    fullMessage = message + activityNote(stageLog.activityToken);
+    fullMessage += activityNote(stageLog.activityToken);
   }
   console.log(`[chat] turn start  (${message.length} chars) user=${user.email} session=${sessionKey} mode=${mode}`);
   appendSessionMessage(user.id, sess, "user", message);
@@ -1084,7 +1137,7 @@ async function handle(req, res) {
       agent: AGENT,
       session: SESSION,
       bridge: "openclaw-cli",
-      build: "onboarding-1",
+      build: "per-user-data-1",
       busy: activeTurns >= MAX_CONCURRENT,
       activeTurns,
       maxConcurrent: MAX_CONCURRENT,
@@ -1248,11 +1301,24 @@ async function handle(req, res) {
         spendCapChf: shopping.getSpendCap(auth.user.id),
         whitelist: shopping.getWhitelist(auth.user.id),
         methods: shopping.listMethods(auth.user.id),
+        delivery: shopping.getDelivery(auth.user.id),
         unrestricted: {
           cap: shopping.getSpendCap(auth.user.id) == null,
           whitelist: shopping.getWhitelist(auth.user.id).length === 0,
         },
       });
+    }
+
+    if (pathname === "/api/account/shopping/delivery" && req.method === "PUT") {
+      const body = await readJsonBody(req, 4).catch(() => null);
+      if (body === null) return sendJson(res, 413, { error: "Payload too large." });
+      try {
+        const saved = shopping.setDelivery(auth.user.id, body);
+        console.log(`[shopping] ${auth.user.email} delivery address saved (${saved.zip} ${saved.city})`);
+        return sendJson(res, 200, { ok: true, delivery: saved });
+      } catch (e) {
+        return sendJson(res, e.status || 500, { error: e.message });
+      }
     }
 
     if (pathname === "/api/account/shopping/cap" && req.method === "PUT") {

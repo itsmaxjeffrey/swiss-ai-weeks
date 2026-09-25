@@ -96,6 +96,13 @@ const post = (p, body, headers = {}) =>
     body: JSON.stringify(body),
   });
 
+const putDl = (cookie, d = { street: "Musterstrasse 1", zip: "8001", city: "Zürich" }) =>
+  fetch(`${BASE}/api/account/shopping/delivery`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", Cookie: cookie },
+    body: JSON.stringify(d),
+  });
+
 function cookieOf(res) {
   const c = res.headers.getSetCookie ? res.headers.getSetCookie() : [res.headers.get("set-cookie")];
   const full = c.find((x) => x && x.startsWith("shopper_session="));
@@ -294,6 +301,61 @@ test("policy signing with a session reaches the authority (refuses incomplete)",
   assert.equal(r.status, 422); // authority refused — incomplete policy
 });
 
+test("per-customer delivery separation: envelopes carry the signing account's data", async () => {
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  const dateTag = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
+  const plusDays = (n) => new Date(now.getTime() + n * 86400000);
+  const mkPolicy = (suffix, draftedAddress) => ({
+    policy_id: `pol_${dateTag}-${suffix}`,
+    created_at: isoZurich(now),
+    request: "Per-customer separation test order",
+    items: [{ product: "Test item", quantity: 1, max_unit_price: { amount: 10, currency: "CHF" } }],
+    budget: { max_total: 10, currency: "CHF" },
+    timing: { order_by: isoZurich(plusDays(3)), deliver_by: isoZurich(plusDays(10)) },
+    delivery: { address: draftedAddress, instructions: "" },
+    payment: { method: "Viseca card", max_single_charge: { amount: 10, currency: "CHF" } },
+    merchant: { allowed_domains: [], blocked_domains: [], require_impressum: true },
+    stop_rules: ["stop and ask if nothing within budget"],
+  });
+  const reg = async (email) => cookieOf(await post("/api/auth/register", { email, password: "correct horse battery", name: "Sep" }));
+  const envPath = (id) => path.join(tmpDir, "agent-ws", "policies", `${id}.signed.json`);
+
+  const cookieA = await reg(`sep-a-${Date.now()}@test.local`);
+  const cookieB2 = await reg(`sep-b-${Date.now()}@test.local`);
+  assert.equal((await putDl(cookieA, { street: "Bahnhofstrasse 1", zip: "8001", city: "Zürich" })).status, 200);
+  assert.equal((await putDl(cookieB2, { street: "Freie Strasse 20", zip: "4051", city: "Basel", country: "Switzerland" })).status, 200);
+  const shopA = await (await fetch(`${BASE}/api/account/shopping`, { headers: { Cookie: cookieA } })).json();
+  assert.equal(shopA.delivery.street, "Bahnhofstrasse 1");
+  const shopB = await (await fetch(`${BASE}/api/account/shopping`, { headers: { Cookie: cookieB2 } })).json();
+  assert.equal(shopB.delivery.city, "Basel");
+
+  // the agent drafts a wrong/TODO address — the authority overrides with the on-file one
+  const sA = await post("/api/policy/sign", { policy: mkPolicy("d1a001", "Wrong Default 1, 9999 Nowhere") }, { Cookie: cookieA });
+  assert.equal(sA.status, 200, await sA.text());
+  const sB = await post("/api/policy/sign", { policy: mkPolicy("d1a002", "TODO full address") }, { Cookie: cookieB2 });
+  assert.equal(sB.status, 200, await sB.text());
+
+  const envA = JSON.parse(fs.readFileSync(envPath(`pol_${dateTag}-d1a001`), "utf8"));
+  const envB = JSON.parse(fs.readFileSync(envPath(`pol_${dateTag}-d1a002`), "utf8"));
+  assert.equal(envA.policy.delivery.address, "Bahnhofstrasse 1, 8001 Zürich, Switzerland");
+  assert.equal(envB.policy.delivery.address, "Freie Strasse 20, 4051 Basel, Switzerland");
+  assert.notEqual(envA.policy.delivery.address, envB.policy.delivery.address);
+  assert.ok(envA.policy.customer.email.startsWith("sep-a-"), "envelope names its own customer");
+  assert.ok(envB.policy.customer.email.startsWith("sep-b-"), "envelope names its own customer");
+  assert.notEqual(envA.policy.customer.email, envB.policy.customer.email);
+
+  // no address on file → the authority refuses to sign
+  const cookieC2 = await reg(`sep-c-${Date.now()}@test.local`);
+  const sC = await post("/api/policy/sign", { policy: mkPolicy("d1a003", "Whatever 3, 4000 X") }, { Cookie: cookieC2 });
+  assert.equal(sC.status, 422);
+  const scj = await sC.json();
+  assert.ok(scj.violations.some((v) => /delivery address/i.test(v)), "violation names the missing delivery address");
+
+  // malformed address PUT is rejected
+  assert.equal((await putDl(cookieA, { street: "", zip: "8001", city: "Zürich" })).status, 400);
+});
+
 test("login rejects wrong passwords, accepts right ones", async () => {
   const bad = await post("/api/auth/login", { email: "ada@example.com", password: "nope nope nope" });
   assert.equal(bad.status, 401);
@@ -404,6 +466,7 @@ test("sessions: per-session history, rename + delete", async () => {
 });
 
  test("signing a valid policy maps it to the account and lists it in purchases", async () => {
+  await putDl(cookieB, { street: "Bahnhofstrasse 1", zip: "8001", city: "Zürich" });
   const now = new Date();
   const pad = (n) => String(n).padStart(2, "0");
   const dateTag = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
@@ -593,6 +656,7 @@ const capPut = (c, value) =>
 });
 
  test("sign requires whitelisted merchant domains once the whitelist is active", async () => {
+  await putDl(cookieC, { street: "Freie Strasse 20", zip: "4051", city: "Basel" });
   await post("/api/account/shopping/whitelist", { domain: "ubereats.com" }, { Cookie: cookieC });
 
   const other = fullPolicy("wlro1", { merchant: { allowed_domains: ["migros.ch"], blocked_domains: [], require_impressum: true } });
@@ -644,6 +708,7 @@ const capPut = (c, value) =>
   cookieD = cookieOf(reg);
   await post("/api/account/shopping/whitelist", { domain: "ubereats.com" }, { Cookie: cookieD });
 
+  await putDl(cookieD, { street: "Tiergartenstrasse 5", zip: "8055", city: "Zürich" });
   const policy = fullPolicy("nocd1");
   const r = await post("/api/policy/sign", { policy }, { Cookie: cookieD });
   assert.equal(r.status, 200);
@@ -802,6 +867,7 @@ async function famLimitsFetch(cookie, body) {
 });
 
  test("sign within limits succeeds and records spend (no card anywhere yet)", async () => {
+  await putDl(cookieParent, { street: "Family Lane 1", zip: "8001", city: "Zürich" }); // child inherits the parent's address
   const policy = famPolicy(15, ["ubereats.com"]); // 15 ≤ 20/order, ≤ 30/mo, Food delivery 15 ≤ 25
   const r = await post("/api/policy/sign", { policy }, { Cookie: cookieChild });
   assert.equal(r.status, 200);

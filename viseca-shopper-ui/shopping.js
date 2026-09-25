@@ -431,6 +431,44 @@ function checkPolicyAgainstSettings(uid, policy) {
   return violations.length ? { ok: false, violations } : { ok: true };
 }
 
+/* ---------- per-customer delivery address ---------- */
+
+const DELIVERY_LIMITS = { street: 160, zip: 16, city: 80, country: 80 };
+
+/** This account's delivery address on file, or null. Per-account by design:
+ *  a shared agent workspace must never fall back to a global default. */
+function getDelivery(uid) {
+  const d = userSettings(uid).delivery;
+  return d && typeof d === "object" ? { ...d } : null;
+}
+
+function deliveryAddressString(d) {
+  if (!d || typeof d !== "object") return "";
+  return [d.street, `${d.zip} ${d.city}`.trim(), d.country].filter(Boolean).join(", ");
+}
+
+/** Validate + store this account's delivery address. Throws ShoppingError(400). */
+function setDelivery(uid, body) {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    throw new ShoppingError(400, "Delivery address must be an object.");
+  }
+  const out = {};
+  for (const [field, max] of Object.entries(DELIVERY_LIMITS)) {
+    let v = body[field];
+    if (field === "country" && (v == null || String(v).trim() === "")) v = "Switzerland";
+    if (typeof v !== "string" || !v.trim()) throw new ShoppingError(400, `Delivery "${field}" is required.`);
+    v = v.trim();
+    if (v.length > max) throw new ShoppingError(400, `Delivery "${field}" is too long (max ${max} chars).`);
+    if (/[\n\r]/.test(v)) throw new ShoppingError(400, `Delivery "${field}" must be a single line.`);
+    out[field] = v;
+  }
+  if (!/^[A-Za-z0-9][A-Za-z0-9\- ]*$/.test(out.zip)) throw new ShoppingError(400, 'Delivery "zip" looks invalid.');
+  const s = userSettings(uid);
+  s.delivery = { ...out, updatedAt: new Date().toISOString() };
+  saveSettings();
+  return { ...s.delivery };
+}
+
 /* ---------- payment handoff to the agent workspace ---------- */
 
 /** File the instrument for one signed policy. The agent reads this file at the
@@ -464,5 +502,6 @@ module.exports = {
   searchSites,
   listMethods, addMethod, deleteMethod, setDefaultMethod, pickMethod, maskedMethod,
   checkPolicyAgainstSettings,
+  getDelivery, setDelivery, deliveryAddressString,
   writePaymentFile,
 };

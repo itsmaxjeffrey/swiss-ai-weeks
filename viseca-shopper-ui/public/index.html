@@ -206,6 +206,23 @@
       </div>
 
       <div class="shop-block">
+        <span class="mono-label shop-label">Delivery address</span>
+        <p class="form-note" id="dlNote">Where the agent ships your orders. Each account keeps its own — the agent can only use the address saved here.</p>
+        <div class="wl-add-row">
+          <input type="text" id="dlStreet" placeholder="Street and number — e.g. Selnaustrasse 25" autocomplete="off">
+        </div>
+        <div class="wl-add-row">
+          <input type="text" id="dlZip" placeholder="ZIP — e.g. 8001" autocomplete="off">
+          <input type="text" id="dlCity" placeholder="City — e.g. Zürich" autocomplete="off">
+        </div>
+        <div class="wl-add-row">
+          <input type="text" id="dlCountry" placeholder="Country — default Switzerland" autocomplete="off">
+          <button class="acct-btn" id="dlSave" type="button">Save address</button>
+        </div>
+        <p class="form-note" id="dlError" hidden></p>
+      </div>
+
+      <div class="shop-block">
         <span class="mono-label shop-label">Whitelisted websites</span>
         <p class="form-note" id="wlNote">Empty whitelist — purchases from any website are allowed. Add the shops you actually order from to restrict the agent.</p>
         <div class="wl-chips" id="wlList"></div>
