@@ -77,6 +77,24 @@
   const famPassword = document.getElementById("famPassword");
   const famError = document.getElementById("famError");
   const famChildren = document.getElementById("famChildren");
+  /* first-run onboarding wizard */
+  const onboardingOverlay = document.getElementById("onboardingOverlay");
+  const onbKicker = document.getElementById("onbKicker");
+  const btnCloseOnboarding = document.getElementById("btnCloseOnboarding");
+  const onbStep1 = document.getElementById("onbStep1");
+  const onbStep2 = document.getElementById("onbStep2");
+  const onbStep3 = document.getElementById("onbStep3");
+  const onbTitle = document.getElementById("onbTitle");
+  const onbCapChips = document.getElementById("onbCapChips");
+  const onbCapCustom = document.getElementById("onbCapCustom");
+  const onbShopChips = document.getElementById("onbShopChips");
+  const onbShopCount = document.getElementById("onbShopCount");
+  const onbRecap = document.getElementById("onbRecap");
+  const onbStarters = document.getElementById("onbStarters");
+  const onbDots = document.getElementById("onbDots");
+  const onbBack = document.getElementById("onbBack");
+  const onbNext = document.getElementById("onbNext");
+  const onbSkip = document.getElementById("onbSkip");
 
   let turns = 0;
   let busy = false;
@@ -1200,6 +1218,7 @@
     acctUsage.textContent = user.usage.limit == null ? `${user.usage.used}/∞ msgs` : `${user.usage.used}/${user.usage.limit} msgs`;
     setLocked(false);
     if (!authOverlay.hidden && !accountView.hidden) renderAccountView(user);
+    maybeStartOnboarding(user); // first-run wizard (no-op when onboarded)
   }
   function renderSignedOut() {
     currentUser = null;
@@ -1432,6 +1451,158 @@
   tabRegister.addEventListener("click", () => showTab("register"));
   authOverlay.addEventListener("click", (e) => { if (e.target === authOverlay) closeAuth(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !authOverlay.hidden) closeAuth(); });
+
+  /* ---------- first-run onboarding wizard ---------- */
+
+  const ONB_SHOPS = [
+    { domain: "migros.ch", name: "Migros" },
+    { domain: "coop.ch", name: "Coop" },
+    { domain: "digitec.ch", name: "Digitec" },
+    { domain: "brack.ch", name: "Brack.ch" },
+    { domain: "galaxus.ch", name: "Galaxus" },
+    { domain: "interdiscount.ch", name: "Interdiscount" },
+    { domain: "farmy.ch", name: "Farmy" },
+    { domain: "zalando.ch", name: "Zalando" },
+    { domain: "justeat.ch", name: "Just Eat" },
+    { domain: "exlibris.ch", name: "Ex Libris" },
+  ];
+  const ONB_KICKERS = { 1: "01 — Budget", 2: "02 — Trusted shops", 3: "03 — Ready" };
+  let onbStep = 1;
+  let onbCap = "50"; // selected preset or "none" (a filled custom input wins)
+  let onbShops = new Set();
+  let onboardingDone = false; // never re-open within this page load
+
+  function onbGoto(step) {
+    onbStep = Math.min(3, Math.max(1, step));
+    onbKicker.textContent = ONB_KICKERS[onbStep];
+    onbStep1.hidden = onbStep !== 1;
+    onbStep2.hidden = onbStep !== 2;
+    onbStep3.hidden = onbStep !== 3;
+    onbBack.hidden = onbStep === 1;
+    onbNext.textContent = onbStep === 3 ? "Finish" : "Continue";
+    onbDots.querySelectorAll(".onb-dot").forEach((d, i) => d.classList.toggle("onb-dot--on", i < onbStep));
+    if (onbStep === 3) onbRenderRecap();
+  }
+
+  async function onbApplyCap() {
+    const custom = Number(String(onbCapCustom.value || "").trim());
+    const cap = Number.isFinite(custom) && custom > 0 ? custom : (onbCap === "none" ? null : Number(onbCap));
+    try {
+      await fetch("/api/account/shopping/cap", {
+        method: "PUT",
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify(cap == null ? {} : { capChf: cap }), // {} clears the cap server-side
+      });
+    } catch { /* onboarding never blocks on a failed save */ }
+  }
+
+  async function onbToggleShop(domain, on) {
+    const path = on ? "/api/account/shopping/whitelist" : "/api/account/shopping/whitelist/remove";
+    try {
+      await fetch(path, {
+        method: "POST",
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ domain }),
+      });
+    } catch { /* chip state stays optimistic; the Account sheet shows the truth */ }
+  }
+
+  function onbRenderShops() {
+    onbShopChips.innerHTML = "";
+    ONB_SHOPS.forEach(({ domain, name }) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "onb-chip" + (onbShops.has(domain) ? " onb-chip--on" : "");
+      b.textContent = name;
+      b.addEventListener("click", () => {
+        const on = !onbShops.has(domain);
+        if (on) onbShops.add(domain); else onbShops.delete(domain);
+        b.classList.toggle("onb-chip--on", on);
+        onbShopCount.textContent = onbShops.size
+          ? `${onbShops.size} shop${onbShops.size > 1 ? "s" : ""} selected — checkouts stay limited to these.`
+          : "No shops selected — every website is allowed.";
+        onbToggleShop(domain, on);
+      });
+      onbShopChips.appendChild(b);
+    });
+  }
+
+  function onbRenderRecap() {
+    const cap = onbCap === "none" ? "no fixed limit" : `CHF ${onbCap}`;
+    const shops = onbShops.size
+      ? [...onbShops].slice(0, 3).join(", ") + (onbShops.size > 3 ? ` +${onbShops.size - 3} more` : "")
+      : "all Swiss shops";
+    onbRecap.textContent = `Budget ${cap} per order · shops: ${shops}. Your first mission is one click away:`;
+    onbStarters.innerHTML = "";
+    const capNum = onbCap === "none" ? 50 : Number(onbCap);
+    const picks = [
+      `Find a birthday gift under ${capNum} CHF for a friend who loves hiking — suggest 3 options with links.`,
+      onbShops.size >= 2
+        ? `Compare prices on ${[...onbShops][0]} vs ${[...onbShops][1]} for Sony WH-1000XM6 headphones — where is it cheapest right now?`
+        : `Compare headphone prices across Swiss online shops — where is the Sony WH-1000XM6 cheapest right now?`,
+      `Plan a weekly grocery shop for two people with a ${Math.min(120, capNum)} CHF budget at Migros and Coop.`,
+    ];
+    picks.forEach((p) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "onb-starter";
+      const t = document.createElement("span");
+      t.className = "onb-starter-text";
+      t.textContent = p;
+      const go = document.createElement("span");
+      go.className = "onb-starter-go";
+      go.textContent = "→";
+      b.append(t, go);
+      b.addEventListener("click", () => onbFinish(p));
+      onbStarters.appendChild(b);
+    });
+  }
+
+  async function onbFinish(prefill) {
+    onboardingOverlay.hidden = true;
+    if (onboardingDone) return;
+    onboardingDone = true;
+    fetch("/api/account/onboarded", { method: "POST", headers: authHeaders() }).catch(() => {});
+    if (prefill) {
+      input.value = prefill;
+      input.dispatchEvent(new Event("input")); // re-run autosize
+    }
+    input.focus();
+  }
+
+  function maybeStartOnboarding(user) {
+    if (!onboardingOverlay || user.onboarded || onboardingDone) return;
+    if (!authOverlay.hidden || busy) return; // never fight another sheet or a running turn
+    const first = String(user.name || "").split("@")[0].split(" ")[0];
+    onbTitle.textContent = (first ? `Grüezi, ${first}! ` : "Grüezi! ") + "How much may I spend per order?";
+    onbRenderShops();
+    onbGoto(1);
+    onboardingOverlay.hidden = false;
+  }
+
+  onbCapChips.addEventListener("click", (e) => {
+    const chip = e.target.closest("[data-cap]");
+    if (!chip) return;
+    onbCap = chip.dataset.cap;
+    onbCapCustom.value = "";
+    onbCapChips.querySelectorAll(".onb-chip").forEach((c) => c.classList.toggle("onb-chip--on", c === chip));
+  });
+  onbCapCustom.addEventListener("input", () => {
+    if (onbCapCustom.value !== "") {
+      onbCapChips.querySelectorAll(".onb-chip").forEach((c) => c.classList.remove("onb-chip--on"));
+    }
+  });
+  onbCapCustom.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); onbNext.click(); } });
+  onbBack.addEventListener("click", () => onbGoto(onbStep - 1));
+  onbNext.addEventListener("click", async () => {
+    if (onbStep === 1) { await onbApplyCap(); onbGoto(2); }
+    else if (onbStep === 2) onbGoto(3);
+    else await onbFinish();
+  });
+  onbSkip.addEventListener("click", () => onbFinish());
+  btnCloseOnboarding.addEventListener("click", () => onbFinish());
+  onboardingOverlay.addEventListener("click", (e) => { if (e.target === onboardingOverlay) onbFinish(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !onboardingOverlay.hidden) onbFinish(); });
 
   /* ---------- boot ---------- */
 

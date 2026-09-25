@@ -328,6 +328,16 @@ function setPlan(userId, plan) {
   return user;
 }
 
+/** First-run onboarding: mark the welcome wizard as done so it never opens
+ *  again (idempotent — any exit path from the wizard calls this once). */
+function markOnboarded(userId) {
+  const user = findUser(userId);
+  if (!user) throw new ApiError(404, "No such user.");
+  if (!user.onboardedAt) user.onboardedAt = Date.now();
+  saveSoon();
+  return user;
+}
+
 /** Count one message against the plan's daily cap. */
 function countMessage(userId) {
   const user = findUser(userId);
@@ -428,6 +438,7 @@ function publicUser(user) {
     plan: user.plan,
     planLabel: (PLANS[user.plan] || PLANS.free).label,
     isDemo: Boolean(user.demo),
+    onboarded: Boolean(user.onboardedAt), // false ⇒ client shows the first-run wizard
     parentId: user.parentId || null,
     usage: usageInfo(user),
     created: user.created,
@@ -446,5 +457,5 @@ module.exports = {
   createSession, destroySession, userBySessionToken,
   parseCookies, sessionCookieHeader, clearedSessionCookieHeader,
   createApiKey, userByApiKey, revokeApiKey,
-  setPlan, countMessage, usageInfo, publicUser,
+  setPlan, markOnboarded, countMessage, usageInfo, publicUser,
 };

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <title>Viseca Shopper — Personal Shopping Concierge</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,7 +12,7 @@
 </head>
 <body>
 
-<aside class="rail">
+<aside class="rail" id="railDrawer">
   <header class="masthead">
     <div class="masthead-cross" aria-hidden="true">+</div>
     <h1 class="masthead-title">
@@ -104,6 +104,11 @@
 
 <main class="stage">
   <div class="stage-head">
+    <button class="m-menu" id="mMenuBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="railDrawer">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" aria-hidden="true">
+        <path d="M3 6h18M3 12h18M3 18h18"/>
+      </svg>
+    </button>
     <span class="mono-label stage-head-label"><span class="red">+</span> Konversation / Conversation</span>
     <span class="stage-head-right">
       <span class="mono-label" id="turnCounter">no messages yet</span>
@@ -284,6 +289,92 @@
   </div>
 </div>
 
+<!-- first-run onboarding wizard -->
+<div class="overlay" id="onboardingOverlay" hidden>
+  <div class="sheet sheet--wizard" role="dialog" aria-modal="true" aria-labelledby="onbTitle">
+    <div class="sheet-head">
+      <span class="mono-label sheet-kicker" id="onbKicker">01 — Budget</span>
+      <button class="sheet-close" id="btnCloseOnboarding" type="button" aria-label="Skip onboarding">×</button>
+    </div>
+
+    <div class="onb-step" id="onbStep1">
+      <h3 class="sheet-title" id="onbTitle">Grüezi! How much may I spend per order?</h3>
+      <p class="sheet-sub">I'm your shopping agent — this cap is a hard limit I can never break when paying.</p>
+      <div class="onb-chips" id="onbCapChips">
+        <button class="onb-chip" type="button" data-cap="20">CHF 20</button>
+        <button class="onb-chip onb-chip--on" type="button" data-cap="50">CHF 50</button>
+        <button class="onb-chip" type="button" data-cap="100">CHF 100</button>
+        <button class="onb-chip" type="button" data-cap="250">CHF 250</button>
+        <button class="onb-chip" type="button" data-cap="none">No limit</button>
+      </div>
+      <div class="onb-custom-row">
+        <input type="number" id="onbCapCustom" min="1" max="100000" step="0.01" placeholder="Custom amount…">
+        <span class="shop-cap-chf">CHF</span>
+      </div>
+      <p class="form-note">You can change this anytime — Account → Shopping settings. Recommended: CHF 50.</p>
+    </div>
+
+    <div class="onb-step" id="onbStep2" hidden>
+      <h3 class="sheet-title">Which shops do you trust?</h3>
+      <p class="sheet-sub">Tap the ones you actually order from — I'll check out only there. Leave all off and I may shop anywhere.</p>
+      <div class="onb-chips onb-shops" id="onbShopChips"></div>
+      <p class="form-note" id="onbShopCount">No shops selected — every website is allowed.</p>
+    </div>
+
+    <div class="onb-step" id="onbStep3" hidden>
+      <h3 class="sheet-title">You're ready. What are we shopping for?</h3>
+      <p class="sheet-sub" id="onbRecap">—</p>
+      <div class="onb-starters" id="onbStarters"></div>
+      <p class="form-note">A card is optional — I'll ask at checkout when a purchase needs one (Account → Payment method).</p>
+    </div>
+
+    <div class="onb-nav">
+      <div class="onb-dots" id="onbDots" aria-hidden="true">
+        <span class="onb-dot onb-dot--on"></span><span class="onb-dot"></span><span class="onb-dot"></span>
+      </div>
+      <span class="onb-nav-btns">
+        <button class="acct-btn" id="onbBack" type="button" hidden>Back</button>
+        <button class="acct-btn acct-btn--primary" id="onbNext" type="button">Continue</button>
+      </span>
+    </div>
+    <button class="onb-skip mono-label" id="onbSkip" type="button">skip — decide later in Account</button>
+  </div>
+</div>
+
 <script src="app.js"></script>
+<script>
+  /* Mobile-only rail drawer toggle (≤ 960px, styled in styles.css).
+     Elements are inert on desktop: the button is display:none there. */
+  (function () {
+    var btn = document.getElementById("mMenuBtn");
+    var rail = document.getElementById("railDrawer");
+    if (!btn || !rail) return;
+    function setOpen(open) {
+      document.body.classList.toggle("rail-open", !!open);
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+    }
+    btn.addEventListener("click", function () {
+      setOpen(!document.body.classList.contains("rail-open"));
+    });
+    /* tap on the dim backdrop (outside the drawer) closes it */
+    document.addEventListener("click", function (e) {
+      if (!document.body.classList.contains("rail-open")) return;
+      if (e.target.closest && (e.target.closest(".rail") || e.target.closest("#mMenuBtn"))) return;
+      setOpen(false);
+    });
+    /* acting on anything inside the drawer closes it */
+    rail.addEventListener("click", function (e) {
+      if (e.target.closest && e.target.closest("button, .conv-item")) setOpen(false);
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") setOpen(false);
+    });
+    /* drop keyboard-only hint copy on touch devices */
+    if (window.matchMedia && window.matchMedia("(pointer: coarse)").matches) {
+      var hint = document.querySelector(".composer-hint");
+      if (hint) hint.textContent = "Replies come from the live agent";
+    }
+  })();
+</script>
 </body>
 </html>

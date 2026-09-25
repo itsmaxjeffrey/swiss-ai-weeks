@@ -164,6 +164,28 @@ test("me returns the signed-in user", async () => {
   assert.equal(j.user.usage.used, 0);
 });
 
+test("onboarding: fresh accounts start un-onboarded; endpoint marks done (auth + idempotent)", async () => {
+  const reg = await post("/api/auth/register", { email: "onb@example.com", password: "correct horse battery", name: "Ona" });
+  assert.equal(reg.status, 201);
+  const { user, session } = await reg.json();
+  assert.equal(user.onboarded, false);
+
+  const noAuth = await post("/api/account/onboarded", {});
+  assert.equal(noAuth.status, 401);
+
+  const done = await post("/api/account/onboarded", {}, { Authorization: `Bearer ${session}` });
+  assert.equal(done.status, 200);
+  assert.equal((await done.json()).user.onboarded, true);
+
+  // idempotent: finishing twice (skip, reopen, …) stays ok
+  const again = await post("/api/account/onboarded", {}, { Authorization: `Bearer ${session}` });
+  assert.equal(again.status, 200);
+
+  // flag persists in /api/auth/me for the wizard trigger on next page load
+  const me = await fetch(`${BASE}/api/auth/me`, { headers: { Authorization: `Bearer ${session}` } });
+  assert.equal((await me.json()).user.onboarded, true);
+});
+
 test("chat works over SSE with a cookie and gets a per-user session", async () => {
   const r = await post("/api/chat", { message: "find me a gift" }, { Cookie: cookie });
   assert.equal(r.status, 200);

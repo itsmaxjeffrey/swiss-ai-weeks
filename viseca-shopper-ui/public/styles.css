@@ -460,28 +460,121 @@ body::after {
 /* ---------------- responsive ---------------- */
 
 @media (max-width: 960px) {
-  body { grid-template-columns: 1fr; grid-template-rows: auto 1fr; overflow: auto; }
-
-  .rail {
-    border-right: none;
-    border-bottom: 1px solid var(--ink);
-    padding: 20px 20px 14px;
-    gap: 16px;
-    overflow: visible;
+  /* Phone / tablet app frame: the stage fills the viewport as a chat screen
+     (internally scrolling feed, pinned composer) and the rail becomes an
+     off-canvas drawer opened by the .m-menu button in the stage head.
+     Drawer toggling lives in an inline script in index.html (body.rail-open).
+     Desktop (> 960px) is untouched. */
+  body {
+    display: block;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    overscroll-behavior: none;
   }
 
-  .masthead-title { font-size: 40px; }
-  .masthead-cross { font-size: 30px; top: -2px; }
-  .prompt-index { display: none; }
+  /* rail → off-canvas drawer */
+  .rail {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 90;
+    width: min(86vw, 360px);
+    border-right: 1px solid var(--ink);
+    padding: 20px 20px 14px;
+    gap: 16px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    transform: translateX(-103%);
+    visibility: hidden;
+    transition: transform 0.28s var(--ease), visibility 0s linear 0.28s;
+  }
+
+  body.rail-open .rail {
+    transform: translateX(0);
+    visibility: visible;
+    transition: transform 0.28s var(--ease);
+    box-shadow: 12px 0 32px rgba(23, 21, 15, 0.3);
+  }
+
+  /* dim backdrop behind the open drawer */
+  body.rail-open::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 89;
+    background: rgba(23, 21, 15, 0.45);
+  }
+
+  /* menu button — stage-head slot, phones only */
+  .m-menu {
+    display: inline-flex;
+    flex: none;
+    width: 38px;
+    height: 38px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--ink);
+    background: var(--paper);
+    color: var(--ink);
+    cursor: pointer;
+    transition: background 0.15s var(--ease), color 0.15s var(--ease);
+  }
+  .m-menu:hover { background: var(--ink); color: var(--paper); }
+  .m-menu:active { background: var(--red); border-color: var(--red-deep); color: #fff; }
+
+  /* stage = full-viewport chat frame */
+  .stage {
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  .stage-head { gap: 10px; padding: 10px 14px; }
+  .stage-head-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .stage-head-right { margin-left: auto; }
+
+  .feed {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding: 20px 16px 10px;
+  }
+
+  .msg, .msg--trail, .msg--timings { max-width: 92%; }
+  .typing { padding: 4px 16px 12px; }
+
+  .composer {
+    margin: 0 12px;
+    padding: 10px 10px 10px 14px;
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  .composer:focus-within { box-shadow: 4px 4px 0 var(--red); }
+  .composer-hint {
+    padding: 8px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* drawer content */
+  .masthead-title { font-size: 34px; }
+  .masthead-cross { font-size: 26px; top: -2px; }
   .rail-footer { display: none; }
   .status-card { box-shadow: 3px 3px 0 var(--ink); }
 
-  .stage { height: auto; min-height: 0; overflow: visible; }
-  .feed { overflow: visible; padding: 22px 20px 8px; }
-  .msg { max-width: 92%; }
-  .typing { padding: 4px 20px 14px; }
-  .composer { margin: 0 20px; }
-  .composer-hint { padding: 8px 20px 20px; }
+  /* no hover on touch — keep the conversation delete reachable */
+  .conv-del { opacity: 1; }
+
+  /* ≥16px inputs: iOS Safari zooms the viewport on focus otherwise */
+  #input, .field input, .shop-cap-row input[type="number"],
+  .wl-add-row input, .wl-search-row input, .onb-custom-row input,
+  .fam-new-row input, .key-form input {
+    font-size: 16px;
+  }
 }
 
 /* ---------------- order policy approval cards ---------------- */
@@ -1158,4 +1251,144 @@ body::after {
 
 @media (max-width: 760px) {
   .msg--timings { max-width: 92%; }
+}
+
+/* ---------- first-run onboarding wizard ---------- */
+
+.sheet--wizard { width: min(560px, 100%); }
+
+.onb-step { animation: onbIn 0.22s var(--ease) both; }
+@keyframes onbIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.onb-chips { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0 12px; }
+.onb-chip {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  padding: 9px 16px;
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  cursor: pointer;
+  color: var(--ink);
+  transition: transform 0.08s var(--ease), box-shadow 0.08s var(--ease), background 0.08s var(--ease), color 0.08s var(--ease);
+}
+.onb-chip:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--ink); }
+.onb-chip--on { background: var(--ink); color: var(--paper); }
+.onb-shops .onb-chip--on { background: var(--red); border-color: var(--red-deep); color: #fff; }
+.onb-shops .onb-chip--on::after { content: " ✓"; }
+
+.onb-custom-row { display: flex; align-items: center; gap: 8px; margin: 4px 0 10px; }
+.onb-custom-row input {
+  width: 170px;
+  padding: 8px 10px;
+  border: 1px solid var(--ink);
+  background: #fff;
+  font-family: var(--mono);
+  font-size: 13px;
+}
+.onb-custom-row input:focus { outline: none; border-color: var(--red); }
+
+.onb-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 22px;
+  padding-top: 14px;
+  border-top: 1px solid var(--ink);
+}
+.onb-nav-btns { display: flex; gap: 8px; }
+.onb-dots { display: flex; gap: 6px; }
+.onb-dot { width: 22px; height: 4px; background: var(--paper-deep); border: 1px solid var(--ink-soft); }
+.onb-dot--on { background: var(--red); border-color: var(--red-deep); }
+
+.onb-skip {
+  display: block;
+  margin: 12px auto 0;
+  background: none;
+  border: none;
+  text-decoration: underline;
+  cursor: pointer;
+  color: var(--ink-soft);
+}
+.onb-skip:hover { color: var(--red); }
+
+.onb-starters { display: flex; flex-direction: column; gap: 8px; margin: 14px 0 10px; }
+.onb-starter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  font-family: var(--serif);
+  font-size: 15px;
+  line-height: 1.35;
+  padding: 11px 14px;
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  cursor: pointer;
+  color: var(--ink);
+  transition: background 0.1s var(--ease), color 0.1s var(--ease);
+}
+.onb-starter:hover { background: var(--ink); color: var(--paper); }
+.onb-starter-go { flex: none; font-family: var(--mono); color: var(--red); }
+.onb-starter:hover .onb-starter-go { color: var(--red); }
+
+@media (max-width: 760px) {
+  .onb-starter { font-size: 14px; }
+}
+
+/* ============================================================
+   MOBILE POLISH — touch + small phones
+   ============================================================ */
+
+button { touch-action: manipulation; }
+body { -webkit-tap-highlight-color: transparent; }
+
+/* menu button exists only inside the ≤960px app frame */
+.m-menu { display: none; }
+
+@media (max-width: 640px) {
+  .plans { grid-template-columns: 1fr; }
+
+  /* overlays become full-screen sheets */
+  .overlay { padding: 0; }
+  .sheet, .sheet--wizard {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    border: none;
+    box-shadow: none;
+    padding: 14px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+  }
+  .sheet-head {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    margin: 0 -16px 14px;
+    padding: 12px 16px 10px;
+    background: var(--paper);
+  }
+
+  /* editorial type scales down */
+  .welcome { padding: 10px 0 6px; }
+  .welcome-lede { font-size: 22px; }
+  .masthead-title { font-size: 34px; }
+  .msg { margin-bottom: 20px; }
+  .msg--agent .msg-body { font-size: 16.5px; padding-left: 14px; }
+  .msg--user .msg-body { font-size: 15.5px; padding-right: 12px; }
+
+  /* declutter the stage head */
+  #turnCounter { display: none; }
+
+  .policy-row { grid-template-columns: 86px 1fr; gap: 8px; }
+  .policy-actions { padding: 10px 12px; }
+  .policy-btn { padding: 10px 14px; }
+
+  .send { width: 44px; height: 44px; }
+  .shop-cap-row { flex-wrap: wrap; }
+  .fam-new-row input { flex: 1 1 100%; }
 }

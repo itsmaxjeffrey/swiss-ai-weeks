@@ -1084,7 +1084,7 @@ async function handle(req, res) {
       agent: AGENT,
       session: SESSION,
       bridge: "openclaw-cli",
-      build: "activity-live-2",
+      build: "onboarding-1",
       busy: activeTurns >= MAX_CONCURRENT,
       activeTurns,
       maxConcurrent: MAX_CONCURRENT,
@@ -1211,6 +1211,12 @@ async function handle(req, res) {
         return sendJson(res, e.status || 500, { error: e.message });
       }
       console.log(`[account] ${auth.user.email} switched plan -> ${body.plan}${auth.via === "session" ? "" : " (demo: billing not wired)"}`);
+      return sendJson(res, 200, { ok: true, user: publicUserView(auth.user) });
+    }
+
+    if (req.method === "POST" && pathname === "/api/account/onboarded") {
+      accounts.markOnboarded(auth.user.id);
+      console.log(`[account] ${auth.user.email} finished onboarding`);
       return sendJson(res, 200, { ok: true, user: publicUserView(auth.user) });
     }
 
