@@ -176,3 +176,53 @@ footer { margin-top: 34px; border-top: 1px solid var(--line); padding-top: 14px;
 .dz-chip { display: inline-block; border: 1px solid var(--line); border-radius: 6px; padding: 0 6px 1px; margin: 1px 2px 1px 0; font-size: 11.5px; background: #fff; }
 .dz-loading { font-family: var(--mono); font-size: 12px; color: var(--ink-soft); }
 .dz-url { font-family: var(--mono); font-size: 11px; word-break: break-all; margin-top: 8px; color: var(--ink-soft); }
+
+/* confidence badge — evidence-based feedback on every decision surface */
+.conf-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-family: var(--mono);
+  padding: 2px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.conf-badge.conf-high { color: var(--green); border-color: var(--green); background: #eef6ef; }
+.conf-badge.conf-mid  { color: var(--amber); border-color: var(--amber); background: #fdf6e7; }
+.conf-badge.conf-low  { color: var(--red); border-color: var(--red); background: #f9ecea; }
+
+/* ---- sustainability preference + offer comparison (additive) ---- */
+.sus-toggle {
+  cursor: pointer; font-family: var(--mono); font-size: 11px;
+  padding: 3px 9px; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--card); color: var(--ink-soft);
+}
+.sus-toggle:hover { border-color: var(--green); color: var(--green); }
+.sus-toggle.on { border-color: var(--green); color: var(--green); background: #eef6ef; }
+
+.offers-box { margin-top: 18px; border-top: 1px dashed var(--line); padding-top: 10px; }
+.offers-box summary { cursor: pointer; font-weight: 600; }
+.offers-input { flex: 1; font: inherit; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); }
+.offers-input:focus { outline: 1px solid var(--ink); }
+
+.offers-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14px; }
+.offers-table th {
+  text-align: left; font-family: var(--mono); font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.05em; color: var(--ink-soft); padding: 6px 10px; border-bottom: 2px solid var(--ink);
+}
+.offers-table td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.offers-table tr.best td { background: #eef6ef; }
+.offer-note { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+.band {
+  font-family: var(--mono); font-size: 10px; padding: 1px 7px; border-radius: 999px;
+  border: 1px solid var(--line); color: var(--ink-soft); white-space: nowrap;
+}
+.band.risk.low { color: var(--green); border-color: var(--green); background: #eef6ef; }
+.band.risk.medium { color: var(--amber); border-color: var(--amber); background: #fdf6e7; }
+.band.risk.high { color: var(--red); border-color: var(--red); background: #f9ecea; }
+.band.sus.good { color: var(--green); border-color: var(--green); background: #eef6ef; }
+.band.sus.medium { color: var(--amber); border-color: var(--amber); background: #fdf6e7; }
+.band.sus.poor { color: var(--red); border-color: var(--red); background: #f9ecea; }
+.band.sus.unknown { color: var(--ink-soft); }
+.pick { font-family: var(--mono); font-size: 11px; color: var(--green); font-weight: 700; white-space: nowrap; }

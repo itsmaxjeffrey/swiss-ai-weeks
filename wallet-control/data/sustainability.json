@@ -1,0 +1,19 @@
+{
+  "_comment": "Demo-grade static sustainability scores per shop domain. 0-100, higher = more sustainable. Hand-curated, very basic by design — NOT a certification feed; notes are one-line summaries. Shops missing here are reported as 'unknown' by lib/sustainability.js, never guessed.",
+  "merchants": {
+    "digitec.ch": { "score": 78, "note": "published sustainability report, repairability pledge, e-waste take-back" },
+    "galaxus.ch": { "score": 74, "note": "digitec Galaxus marketplace; sustainability report, second-life/returns programme" },
+    "galaxus.de": { "score": 72, "note": "Galaxus DE; sustainability report, second-life programme" },
+    "brack.ch": { "score": 68, "note": "family-run Allgäu retailer; efficient logistics, e-waste take-back" },
+    "decathlon.ch": { "score": 66, "note": "eco-design programme, spare-parts & repair offer, published product scorecards" },
+    "fust.ch": { "score": 62, "note": "long-running repair service, efficient-appliance focus" },
+    "ochsnersport.ch": { "score": 60, "note": "sports retailer; some sustainable product lines, moderate public reporting" },
+    "microspot.ch": { "score": 58, "note": "Coop Group; some eco ranges, moderate reporting" },
+    "melectronics.ch": { "score": 58, "note": "Migros electronics; moderate reporting" },
+    "intersport.ch": { "score": 55, "note": "retailer co-op; some eco ranges, thin public reporting" },
+    "hm.com": { "score": 56, "note": "garment collecting, reported sustainability data; record contested by critics" },
+    "zalando.ch": { "score": 54, "note": "fashion platform; some sustainable ranges, packaging reductions" },
+    "interdiscount.ch": { "score": 52, "note": "discount electronics; limited public sustainability reporting" },
+    "sportxx.ch": { "score": 48, "note": "budget sports chain (Coop Group); limited sustainability data" }
+  }
+}

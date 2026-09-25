@@ -1,0 +1,210 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>wallet-control backend flow</title>
+<style>
+  body { margin: 0; background: #f8fafc; font: 14px/1.4 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  svg { width: 100%; height: auto; display: block; }
+  .title { font-size: 21px; font-weight: 700; fill: #172033; }
+  .subtitle { font-size: 13px; fill: #5b6475; }
+  .zt { font-size: 14px; font-weight: 700; fill: #3d4757; }
+  .h { font-size: 13px; font-weight: 700; fill: #172033; }
+  .s { font-size: 11px; fill: #4a5568; }
+  .el { font-size: 11px; font-weight: 700; paint-order: stroke; stroke: #f8fafc; stroke-width: 5px; stroke-linejoin: round; }
+  .chip { font-size: 11px; font-weight: 600; fill: #1e3f63; }
+  .cap { font-size: 12.5px; font-style: italic; fill: #5b6475; }
+  .edge { stroke: #64748b; stroke-width: 1.6; fill: none; }
+  .edgep { stroke: #7c5cbf; stroke-width: 1.6; fill: none; stroke-dasharray: 5 4; }
+  .edgea { stroke: #c98a1e; stroke-width: 1.6; fill: none; stroke-dasharray: 5 4; }
+  .edged { stroke: #94a3b8; stroke-width: 1.4; fill: none; stroke-dasharray: 2 3; }
+</style>
+<svg viewBox="0 0 1280 930" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#64748b"/>
+    </marker>
+    <marker id="arp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7c5cbf"/>
+    </marker>
+    <marker id="ara" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c98a1e"/>
+    </marker>
+    <marker id="ard" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1280" height="930" fill="#f8fafc"/>
+
+  <!-- ============ edges first ============ -->
+  <g>
+    <!-- untrusted purchases -> platform -->
+    <path class="edge" d="M230,180 V200" marker-end="url(#ar)"/>
+    <!-- platform -> worker: long-poll requests (over the top, into right edge) -->
+    <path class="edge" d="M380,236 H955 V278 H920" marker-end="url(#ar)"/>
+    <!-- server -> platform: mandate lifecycle -->
+    <path class="edge" d="M470,210 H380" marker-end="url(#ar)"/>
+    <!-- worker -> platform: submit decision -->
+    <path class="edge" d="M720,310 V320 H380" marker-end="url(#ar)"/>
+    <!-- UI -> server: instruction / confirm / resolve -->
+    <path class="edge" d="M1020,196 H920" marker-end="url(#ar)"/>
+    <!-- server -> compiler -->
+    <path class="edge" d="M555,226 V246" marker-end="url(#ar)"/>
+    <!-- server -> worker: start run -->
+    <path class="edge" d="M810,226 V246" marker-end="url(#ar)"/>
+    <!-- worker -> engine -->
+    <path class="edge" d="M810,310 V330" marker-end="url(#ar)"/>
+    <!-- helpers -> engine -->
+    <path class="edge" d="M670,360 H700" marker-end="url(#ar)"/>
+    <path class="edge" d="M670,446 H700" marker-end="url(#ar)"/>
+    <!-- models -> engine (advisory) -->
+    <path class="edgep" d="M670,529 H686 V508 H700" marker-end="url(#arp)"/>
+    <!-- worker -> store (right rail) -->
+    <path class="edge" d="M920,290 H935 V676 H920" marker-end="url(#ar)"/>
+    <!-- store -> UI: step-up inbox (amber dashed) -->
+    <path class="edgea" d="M920,676 H960 V230 H1020" marker-end="url(#ara)"/>
+    <!-- UI -> human -->
+    <path class="edge" d="M1120,300 V318" marker-end="url(#ar)"/>
+    <!-- data inputs (dotted) -->
+    <path class="edged" d="M380,490 H424 V446 H470" marker-end="url(#ard)"/>
+    <path class="edged" d="M380,570 H430 V365 H470" marker-end="url(#ard)"/>
+    <path class="edged" d="M380,666 H436 V529 H470" marker-end="url(#ard)"/>
+  </g>
+
+  <!-- ============ title ============ -->
+  <text class="title" x="80" y="42">wallet-control backend — how one decision actually flows</text>
+  <text class="subtitle" x="80" y="64">single Node process · zero dependencies · every arrow is implemented code (server.js · lib/ · sim/)</text>
+
+  <!-- ============ untrusted input ============ -->
+  <rect x="80" y="130" width="300" height="50" rx="10" fill="#fbe9e7" stroke="#c0453a" stroke-width="1.4" stroke-dasharray="6 4"/>
+  <text class="h" x="96" y="150">AI-agent purchases (untrusted)</text>
+  <text class="s" x="96" y="168">listing &amp; merchant text — may carry injections</text>
+
+  <!-- ============ platform ============ -->
+  <rect x="80" y="200" width="300" height="160" rx="10" fill="#eef2f7" stroke="#3b6ea5" stroke-width="1.5"/>
+  <text class="h" x="96" y="224">Platform API — live</text>
+  <text class="s" x="96" y="244">mandates · runs · decision-requests · resolve</text>
+  <text class="s" x="96" y="260">8 s decision deadline · 120 s step-up window</text>
+  <text class="s" x="96" y="280">api.js → HttpApiClient (env: base URL + team key)</text>
+  <rect x="96" y="296" width="268" height="48" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="4 3"/>
+  <text class="s" x="108" y="316" font-weight="700">sim/local-api.js — offline stand-in</text>
+  <text class="s" x="108" y="332">same contract, backed by the data pack</text>
+
+  <!-- ============ data band ============ -->
+  <rect x="80" y="470" width="300" height="64" rx="10" fill="#fafaf7" stroke="#8a7663" stroke-width="1.3" stroke-dasharray="2 3"/>
+  <text class="h" x="96" y="490">data/pack/*.csv</text>
+  <text class="s" x="96" y="508">read-only at boot · authorization_history → profiles</text>
+  <text class="s" x="96" y="522">scenarios · attempts · merchants · items</text>
+
+  <rect x="80" y="554" width="300" height="56" rx="10" fill="#fafaf7" stroke="#8a7663" stroke-width="1.3" stroke-dasharray="2 3"/>
+  <text class="h" x="96" y="574">data/leash_trust.json</text>
+  <text class="s" x="96" y="592">5,484 malicious domains · 5,922 GLEIF legit companies</text>
+
+  <rect x="80" y="630" width="300" height="72" rx="10" fill="#f3eefa" stroke="#7c5cbf" stroke-width="1.4" stroke-dasharray="6 4"/>
+  <text class="h" x="96" y="650">merchant-trust-data — offline training</text>
+  <text class="s" x="96" y="668">TensorTrust corpus → injection-model.json</text>
+  <text class="s" x="96" y="684">history → behavior-model.json</text>
+
+  <!-- ============ service zone ============ -->
+  <rect x="440" y="130" width="540" height="630" rx="14" fill="#ffffff" stroke="#94a3b8" stroke-width="1.3" stroke-dasharray="7 5"/>
+  <text class="zt" x="460" y="154">wallet-control service — Node · zero-dep · http://127.0.0.1:8791</text>
+
+  <!-- server.js -->
+  <rect x="470" y="166" width="450" height="60" rx="10" fill="#e7effb" stroke="#3b6ea5" stroke-width="1.5"/>
+  <text class="h" x="486" y="188">server.js — app API + static UI</text>
+  <text class="s" x="486" y="202">/api/policy/compile · /api/mandates (confirm·patch·revoke) · /api/runs</text>
+  <text class="s" x="486" y="218">/api/stepups/:id/resolve · /api/state · serves web/ static UI</text>
+
+  <!-- policy-compiler -->
+  <rect x="470" y="246" width="210" height="64" rx="10" fill="#eff5fc" stroke="#3b6ea5" stroke-width="1.3"/>
+  <text class="h" x="484" y="266">policy-compiler.js</text>
+  <text class="s" x="484" y="282">NL instruction → draft rules +</text>
+  <text class="s" x="484" y="296">uncertainty policy (deterministic)</text>
+
+  <!-- worker -->
+  <rect x="700" y="246" width="220" height="64" rx="10" fill="#e7effb" stroke="#3b6ea5" stroke-width="1.5"/>
+  <text class="h" x="714" y="266">worker.js</text>
+  <text class="s" x="714" y="282">poll 25 s · evaluate · submit ≤ 8 s</text>
+  <text class="s" x="714" y="296">replay-safe · idempotent decisions</text>
+
+  <!-- engine -->
+  <rect x="700" y="330" width="220" height="190" rx="10" fill="#dbe9f7" stroke="#3b6ea5" stroke-width="1.8"/>
+  <text class="h" x="714" y="352">engine.js — deterministic</text>
+  <rect x="714" y="362" width="192" height="22" rx="11" fill="#ffffff" stroke="#3b6ea5" stroke-width="1"/>
+  <text class="chip" x="810" y="377" text-anchor="middle">facts + FX → CHF</text>
+  <rect x="714" y="390" width="192" height="22" rx="11" fill="#ffffff" stroke="#3b6ea5" stroke-width="1"/>
+  <text class="chip" x="810" y="405" text-anchor="middle">hard rules vs mandate snapshot</text>
+  <rect x="714" y="418" width="192" height="22" rx="11" fill="#ffffff" stroke="#3b6ea5" stroke-width="1"/>
+  <text class="chip" x="810" y="433" text-anchor="middle">device · velocity · odd-hour checks</text>
+  <rect x="714" y="446" width="192" height="22" rx="11" fill="#ffffff" stroke="#3b6ea5" stroke-width="1"/>
+  <text class="chip" x="810" y="461" text-anchor="middle">aggregate → decision + evidence</text>
+  <text class="s" x="714" y="490">approve / decline / step_up</text>
+  <text class="s" x="714" y="504">+ reason codes · message · evidence</text>
+
+  <!-- signals -->
+  <rect x="470" y="330" width="200" height="70" rx="10" fill="#eff5fc" stroke="#3b6ea5" stroke-width="1.3"/>
+  <text class="h" x="484" y="350">signals.js</text>
+  <text class="s" x="484" y="366">regex injection · return-window,</text>
+  <text class="s" x="484" y="380">item mining · lookalike (J-W)</text>
+  <text class="s" x="484" y="394">trust-dataset lookup</text>
+
+  <!-- history -->
+  <rect x="470" y="414" width="200" height="64" rx="10" fill="#eff5fc" stroke="#3b6ea5" stroke-width="1.3"/>
+  <text class="h" x="484" y="434">history.js</text>
+  <text class="s" x="484" y="450">per-customer profiles: merchant</text>
+  <text class="s" x="484" y="464">familiarity · devices · hours</text>
+
+  <!-- models (advisory) -->
+  <rect x="470" y="492" width="200" height="74" rx="10" fill="#f3eefa" stroke="#7c5cbf" stroke-width="1.4" stroke-dasharray="6 4"/>
+  <text class="h" x="484" y="512">trained models (advisory)</text>
+  <text class="s" x="484" y="528">injection-model · behavior-model</text>
+  <text class="s" x="484" y="542">adds evidence · can escalate,</text>
+  <text class="s" x="484" y="556">never approve / decline / loosen</text>
+
+  <!-- cli / tests -->
+  <rect x="470" y="580" width="200" height="56" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="1.2"/>
+  <text class="h" x="484" y="600">cli.js · test/</text>
+  <text class="s" x="484" y="616">offline replay of all scenarios</text>
+  <text class="s" x="484" y="630">41 invariant + parity tests</text>
+
+  <!-- store -->
+  <rect x="700" y="640" width="220" height="76" rx="10" fill="#e6f4f2" stroke="#2e8b7a" stroke-width="1.5"/>
+  <text class="h" x="714" y="662">store.js — ledger &amp; spend memory</text>
+  <text class="s" x="714" y="680">decisions · rolling spend windows</text>
+  <text class="s" x="714" y="694">pending step-ups · mandate mirrors</text>
+  <text class="s" x="714" y="708">persisted → data/state.json</text>
+
+  <!-- ============ customer zone ============ -->
+  <rect x="1000" y="130" width="240" height="280" rx="14" fill="#fdfbf8" stroke="#3a8a3f" stroke-width="1.4" stroke-dasharray="7 5"/>
+  <text class="zt" x="1016" y="154" fill="#2f6e33">customer — trusted side</text>
+
+  <rect x="1014" y="166" width="212" height="134" rx="10" fill="#f5f0ea" stroke="#8a7663" stroke-width="1.5"/>
+  <text class="h" x="1028" y="188">web/ customer UI</text>
+  <text class="s" x="1028" y="206">compile → confirm policy</text>
+  <text class="s" x="1028" y="222">live decision feed + evidence</text>
+  <text class="s" x="1028" y="238">step-up inbox · 120 s countdown</text>
+  <text class="s" x="1028" y="254">tighten-only edits · revoke</text>
+  <text class="s" x="1028" y="278">every decision shown with its why</text>
+
+  <rect x="1014" y="330" width="212" height="64" rx="10" fill="#e4f4e4" stroke="#3a8a3f" stroke-width="1.5"/>
+  <text class="h" x="1028" y="352">the human answers</text>
+  <text class="s" x="1028" y="370">the worker never invents</text>
+  <text class="s" x="1028" y="384">step-up answers — resolve is real</text>
+
+  <!-- ============ caption ============ -->
+  <text class="cap" x="640" y="866" text-anchor="middle">Left of the customer everything is machine-speed — a decision is submitted inside the 8 s deadline, replay-safe and idempotent.</text>
+  <text class="cap" x="640" y="888" text-anchor="middle">Rules decide · signals and trained models only add evidence and can escalate · the human’s answer is the only path from step_up to spend.</text>
+
+  <!-- ============ edge labels (drawn last, halo over lines) ============ -->
+  <g>
+    <text class="el" x="222" y="194" fill="#5b6475" text-anchor="end">decision requests</text>
+    <text class="el" x="392" y="230" fill="#5b6475">long-poll 25 s → authorization events</text>
+    <text class="el" x="376" y="196" fill="#5b6475" text-anchor="end">mandate lifecycle</text>
+    <text class="el" x="386" y="334" fill="#5b6475">submit ≤ 8 s</text>
+    <text class="el" x="970" y="120" fill="#5b6475" text-anchor="middle">instruction · confirm · resolve</text>
+    <text class="el" x="818" y="241" fill="#5b6475">start run</text>
+    <text class="el" x="818" y="326" fill="#5b6475">evaluate</text>
+    <text class="el" x="984" y="440" fill="#9a6a12">step-up · 120 s</text>
+  </g>
+</svg>
+</html>

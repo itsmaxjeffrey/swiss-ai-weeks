@@ -159,6 +159,9 @@ function renderFeed(state) {
     if (f.kind === 'mandate') return `<div class="decision-card" style="border-left-color:var(--red)"><div class="dc-msg">${esc(f.text)}</div></div>`;
     if (f.kind === 'resolution') return `<div class="decision-card" style="border-left-color:var(--ink-soft)"><div class="dc-msg">👤 ${esc(f.text)}</div></div>`;
     const badge = f.decision === 'approve' ? 'APPROVED' : f.decision === 'decline' ? 'DECLINED' : 'PAUSED · ASKING YOU';
+    const conf = f.confidence;
+    const confCls = !conf ? '' : conf.percent >= 90 ? 'conf-high' : conf.percent >= 70 ? 'conf-mid' : 'conf-low';
+    const confBadge = conf ? `<span class="conf-badge ${confCls}" title="${esc(conf.method || 'share of decision-relevant facts verified by deterministic checks')}">${conf.percent}% confidence · ${conf.verified_facts}/${conf.verified_facts + conf.open_points} facts verified</span>` : '';
     const inj = (f.manipulation && f.manipulation.length)
       ? `<div class="inj-banner">🚨 Manipulation attempt blocked — merchant text tried: “<code>${esc(f.manipulation[0].snippet)}</code>”</div>` : '';
     const evs = (f.evidence || []).map(e => `<span class="ev">${esc(e.label)}: <b>${esc(e.value)}</b></span>`).join('');
@@ -166,7 +169,7 @@ function renderFeed(state) {
     return `<div class="decision-card ${esc(f.decision)}">
       <div class="dc-head">
         <span class="dc-title">#${f.replay_order ?? '?'} ${esc(f.merchant || '')} — ${chf(f.amount)}</span>
-        <span class="dc-badge ${esc(f.decision)}">${badge}</span>
+        <span style="display:flex;gap:6px;align-items:center">${confBadge}<span class="dc-badge ${esc(f.decision)}">${badge}</span></span>
       </div>
       <div class="dc-items">${items}</div>
       <div class="dc-msg">${esc(f.message)}</div>
@@ -228,6 +231,7 @@ function renderDossier(d) {
       ${cell('Social presence', `LinkedIn: ${link(d.social?.linkedin)} · Instagram: ${link(d.social?.instagram)}`)}
       ${cell('Payment methods', chips)}
       ${cell('Reviews', ts?.listed === true && ts.rating != null ? `Trusted Shops ${esc(String(ts.rating))}/5 (${esc(String(ts.review_count ?? '?'))} reviews)` : ts?.listed === true ? 'Trusted Shops listed (no rating)' : pr?.rating != null ? `Product page ${esc(String(pr.rating))}/${esc(String(pr.best || 5))} (${esc(String(pr.count ?? '?'))} reviews)` : 'no ratings found')}
+      ${cell('🌱 Sustainability', d.sustainability ? (d.sustainability.score != null ? `<b>${esc(String(d.sustainability.score))}</b>/100 · ${esc(d.sustainability.band)}${d.sustainability.note ? ` — ${esc(d.sustainability.note)}` : ''}` : `unknown${d.sustainability.note ? ` — ${esc(d.sustainability.note)}` : ''}`) : '—')}
     </div>
     ${d.product_url ? `<div class="dz-url">Product URL the agent wants to buy from: <a href="${esc(d.product_url)}" target="_blank" rel="noreferrer">${esc(d.product_url)}</a></div>` : `<div class="dz-url">Shop URL: <a href="https://${esc(d.domain)}" target="_blank" rel="noreferrer">https://${esc(d.domain)}</a></div>`}
   `;
@@ -267,6 +271,9 @@ function renderApprovals(state) {
     const inj = (p.manipulation && p.manipulation.length)
       ? `<div class="inj-banner">🚨 Merchant text contains a manipulation attempt: “<code>${esc(p.manipulation[0].snippet)}</code>” — the wallet did not follow it.</div>` : '';
     const evs = (p.evidence || []).map(e => `<span class="ev">${esc(e.label)}: <b>${esc(e.value)}</b></span>`).join('');
+    const pconf = p.confidence;
+    const pconfCls = !pconf ? '' : pconf.percent >= 90 ? 'conf-high' : pconf.percent >= 70 ? 'conf-mid' : 'conf-low';
+    const pconfBadge = pconf ? `<span class="conf-badge ${pconfCls}" title="${esc(pconf.method || 'share of decision-relevant facts verified by deterministic checks')}">${pconf.percent}% confidence · ${pconf.verified_facts}/${pconf.verified_facts + pconf.open_points} facts verified</span>` : '';
     const yellow = p.merchant_site
       ? `<div class="ap-dossier" data-site="${esc(p.merchant_site)}" data-auth="${esc(p.authorization_id)}"></div>`
       : '';
@@ -281,7 +288,7 @@ function renderApprovals(state) {
           <button class="btn danger" data-do="decline">Decline</button>
         </div>`;
     return `<div class="approval-card" data-auth="${esc(p.authorization_id)}">
-      <div class="dc-head"><span class="dc-title">${esc(p.merchant)} — ${chf(p.amount)}</span><span class="ap-count" data-left>${Math.ceil(left / 1000)}s left</span></div>
+      <div class="dc-head"><span class="dc-title">${esc(p.merchant)} — ${chf(p.amount)}</span>${pconfBadge}<span class="ap-count" data-left>${Math.ceil(left / 1000)}s left</span></div>
       <div class="ap-bar"><div style="width:${pct}%"></div></div>
       <div class="ap-items">${items}</div>
       ${inj}
@@ -317,6 +324,7 @@ async function refresh() {
   try {
     state = await api('/api/state');
     setChips(state);
+    renderSusToggle(state);
     renderScenarios(state);
     renderBanner(state);
     renderProgress(state);
@@ -343,6 +351,66 @@ setInterval(() => {
     }
   });
 }, 500);
+
+// ---------- sustainability preference + offer comparison ----------
+function renderSusToggle(state) {
+  const b = $('sus-toggle');
+  if (!b) return;
+  const on = state?.sustainability?.prefer === true;
+  b.textContent = on ? '🌱 Prefer sustainable: ON' : '🌱 Prefer sustainable: off';
+  b.classList.toggle('on', on);
+}
+
+async function toggleSustainability() {
+  try {
+    const on = !(state?.sustainability?.prefer === true);
+    await api('/api/settings/sustainability', 'POST', { enabled: on });
+    refresh();
+  } catch (e) { alert(e.message); }
+}
+
+const bandChip = (kind, band) => `<span class="band ${kind} ${esc(band)}">${esc(band)}</span>`;
+
+function renderOffers(out) {
+  const rows = out.offers.map((o, i) => {
+    const best = i === 0 && out.recommended && o.merchant === out.recommended.merchant;
+    const sus = o.sustainability.score != null
+      ? `<b>${o.sustainability.score}</b>/100 ${bandChip('sus', o.sustainability.band)}${o.sustainability.note ? `<div class="offer-note">${esc(o.sustainability.note)}</div>` : ''}`
+      : `${bandChip('sus', 'unknown')}<div class="offer-note">${esc(o.sustainability.note || 'no data')}</div>`;
+    const risk = `<b>${o.risk.score}</b>/100 ${bandChip('risk', o.risk.band)}<div class="offer-note">${esc(o.risk.reasons.join(' · '))}</div>`;
+    return `<tr class="${best ? 'best' : ''}">
+      <td>${esc(o.name)}<div class="offer-note mono">${esc(o.merchant)}</div></td>
+      <td>${risk}</td>
+      <td>${sus}</td>
+      <td class="pick-cell">${best ? '<span class="pick">🌱 suggested</span>' : ''}</td>
+    </tr>`;
+  }).join('');
+  return `<table class="offers-table">
+    <thead><tr><th>Shop</th><th>Risk score</th><th>🌱 Sustainability</th><th></th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  ${out.recommended ? `<p class="hint">Suggested pick: <b>${esc(out.recommended.merchant)}</b> — ${esc(out.recommended.reason)}</p>` : ''}
+  ${out.prefer ? '' : '<p class="hint">Tip: turn on “🌱 Prefer sustainable” (top right) to factor sustainability into the suggestion.</p>'}`;
+}
+
+async function compareOffers() {
+  const raw = $('offers-merchants').value.trim();
+  if (!raw) { $('offers-status').textContent = 'paste at least one shop domain first'; return; }
+  $('offers-status').textContent = 'checking shops… (Trusted Shops lookup, cached)';
+  $('btn-compare-offers').disabled = true;
+  try {
+    const out = await api('/api/offers/compare', 'POST', {
+      item: $('offers-item').value.trim(),
+      merchants: raw.split(/[,,;\n]/).map(s => s.trim()).filter(Boolean),
+    });
+    $('offers-status').textContent = `${out.count} shop${out.count === 1 ? '' : 's'} compared${out.item ? ` — ${out.item}` : ''}`;
+    $('offers-result').innerHTML = renderOffers(out);
+  } catch (e) { $('offers-status').textContent = `error: ${e.message}`; }
+  finally { $('btn-compare-offers').disabled = false; }
+}
+
+$('sus-toggle').onclick = toggleSustainability;
+$('btn-compare-offers').onclick = compareOffers;
 
 $('btn-compile').onclick = compile;
 $('btn-confirm').onclick = confirmMandate;

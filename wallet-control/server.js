@@ -11,10 +11,11 @@ import { HistoryProfiles } from './lib/history.js';
 import { makeClient } from './lib/api.js';
 import { Worker } from './lib/worker.js';
 import { compilePolicy } from './lib/policy-compiler.js';
-import { buildTrustIndex } from './lib/signals.js';
-import { TrustedShopsChecker } from './lib/trustedshops.js';
+import { buildTrustIndex, trustLookup } from './lib/signals.js';
+import { TrustedShopsChecker, normalizeDomain } from './lib/trustedshops.js';
 import { MerchantDossier } from './lib/yellowlist.js';
 import { readJsonIfExists, loadCsv } from './lib/util.js';
+import { loadSustainabilityIndex, lookupSustainability, scoreMerchantRisk, rankOffers } from './lib/sustainability.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = __dirname;
@@ -30,6 +31,13 @@ const client = makeClient(store);
 const trustedShops = new TrustedShopsChecker();
 const gleifAges = readJsonIfExists(path.join(ROOT, 'data', 'gleif_ch_ages.json'));
 const dossierService = new MerchantDossier({ trustedShops, gleifAges });
+// Sustainability scores (demo-grade static dataset, data/sustainability.json)
+// + persisted UI preferences (data/preferences.json). Advisory only: they
+// inform the offer comparison; they never change engine decisions.
+const sustainabilityIndex = loadSustainabilityIndex(path.join(ROOT, 'data', 'sustainability.json'));
+const PREFS_FILE = path.join(ROOT, 'data', 'preferences.json');
+const prefs = (() => { try { return JSON.parse(fs.readFileSync(PREFS_FILE, 'utf8')); } catch { return {}; } })();
+function savePrefs() { fs.writeFileSync(PREFS_FILE, JSON.stringify(prefs, null, 2)); }
 // Shopper-bridge whitelist mirror: when the customer approves with "trust
 // merchant", the worker best-effort POSTs the domain to the bridge's internal
 // sync endpoint so sign-time whitelist enforcement there passes too. The token
@@ -103,6 +111,7 @@ function snapshot() {
           merchant_site: d.merchantDomain || null,
           merchant_url: d.merchantUrl || null,
           message: d.customer_message, evidence: d.evidence, uncertainties: d.uncertainties,
+          confidence: d.confidence,
           manipulation: d.flags?.manipulation || [],
           items: d.items, deadline: s.deadline, opened_at: s.openedAt,
         });
@@ -128,6 +137,7 @@ function snapshot() {
       } : null,
     } : null,
     feed: worker.feed.slice(0, 60),
+    sustainability: { prefer: prefs.prefer_sustainable === true },
     pending_step_ups: pending,
   };
 }
@@ -259,7 +269,57 @@ const server = http.createServer(async (req, res) => {
         return json(res, 400, { error: 'provide a merchant: POST {merchant: url-or-domain, product_url?} or GET ?merchant=<domain>&product_url=<url>' });
       }
       const out = await dossierService.check(inputs);
+      for (const r of out.results) r.sustainability = lookupSustainability(r.domain, sustainabilityIndex);
       return json(res, 200, { took_ms: out.tookMs, cache: dossierService.stats, results: out.results });
+    }
+
+    if (p === '/api/settings/sustainability' && req.method === 'POST') {
+      // UI toggle: when on, the offer comparison prefers the more sustainable
+      // shop WITHIN the safest risk band. Advisory only — never an engine rule.
+      const body = await readBody(req);
+      prefs.prefer_sustainable = Boolean(body.enabled);
+      savePrefs();
+      return json(res, 200, { prefer_sustainable: prefs.prefer_sustainable });
+    }
+
+    if (p === '/api/offers/compare' && req.method === 'POST') {
+      // Offer comparison for one item across several shops (up to 8): basic
+      // risk score (trusted list + threat intel + Trusted Shops) and a basic
+      // sustainability score per shop, ranked. Evidence-only: this suggests an
+      // order and a pick; it never decides or changes an engine decision.
+      const body = await readBody(req);
+      const rawList = body.merchants ?? body.domains ?? body.shops ?? [];
+      const list = (Array.isArray(rawList) ? rawList : String(rawList).split(/[,;\n]/))
+        .map(s => String(s).trim()).filter(Boolean).slice(0, 8);
+      if (!list.length) return json(res, 400, { error: 'provide shops: POST {merchants: ["ochsnersport.ch", …], item?}' });
+      const prefer = prefs.prefer_sustainable === true;
+      const ts = await trustedShops.check(list).catch(err => ({ results: [], error: err.message }));
+      const offers = list.map((input) => {
+        const domain = normalizeDomain(input)?.domain || input;
+        const tsResult = ts.results.find(r => r.resolvedDomain === domain) || null;
+        const hit = trust ? trustLookup(domain, trust) : null;
+        const risk = scoreMerchantRisk({
+          trusted: Boolean(store.isTrustedDomain(domain)),
+          malicious: Boolean(hit?.malicious),
+          trustedShopsResult: tsResult,
+        });
+        return { merchant: domain, name: tsResult?.name || domain, risk, sustainability: lookupSustainability(domain, sustainabilityIndex) };
+      });
+      const ranked = rankOffers(offers, { prefer });
+      const top = ranked[0] || null;
+      return json(res, 200, {
+        item: (body.item || '').trim() || null,
+        prefer,
+        count: ranked.length,
+        recommended: top ? {
+          merchant: top.merchant,
+          reason: prefer
+            ? `safest risk band first${top.sustainability.score != null ? ', more sustainable shop preferred within it' : ''}`
+            : 'ranked by risk score (sustainability preference is off)',
+        } : null,
+        offers: ranked,
+        trustedshops_error: ts.error || null,
+      });
     }
 
     if (p.startsWith('/api/')) return json(res, 404, { error: 'unknown api path' });

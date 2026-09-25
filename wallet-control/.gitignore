@@ -3,3 +3,6 @@ lib/injection-model.json
 lib/behavior-model.json
 # runtime state
 node_modules/
+
+# saw26 sandbox key (plaintext fallback, owner-approved)
+.saw26-key

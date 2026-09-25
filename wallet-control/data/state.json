@@ -1,52 +1,22 @@
 {
  "mandates": [
   {
-   "draft_id": "md_f50791c21fb6",
+   "draft_id": "md_de980cb138d0",
    "status": "draft",
-   "instruction": "Buy the 27-inch monitor I chose, from a seller I have bought from before, for CHF 400 or less. Do not add anything I did not ask for. Ask me when uncertain.",
+   "instruction": "Groceries only, max CHF 120 per order",
    "hard_rules": [
     {
      "field": "authorization.billing_amount_chf",
      "operator": "<=",
-     "value": 400,
+     "value": 120,
      "currency": "CHF",
      "scope": "purchase"
-    },
-    {
-     "field": "basket.line_count",
-     "operator": "<=",
-     "value": 1
-    },
-    {
-     "field": "basket.requested_item_match",
-     "operator": "=",
-     "value": "true"
-    },
-    {
-     "field": "merchant.familiar_to_customer",
-     "operator": "=",
-     "value": "true"
-    },
-    {
-     "field": "basket.exact_match",
-     "operator": "=",
-     "value": "true"
-    },
-    {
-     "field": "basket.excluded_categories",
-     "operator": "not_in",
-     "value": [
-      "gift_card"
-     ]
     }
    ],
    "uncertainty_policy": "ask",
-   "guidance": [
-    "When evidence is missing or ambiguous, the purchase is paused and you decide.",
-    "Uncertainty policy: pause and ask you."
-   ],
+   "guidance": [],
    "open_questions": [],
-   "created_at": "2026-09-23T18:21:20.955Z"
+   "created_at": "2026-09-25T04:27:44.645Z"
   },
   {
    "draft_id": "md_f50791c21fb6",
@@ -97,8 +67,76 @@
    "created_at": "2026-09-23T18:21:20.955Z",
    "mandate_id": "TM_SIM_8b378ff81a6d",
    "confirmed_at": "2026-09-23T18:21:20.971Z"
+  },
+  {
+   "draft_id": "md_c81e7302e918",
+   "status": "active",
+   "instruction": "Replace my worn road-running shoes in size 43. Buy only from a specialist sports retailer, only if the order can be returned within 14 days or more, and pay no more than CHF 200. Ask me when uncertain.",
+   "hard_rules": [
+    {
+     "field": "authorization.billing_amount_chf",
+     "operator": "<=",
+     "value": 200,
+     "currency": "CHF",
+     "scope": "purchase"
+    },
+    {
+     "field": "basket.requested_item_match",
+     "operator": "=",
+     "value": "true"
+    },
+    {
+     "field": "merchant.merchant_category",
+     "operator": "in",
+     "value": [
+      "sporting_goods"
+     ]
+    },
+    {
+     "field": "basket.return_window_days_min",
+     "operator": ">=",
+     "value": 14
+    },
+    {
+     "field": "basket.excluded_categories",
+     "operator": "not_in",
+     "value": [
+      "gift_card"
+     ]
+    }
+   ],
+   "uncertainty_policy": "ask",
+   "guidance": [
+    "When evidence is missing or ambiguous, the purchase is paused and you decide.",
+    "Uncertainty policy: pause and ask you."
+   ],
+   "open_questions": [],
+   "created_at": "2026-09-25T03:22:35.933Z",
+   "mandate_id": "TM_SIM_e5e732a17733",
+   "confirmed_at": "2026-09-25T03:22:36.029Z"
+  },
+  {
+   "draft_id": "md_de980cb138d0",
+   "status": "active",
+   "instruction": "Groceries only, max CHF 120 per order",
+   "hard_rules": [
+    {
+     "field": "authorization.billing_amount_chf",
+     "operator": "<=",
+     "value": 120,
+     "currency": "CHF",
+     "scope": "purchase"
+    }
+   ],
+   "uncertainty_policy": "ask",
+   "guidance": [],
+   "open_questions": [],
+   "created_at": "2026-09-25T04:27:44.645Z",
+   "mandate_id": "TM_SIM_aa658687e72d",
+   "confirmed_at": "2026-09-25T04:27:44.712Z"
   }
  ],
+ "trusted_domains": [],
  "runs": [
   {
    "run_id": "run_fdabf27b537a",
@@ -1033,6 +1071,2772 @@
     ]
    ],
    "stepUpsSerialized": []
+  },
+  {
+   "run_id": "run_c24c8b028b07",
+   "scenario_id": "SCEN0002",
+   "mandate_id": "TM_SIM_e5e732a17733",
+   "mandateSnapshot": {
+    "draft_id": "md_c81e7302e918",
+    "status": "active",
+    "instruction": "Replace my worn road-running shoes in size 43. Buy only from a specialist sports retailer, only if the order can be returned within 14 days or more, and pay no more than CHF 200. Ask me when uncertain.",
+    "hard_rules": [
+     {
+      "field": "authorization.billing_amount_chf",
+      "operator": "<=",
+      "value": 200,
+      "currency": "CHF",
+      "scope": "purchase"
+     },
+     {
+      "field": "basket.requested_item_match",
+      "operator": "=",
+      "value": "true"
+     },
+     {
+      "field": "merchant.merchant_category",
+      "operator": "in",
+      "value": [
+       "sporting_goods"
+      ]
+     },
+     {
+      "field": "basket.return_window_days_min",
+      "operator": ">=",
+      "value": 14
+     },
+     {
+      "field": "basket.excluded_categories",
+      "operator": "not_in",
+      "value": [
+       "gift_card"
+      ]
+     }
+    ],
+    "uncertainty_policy": "ask",
+    "guidance": [
+     "When evidence is missing or ambiguous, the purchase is paused and you decide.",
+     "Uncertainty policy: pause and ask you."
+    ],
+    "open_questions": [],
+    "created_at": "2026-09-25T03:22:35.933Z",
+    "mandate_id": "TM_SIM_e5e732a17733",
+    "confirmed_at": "2026-09-25T03:22:36.029Z"
+   },
+   "totalEvents": 12,
+   "customerIds": [],
+   "status": "running",
+   "spend": [
+    {
+     "simTs": 1786443300000,
+     "amount": 165,
+     "merchantId": "ME0028",
+     "authorization_id": "AU_LIVE_028b07_AU0012"
+    },
+    {
+     "simTs": 1786786200000,
+     "amount": 168,
+     "merchantId": "ME0028",
+     "authorization_id": "AU_LIVE_028b07_AU0019"
+    }
+   ],
+   "createdAt": 1790306556083,
+   "decisionsSerialized": [
+    [
+     "AU_LIVE_028b07_AU0012",
+     {
+      "authorizationId": "AU_LIVE_028b07_AU0012",
+      "sourceAuthorizationId": "AU0012",
+      "decision": "approve",
+      "reason_codes": [],
+      "customer_message": "Approved CHF 165.00 at TrailSpark — within your policy.",
+      "evidence": [
+       {
+        "label": "Amount",
+        "value": "CHF 165.00 incl. delivery"
+       },
+       {
+        "label": "Related purchase",
+        "value": "none"
+       },
+       {
+        "label": "Per-order cap",
+        "value": "CHF 200.00 → CHF 165.00"
+       },
+       {
+        "label": "Requested item",
+        "value": "matches: road-running shoes in size 43, size 43"
+       },
+       {
+        "label": "Return window",
+        "value": "seller states returns accepted within 30 days"
+       },
+       {
+        "label": "Device",
+        "value": "DVC-89CB09 — known from your history"
+       },
+       {
+        "label": "Recent attempts (10 min)",
+        "value": "0"
+       },
+       {
+        "label": "Behavior model",
+        "value": "normal — 35% off-pattern: larger than 95% of your past purchases, amount far outside your usual range, device never seen in your history"
+       }
+      ],
+      "uncertainties": [],
+      "flags": {
+       "manipulation": [],
+       "integrity": [],
+       "positive": []
+      },
+      "signature": "ME0028|IT0014|165",
+      "evaluation_ms": 18.81,
+      "merchant": "TrailSpark",
+      "merchantId": "ME0028",
+      "merchantUrl": null,
+      "merchantDomain": null,
+      "amount": 165,
+      "currency": "CHF",
+      "simTs": 1786443300000,
+      "replay_order": 1,
+      "purchase_description": "Running shoes order",
+      "items": [
+       {
+        "name": "Road-running shoes",
+        "qty": 1,
+        "price": 165,
+        "currency": "CHF",
+        "category": "sporting_goods",
+        "details": "Road-running shoe, size 43; returns accepted within 30 days"
+       }
+      ],
+      "finalDecision": "approved",
+      "submitted": true,
+      "decidedAt": 1790306556107
+     }
+    ],
+    [
+     "AU_LIVE_028b07_AU0013",
+     {
+      "authorizationId": "AU_LIVE_028b07_AU0013",
+      "sourceAuthorizationId": "AU0013",
+      "decision": "decline",
+      "reason_codes": [
+       "SIZE_MISMATCH"
+      ],
+      "customer_message": "Declined CHF 155.00 at TrailSpark. Size 42 instead of requested size 43.",
+      "evidence": [
+       {
+        "label": "Amount",
+        "value": "CHF 155.00 incl. delivery"
+       },
+       {
+        "label": "Related purchase",
+        "value": "none"
+       },
+       {
+        "label": "Per-order cap",
+        "value": "CHF 200.00 → CHF 155.00"
+       },
+       {
+        "label": "Return window",
+        "value": "seller states returns accepted within 30 days"
+       },
+       {
+        "label": "Device",
+        "value": "DVC-89CB09 — known from your history"
+       },
+       {
+        "label": "Recent attempts (10 min)",
+        "value": "0"
+       },
+       {
+        "label": "Behavior model",
+        "value": "normal — 34% off-pattern: larger than 95% of your past purchases, amount far outside your usual range, device never seen in your history"
+       }
+      ],
+      "uncertainties": [],
+      "flags": {
+       "manipulation": [],
+       "integrity": [],
+       "positive": []
+      },
+      "signature": "ME0028|IT0014|155",
+      "evaluation_ms": 5.32,
+      "merchant": "TrailSpark",
+      "merchantId": "ME0028",
+      "merchantUrl": null,
+      "merchantDomain": null,
+      "amount": 155,
+      "currency": "CHF",
+      "simTs": 1786459200000,
+      "replay_order": 2,
+      "purchase_description": "Running shoes order",
+      "items": [
+       {
+        "name": "Road-running shoes",
+        "qty": 1,
+        "price": 155,
+        "currency": "CHF",
+        "category": "sporting_goods",
+        "details": "Road-running shoe, size 42; returns accepted within 30 days"
+       }
+      ],
+      "finalDecision": "declined",
+      "submitted": true,
+      "decidedAt": 1790306556114
+     }
+    ],
+    [
+     "AU_LIVE_028b07_AU0014",
+     {
+      "authorizationId": "AU_LIVE_028b07_AU0014",
+      "sourceAuthorizationId": "AU0014",
+      "decision": "decline",
+      "reason_codes": [
+       "RETURN_WINDOW_INSUFFICIENT"
+      ],
+      "customer_message": "Declined CHF 145.00 at TrailSpark. The order is marked non-returnable — you required a return window of at least 14 days.",
+      "evidence": [
+       {
+        "label": "Amount",
+        "value": "CHF 145.00 incl. delivery"
+       },
+       {
+        "label": "Related purchase",
+        "value": "none"
+       },
+       {
+        "label": "Per-order cap",
+        "value": "CHF 200.00 → CHF 145.00"
+       },
+       {
+        "label": "Requested item",
+        "value": "matches: road-running shoes in size 43, size 43"
+       },
+       {
+        "label": "Device",
+        "value": "DVC-89CB09 — known from your history"
+       },
+       {
+        "label": "Recent attempts (10 min)",
+        "value": "0"
+       },
+       {
+        "label": "Behavior model",
+        "value": "normal — 34% off-pattern: larger than 95% of your past purchases, amount far outside your usual range, device never seen in your history"
+       }
+      ],
+      "uncertainties": [],
+      "flags": {
+       "manipulation": [],
+       "integrity": [],
+       "positive": []
+      },
+      "signature": "ME0028|IT0014|145",
+      "evaluation_ms": 5.23,
+      "merchant": "TrailSpark",
+      "merchantId": "ME0028",
+      "merchantUrl": null,
+      "merchantDomain": null,
+      "amount": 145,
+      "currency": "CHF",
+      "simTs": 1786525500000,
+      "replay_order": 3,
+      "purchase_description": "Running shoes order",
+      "items": [
+       {
+        "name": "Road-running shoes",
+        "qty": 1,
+        "price": 145,
+        "currency": "CHF",
+        "category": "sporting_goods",
+        "details": "Road-running shoe, size 43; clearance line, sold as final sale"
+       }
+      ],
+      "finalDecision": "declined",
+      "submitted": true,
+      "decidedAt": 1790306556276
+     }
+    ],
+    [
+     "AU_LIVE_028b07_AU0015",
+     {
+      "authorizationId": "AU_LIVE_028b07_AU0015",
+      "sourceAuthorizationId": "AU0015",
+      "decision": "decline",
+      "reason_codes": [
+       "RETURN_WINDOW_INSUFFICIENT"
+      ],
+      "customer_message": "Declined CHF 158.00 at TrailSpark. Seller policy: seller states returns accepted within 7 days — short of your 14-day return requirement.",
+      "evidence": [
+       {
+        "label": "Amount",
+        "value": "CHF 158.00 incl. delivery"
+       },
+       {
+        "label": "Related purchase",
+        "value": "none"
+       },
+       {
+        "label": "Per-order cap",
+        "value": "CHF 200.00 → CHF 158.00"
+       },
+       {
+        "label": "Requested item",
+        "value": "matches: road-running shoes in size 43, size 43"
+       },
+       {
+        "label": "Return window",
+        "value": "seller states returns accepted within 7 days"
+       },
+       {
+        "label": "Device",
+        "value": "DVC-89CB09 — known from your history"
+       },
+       {
+        "label": "Recent attempts (10 min)",
+        "value": "0"
+       },
+       {
+        "label": "Behavior model",
+        "value": "normal — 34% off-pattern: larger than 95% of your past purchases, amount far outside your usual range, device never seen in your history"
+       }
+      ],
+      "uncertainties": [],
+      "flags": {
+       "manipulation": [],
+       "integrity": [],
+       "positive": []
+      },
+      "signature": "ME0028|IT0014|158",
+      "evaluation_ms": 4.58,
+      "merchant": "TrailSpark",
+      "merchantId": "ME0028",
+      "merchantUrl": null,
+      "merchantDomain": null,
+      "amount": 158,
+      "currency": "CHF",
+      "simTs": 1786552200000,
+      "replay_order": 4,
+      "purchase_description": "Running shoes order",
+      "items": [
+       {
+        "name": "Road-running shoes",
+        "qty": 1,
+        "price": 158,
+        "currency": "CHF",
+        "category": "sporting_goods",
+        "details": "Road-running shoe, size 43; returns accepted within 7 days"
+       }
+      ],
+      "finalDecision": "declined",
+      "submitted": true,
+      "decidedAt": 1790306556281
+     }
+    ],
+    [
+     "AU_LIVE_028b07_AU0016",
+     {
+      "authorizationId": "AU_LIVE_028b07_AU0016",
+      "sourceAuthorizationId": "AU0016",
+      "decision": "step_up",
+      "reason_codes": [
+       "RETURN_WINDOW_UNKNOWN"
+      ],
+      "customer_message": "Paused for your review — TrailSpark, CHF 175.00. Open points: seller did not state a return window; you required ≥ 14 days (seller states no return policy)",
+      "evidence": [
+       {
+        "label": "Amount",
+        "value": "CHF 175.00 incl. delivery"
+       },
+       {
+        "label": "Related purchase",
+        "value": "none"
+       },
+       {
+        "label": "Per-order cap",
+        "value": "CHF 200.00 → CHF 175.00"
+       },
+       {
+        "label": "Requested item",
+        "value": "matches: road-running shoes in size 43, size 43"
+       },
+       {
+        "label": "Return window",
+        "value": "seller states no return policy"
+       },
+       {
+        "label": "Device",
+        "value": "DVC-89CB09 — known from your history"
+       },
+       {
+        "label": "Recent attempts (10 min)",
+        "value": "0"
+       },
+       {
+        "label": "Behavior model",
+        "value": "normal — 36% off-pattern: larger than 95% of your past purchases, amount far outside your usual range, device never seen in your history"
+       }
+      ],
+      "uncertainties": [
+       {
+        "code": "RETURN_WINDOW_UNKNOWN",
+        "detail": "seller did not state a return window; you required ≥ 14 days (seller states no return policy)"
+       }
+      ],
+      "flags": {
+       "manipulation": [],
+       "integrity": [],
+       "positive": []
+      },
+      "signature": "ME0028|IT0014|175",
+      "evaluation_ms": 4.43,
+      "merchant": "TrailSpark",
+      "merchantId": "ME0028",
+      "merchantUrl": null,
+      "merchantDomain": null,
+      "amount": 175,
+      "currency": "CHF",
+      "simTs": 1786620000000,
+      "replay_order": 5,
+      "purchase_description": "Running shoes order",
+      "items": [
+       {
+        "name": "Road-running shoes",
+        "qty": 1,
+        "price": 175,
+        "currency": "CHF",
+        "category": "sporting_goods",
+        "details": "Road-running shoe, size 43; return policy not stated by the seller"
+       }
+      ],
+      "finalDecision": null,
+      "submitted": true,
+      "decidedAt": 1790306556287
+     }
+    ],
+    [
+     "AU_LIVE_028b07_AU0017",
+     {
+      "authorizationId": "AU_LIVE_028b07_AU0017",
+      "sourceAuthorizationId": "AU0017",
+      "decision": "step_up",
+      "reason_codes": [
+       "SUBSTITUTION"
+      ],
+      "customer_message": "Paused for your review — TrailSpark, CHF 180.00. Open points: seller offers trail-running shoes instead of road-running shoes",
+      "evidence": [
+       {
+        "label": "Amount",
+        "value": "CHF 180.00 incl. delivery"
+       },
+       {
+        "label": "Related purchase",
+        "value": "none"
+       },
+       {
+        "label": "Per-order cap",
+        "value": "CHF 200.00 → CHF 180.00"
+       },
+       {
+        "label": "Return window",
+        "value": "seller states returns accepted within 30 days"
+       },
+       {
+        "label": "Device",
+        "value": "DVC-89CB09 — known from your history"
+       },
+       {
+        "label": "Recent attempts (10 min)",
+        "value": "0"
+       },
+       {
+        "label": "Behavior model",
+        "value": "normal — 36% off-pattern: larger than 95% of your past purchases, amount far outside your usual range, device never seen in your history"
+       }
+      ],
+      "uncertainties": [
+       {
+        "code": "SUBSTITUTION",
+        "detail": "seller offers trail-running shoes instead of road-running shoes"
+       }
+      ],
+      "flags": {
+       "manipulation": [],
+       "integrity": [],
+       "positive": []
+      },
+      "signature": "ME0028|IT0063|180",
+      "evaluation_ms": 4.41,
+      "merchant": "TrailSpark",
+      "merchantId": "ME0028",
+      "merchantUrl": null,
+      "merchantDomain": null,
+      "amount": 180,
+      "currency": "CHF",
+      "simTs": 1786701600000,
+      "replay_order": 6,
+      "purchase_description": "Running shoes order",
+      "items": [
+       {
+        "name": "Trail-running shoes",
+        "qty": 1,
+        "price": 180,
+        "currency": "CHF",
+        "category": "sporting_goods",
+        "details": "Trail-running shoe, size 43; lugged off-road sole; returns accepted within 30 days"
+       }
+      ],
+      "finalDecision": null,
+      "submitted": true,
+      "decidedAt": 1790306556293
+     }
+    ],
+    [
+     "AU_LIVE_028b07_AU0018",
+     {
+      "authorizationId": "AU_LIVE_028b07_AU0018",
+      "sourceAuthorizationId": "AU0018",
+      "decision": "step_up",
+      "reason_codes": [
+       "ITEM_UNCLEAR",
+       "SIZE_UNVERIFIED",
+       "EXTRA_ITEM"
+      ],
+      "customer_message": "Paused for your review — TrailSpark, CHF 194.00. Open points: cannot confirm product type from \"Extended protection plan\" size not stated by seller order includes “Extended protection plan” (CHF 29.00) beyond the requested road-running shoes in size 43 — confirm you want them",
+      "evidence": [
+       {
+        "label": "Amount",
+        "value": "CHF 194.00 incl. delivery"
+       },
+       {
+        "label": "Related purchase",
+        "value": "none"
+       },
+       {
+        "label": "Per-order cap",
+        "value": "CHF 200.00 → CHF 194.00"
+       },
+       {
+        "label": "Return window",
+        "value": "seller states returns accepted within 30 days"
+       },
+       {
+        "label": "Device",
+        "value": "DVC-89CB09 — known from your history"
+       },
+       {
+        "label": "Recent attempts (10 min)",
+        "value": "0"
+       },
+       {
+        "label": "Behavior model",
+        "value": "normal — 37% off-pattern: larger than 95% of your past purchases, amount far outside your usual range, device never seen in your history"
+       }
+      ],
+      "uncertainties": [
+       {
+        "code": "ITEM_UNCLEAR",
+        "detail": "cannot confirm product type from \"Extended protection plan\""
+       },
+       {
+        "code": "SIZE_UNVERIFIED",
+        "detail": "size not stated by seller"
+       },
+       {
+        "code": "EXTRA_ITEM",
+        "detail": "order includes “Extended protection plan” (CHF 29.00) beyond the requested road-running shoes in size 43 — confirm you want them"
+       }
+      ],
+      "flags": {
+       "manipulation": [],
+       "integrity": [],
+       "positive": []
+      },
+      "signature": "ME0028|IT0014+IT0066|194",
+      "evaluation_ms": 5.58,
+      "merchant": "TrailSpark",
+      "merchantId": "ME0028",
+      "merchantUrl": null,
+      "merchantDomain": null,
+      "amount": 194,
+      "currency": "CHF",
+      "simTs": 1786722300000,
+      "replay_order": 7,
+      "purchase_description": "Running shoes order",
+      "items": [
+       {
+        "name": "Road-running shoes",
+        "qty": 1,
+        "price": 165,
+        "currency": "CHF",
+        "category": "sporting_goods",
+        "details": "Road-running shoe, size 43; returns accepted within 30 days"
+       },
+       {
+        "name": "Extended protection plan",
+        "qty": 1,
+        "price": 29,
+        "currency": "CHF",
+        "category": "subscriptions",
+        "details": "Optional add-on service, billed monthly after the first year"
+       }
+      ],
+      "finalDecision": null,
+      "submitted": true,
+      "decidedAt": 1790306556301
+     }
+    ],
+    [
+     "AU_LIVE_028b07_AU0019",
+     {
+      "authorizationId": "AU_LIVE_028b07_AU0019",
+      "sourceAuthorizationId": "AU0019",
+      "decision": "approve",
+      "reason_codes": [],
+      "customer_message": "Approved CHF 168.00 at TrailSpark — within your policy.",
+      "evidence": [
+       {
+        "label": "Amount",
+        "value": "CHF 168.00 incl. delivery"
+       },
+       {
+        "label": "Related purchase",
+        "value": "none"
+       },
+       {
+        "label": "Per-order cap",
+        "value": "CHF 200.00 → CHF 168.00"
+       },
+       {
+        "label": "Requested item",
+        "value": "matches: road-running shoes in size 43, size 43"
+       },
+       {
+        "label": "Return window",
+        "value": "seller states returns accepted within 14 days"
+       },
+       {
+        "label": "Device",
+        "value": "DVC-89CB09 — known from your history"
+       },
+       {
+        "label": "Recent attempts (10 min)",
+        "value": "0"
+       },
+       {
+        "label": "Behavior model",
+        "value": "normal — 35% off-pattern: larger than 95% of your past purchases, amount far outside your usual range, device never seen in your history"
+       }
+      ],
+      "uncertainties": [],
+      "flags": {
+       "manipulation": [],
+       "integrity": [],
+       "positive": []
+      },
+      "signature": "ME0028|IT0014|168",
+      "evaluation_ms": 4.46,
+      "merchant": "TrailSpark",
+      "merchantId": "ME0028",
+      "merchantUrl": null,
+      "merchantDomain": null,
+      "amount": 168,
+      "currency": "CHF",
+      "simTs": 1786786200000,
+      "replay_order": 8,
+      "purchase_description": "Running shoes order",
+      "items": [
+       {
+        "name": "Road-running shoes",
+        "qty": 1,
+        "price": 168,
+        "currency": "CHF",
+        "category": "sporting_goods",
+        "details": "Road-running shoe, size 43; returns accepted within 14 days"
+       }
+      ],
+      "finalDecision": "approved",
+      "submitted": true,
+      "decidedAt": 1790306556475
+     }
+    ],
+    [
+     "AU_LIVE_028b07_AU0020",
+     {
+      "authorizationId": "AU_LIVE_028b07_AU0020",
+      "sourceAuthorizationId": "AU0020",
+      "decision": "decline",
+      "reason_codes": [
+       "REQUESTED_ITEM_MISMATCH",
+       "DESCRIPTION_CONTRADICTION"
+      ],
+      "customer_message": "Declined CHF 120.00 at TrailSpark. Basket contains \"Cycling helmet\" instead of the requested road-running shoes in size 43.",
+      "evidence": [
+       {
+        "label": "Amount",
+        "value": "CHF 120.00 incl. delivery"
+       },
+       {
+        "label": "Related purchase",
+        "value": "none"
+       },
+       {
+        "label": "Per-order cap",
+        "value": "CHF 200.00 → CHF 120.00"
+       },
+       {
+        "label": "Return window",
+        "value": "seller states returns accepted within 30 days"
+       },
+       {
+        "label": "Device",
+        "value": "DVC-89CB09 — known from your history"
+       },
+       {
+        "label": "Recent attempts (10 min)",
+        "value": "0"
+       },
+       {
+        "label": "Behavior model",
+        "value": "normal — 32% off-pattern: amount far outside your usual range, larger than 95% of your past purchases, device never seen in your history"
+       }
+      ],
+      "uncertainties": [
+       {
+        "code": "DESCRIPTION_CONTRADICTION",
+        "detail": "the stated purchase (“Running shoes order”) does not match what is actually in the basket"
+       }
+      ],
+      "flags": {
+       "manipulation": [],
+       "integrity": [],
+       "positive": []
+      },
+      "signature": "ME0028|IT0064|120",
+      "evaluation_ms": 4.97,
+      "merchant": "TrailSpark",
+      "merchantId": "ME0028",
+      "merchantUrl": null,
+      "merchantDomain": null,
+      "amount": 120,
+      "currency": "CHF",
+      "simTs": 1786885800000,
+      "replay_order": 9,
+      "purchase_description": "Running shoes order",
+      "items": [
+       {
+        "name": "Cycling helmet",
+        "qty": 1,
+        "price": 120,
+        "currency": "CHF",
+        "category": "sporting_goods",
+        "details": "Road cycling helmet, size M; returns accepted within 30 days"
+       }
+      ],
+      "finalDecision": "declined",
+      "submitted": true,
+      "decidedAt": 1790306556482
+     }
+    ],
+    [
+     "AU_LIVE_028b07_AU0021",
+     {
+      "authorizationId": "AU_LIVE_028b07_AU0021",
+      "sourceAuthorizationId": "AU0021",
+      "decision": "decline",
+      "reason_codes": [
+       "LIMIT_EXCEEDED"
+      ],
+      "customer_message": "Declined CHF 215.00 at TrailSpark. Total CHF 215.00 (delivery included) is over your CHF 200.00 per-order cap.",
+      "evidence": [
+       {
+        "label": "Amount",
+        "value": "CHF 215.00 incl. delivery"
+       },
+       {
+        "label": "Related purchase",
+        "value": "none"
+       },
+       {
+        "label": "Per-order cap",
+        "value": "CHF 200.00 → CHF 215.00"
+       },
+       {
+        "label": "Requested item",
+        "value": "matches: road-running shoes in size 43, size 43"
+       },
+       {
+        "label": "Return window",
+        "value": "seller states returns accepted within 30 days"
+       },
+       {
+        "label": "Device",
+        "value": "DVC-89CB09 — known from your history"
+       },
+       {
+        "label": "Recent attempts (10 min)",
+        "value": "0"
+       },
+       {
+        "label": "Behavior model",
+        "value": "normal — 38% off-pattern: larger than 95% of your past purchases, amount far outside your usual range, device never seen in your history"
+       }
+      ],
+      "uncertainties": [],
+      "flags": {
+       "manipulation": [],
+       "integrity": [],
+       "positive": []
+      },
+      "signature": "ME0028|IT0014|215",
+      "evaluation_ms": 4.3,
+      "merchant": "TrailSpark",
+      "merchantId": "ME0028",
+      "merchantUrl": null,
+      "merchantDomain": null,
+      "amount": 215,
+      "currency": "CHF",
+      "simTs": 1786964400000,
+      "replay_order": 10,
+      "purchase_description": "Running shoes order",
+      "items": [
+       {
+        "name": "Road-running shoes",
+        "qty": 1,
+        "price": 215,
+        "currency": "CHF",
+        "category": "sporting_goods",
+        "details": "Road-running shoe, size 43; returns accepted within 30 days"
+       }
+      ],
+      "finalDecision": "declined",
+      "submitted": true,
+      "decidedAt": 1790306556488
+     }
+    ],
+    [
+     "AU_LIVE_028b07_AU0022",
+     {
+      "authorizationId": "AU_LIVE_028b07_AU0022",
+      "sourceAuthorizationId": "AU0022",
+      "decision": "decline",
+      "reason_codes": [
+       "MERCHANT_TYPE_MISMATCH"
+      ],
+      "customer_message": "Declined CHF 189.00 at GreenLoop. GreenLoop is a sustainable_goods retailer — your policy requires a specialist sporting_goods retailer.",
+      "evidence": [
+       {
+        "label": "Amount",
+        "value": "CHF 189.00 incl. delivery"
+       },
+       {
+        "label": "Related purchase",
+        "value": "none"
+       },
+       {
+        "label": "Per-order cap",
+        "value": "CHF 200.00 → CHF 189.00"
+       },
+       {
+        "label": "Requested item",
+        "value": "matches: road-running shoes in size 43, size 43"
+       },
+       {
+        "label": "Return window",
+        "value": "seller states returns accepted within 30 days"
+       },
+       {
+        "label": "Device",
+        "value": "DVC-89CB09 — known from your history"
+       },
+       {
+        "label": "Recent attempts (10 min)",
+        "value": "0"
+       },
+       {
+        "label": "Behavior model",
+        "value": "suspect — 43% off-pattern: larger than 95% of your past purchases, product category you never buy, amount far outside your usual range"
+       }
+      ],
+      "uncertainties": [],
+      "flags": {
+       "manipulation": [],
+       "integrity": [],
+       "positive": []
+      },
+      "signature": "ME0053|IT0014|189",
+      "evaluation_ms": 5.73,
+      "merchant": "GreenLoop",
+      "merchantId": "ME0053",
+      "merchantUrl": null,
+      "merchantDomain": null,
+      "amount": 189,
+      "currency": "CHF",
+      "simTs": 1787063100000,
+      "replay_order": 11,
+      "purchase_description": "Running shoes order",
+      "items": [
+       {
+        "name": "Road-running shoes",
+        "qty": 1,
+        "price": 189,
+        "currency": "CHF",
+        "category": "sporting_goods",
+        "details": "Road-running shoe, size 43; returns accepted within 30 days"
+       }
+      ],
+      "finalDecision": "declined",
+      "submitted": true,
+      "decidedAt": 1790306556496
+     }
+    ],
+    [
+     "AU_LIVE_028b07_AU0023",
+     {
+      "authorizationId": "AU_LIVE_028b07_AU0023",
+      "sourceAuthorizationId": "AU0023",
+      "decision": "approve",
+      "reason_codes": [],
+      "customer_message": "Approved CHF 179.00 at Summit Thread — within your policy.",
+      "evidence": [
+       {
+        "label": "Amount",
+        "value": "CHF 179.00 incl. delivery"
+       },
+       {
+        "label": "Related purchase",
+        "value": "none"
+       },
+       {
+        "label": "Per-order cap",
+        "value": "CHF 200.00 → CHF 179.00"
+       },
+       {
+        "label": "Requested item",
+        "value": "matches: road-running shoes in size 43, size 43"
+       },
+       {
+        "label": "Return window",
+        "value": "seller states returns accepted within 30 days"
+       },
+       {
+        "label": "Device",
+        "value": "DVC-89CB09 — known from your history"
+       },
+       {
+        "label": "Recent attempts (10 min)",
+        "value": "0"
+       },
+       {
+        "label": "Behavior model",
+        "value": "normal — 38% off-pattern: larger than 95% of your past purchases, amount far outside your usual range, little history at this shop"
+       }
+      ],
+      "uncertainties": [],
+      "flags": {
+       "manipulation": [],
+       "integrity": [],
+       "positive": []
+      },
+      "signature": "ME0029|IT0014|179",
+      "evaluation_ms": 5.48,
+      "merchant": "Summit Thread",
+      "merchantId": "ME0029",
+      "merchantUrl": null,
+      "merchantDomain": null,
+      "amount": 179,
+      "currency": "CHF",
+      "simTs": 1787136000000,
+      "replay_order": 12,
+      "purchase_description": "Running shoes order",
+      "items": [
+       {
+        "name": "Road-running shoes",
+        "qty": 1,
+        "price": 179,
+        "currency": "CHF",
+        "category": "sporting_goods",
+        "details": "Road-running shoe, size 43; returns accepted within 30 days"
+       }
+      ],
+      "finalDecision": "approved",
+      "submitted": true,
+      "decidedAt": 1790306556503
+     }
+    ]
+   ],
+   "stepUpsSerialized": [
+    [
+     "AU_LIVE_028b07_AU0016",
+     {
+      "event": {
+       "type": "authorization.request",
+       "request_id": "req_au0016_1790306556282",
+       "deadline_at": "2026-09-25T03:22:44.282Z",
+       "authorization": {
+        "authorization_id": "AU_LIVE_028b07_AU0016",
+        "source_authorization_id": "AU0016",
+        "scenario_id": "SCEN0002",
+        "replay_order": 5,
+        "mandate_id": "TM_SIM_e5e732a17733",
+        "profile_id": "PROFILE_AUTH0003",
+        "card_id": "CA0011",
+        "initiator_type": "agent",
+        "merchant": {
+         "merchant_id": "ME0028",
+         "merchant_name": "TrailSpark",
+         "merchant_category": "sporting_goods",
+         "merchant_mcc": "5941",
+         "merchant_country": "CH",
+         "merchant_city": "Lucerne",
+         "availability": "store_and_online",
+         "recurring_capable": "false"
+        },
+        "timestamp": "2026-08-13T11:20:00Z",
+        "amount": 175,
+        "currency": "CHF",
+        "billing_amount_chf": 175,
+        "items_subtotal": 175,
+        "delivery_fee": 0,
+        "channel": "ecommerce",
+        "customer_device_id": "DVC-89CB09",
+        "authority_status": "active",
+        "card_status_at_attempt": "active",
+        "spend_in_period_before_chf": null,
+        "recent_attempt_count_10m": 0,
+        "fulfillment_method": "delivery",
+        "delivery_by": null,
+        "order_returnable": "unknown",
+        "order_cancellable": "unknown",
+        "related_authorization_id": null,
+        "related_authorization_status": null,
+        "purchase_description": "Running shoes order",
+        "items": [
+         {
+          "line_no": 1,
+          "item_id": "IT0014",
+          "item_name": "Road-running shoes",
+          "item_category": "sporting_goods",
+          "quantity": 1,
+          "unit_price": 175,
+          "currency": "CHF",
+          "item_details": "Road-running shoe, size 43; return policy not stated by the seller"
+         }
+        ]
+       },
+       "mandate": {
+        "draft_id": "md_c81e7302e918",
+        "status": "active",
+        "instruction": "Replace my worn road-running shoes in size 43. Buy only from a specialist sports retailer, only if the order can be returned within 14 days or more, and pay no more than CHF 200. Ask me when uncertain.",
+        "hard_rules": [
+         {
+          "field": "authorization.billing_amount_chf",
+          "operator": "<=",
+          "value": 200,
+          "currency": "CHF",
+          "scope": "purchase"
+         },
+         {
+          "field": "basket.requested_item_match",
+          "operator": "=",
+          "value": "true"
+         },
+         {
+          "field": "merchant.merchant_category",
+          "operator": "in",
+          "value": [
+           "sporting_goods"
+          ]
+         },
+         {
+          "field": "basket.return_window_days_min",
+          "operator": ">=",
+          "value": 14
+         },
+         {
+          "field": "basket.excluded_categories",
+          "operator": "not_in",
+          "value": [
+           "gift_card"
+          ]
+         }
+        ],
+        "uncertainty_policy": "ask",
+        "guidance": [
+         "When evidence is missing or ambiguous, the purchase is paused and you decide.",
+         "Uncertainty policy: pause and ask you."
+        ],
+        "open_questions": [],
+        "created_at": "2026-09-25T03:22:35.933Z",
+        "mandate_id": "TM_SIM_e5e732a17733",
+        "confirmed_at": "2026-09-25T03:22:36.029Z",
+        "customer_id": "CU0006"
+       },
+       "context": {
+        "approved_spend_in_period_chf": 165,
+        "recent_authorizations": [
+         {
+          "authorization_id": "AU_LIVE_028b07_AU0012",
+          "decision": "approved"
+         }
+        ]
+       },
+       "runtime": {
+        "received_at": "2026-09-25T03:22:36.282Z",
+        "history_window_minutes": 10,
+        "context_basis": "run_decisions_and_scenario_timestamps"
+       }
+      },
+      "evaluation": {
+       "decision": "step_up",
+       "reason_codes": [
+        "RETURN_WINDOW_UNKNOWN"
+       ],
+       "customer_message": "Paused for your review — TrailSpark, CHF 175.00. Open points: seller did not state a return window; you required ≥ 14 days (seller states no return policy)",
+       "evidence": [
+        {
+         "label": "Amount",
+         "value": "CHF 175.00 incl. delivery"
+        },
+        {
+         "label": "Related purchase",
+         "value": "none"
+        },
+        {
+         "label": "Per-order cap",
+         "value": "CHF 200.00 → CHF 175.00"
+        },
+        {
+         "label": "Requested item",
+         "value": "matches: road-running shoes in size 43, size 43"
+        },
+        {
+         "label": "Return window",
+         "value": "seller states no return policy"
+        },
+        {
+         "label": "Device",
+         "value": "DVC-89CB09 — known from your history"
+        },
+        {
+         "label": "Recent attempts (10 min)",
+         "value": "0"
+        },
+        {
+         "label": "Behavior model",
+         "value": "normal — 36% off-pattern: larger than 95% of your past purchases, amount far outside your usual range, device never seen in your history"
+        }
+       ],
+       "uncertainties": [
+        {
+         "code": "RETURN_WINDOW_UNKNOWN",
+         "detail": "seller did not state a return window; you required ≥ 14 days (seller states no return policy)"
+        }
+       ],
+       "rule_results": [
+        {
+         "rule": {
+          "field": "authorization.billing_amount_chf",
+          "operator": "<=",
+          "value": 200,
+          "currency": "CHF",
+          "scope": "purchase"
+         },
+         "status": "pass",
+         "detail": "CHF 175.00 within cap CHF 200.00"
+        },
+        {
+         "rule": {
+          "field": "basket.requested_item_match",
+          "operator": "=",
+          "value": "true"
+         },
+         "status": "pass",
+         "detail": "matches requested road-running shoes in size 43"
+        },
+        {
+         "rule": {
+          "field": "merchant.merchant_category",
+          "operator": "in",
+          "value": [
+           "sporting_goods"
+          ]
+         },
+         "status": "pass",
+         "detail": "TrailSpark is “sporting_goods”, needs sporting_goods"
+        },
+        {
+         "rule": {
+          "field": "basket.return_window_days_min",
+          "operator": ">=",
+          "value": 14
+         },
+         "status": "uncertain",
+         "detail": "seller states no return policy"
+        },
+        {
+         "rule": {
+          "field": "basket.excluded_categories",
+          "operator": "not_in",
+          "value": [
+           "gift_card"
+          ]
+         },
+         "status": "pass",
+         "detail": "no excluded categories in basket"
+        }
+       ],
+       "flags": {
+        "manipulation": [],
+        "integrity": [],
+        "positive": []
+       },
+       "signature": "ME0028|IT0014|175",
+       "evaluation_ms": 4.43,
+       "engine_version": "leash-engine 1.2.0"
+      },
+      "deadline": 1790306676287,
+      "openedAt": 1790306556288
+     }
+    ],
+    [
+     "AU_LIVE_028b07_AU0017",
+     {
+      "event": {
+       "type": "authorization.request",
+       "request_id": "req_au0017_1790306556288",
+       "deadline_at": "2026-09-25T03:22:44.288Z",
+       "authorization": {
+        "authorization_id": "AU_LIVE_028b07_AU0017",
+        "source_authorization_id": "AU0017",
+        "scenario_id": "SCEN0002",
+        "replay_order": 6,
+        "mandate_id": "TM_SIM_e5e732a17733",
+        "profile_id": "PROFILE_AUTH0003",
+        "card_id": "CA0011",
+        "initiator_type": "agent",
+        "merchant": {
+         "merchant_id": "ME0028",
+         "merchant_name": "TrailSpark",
+         "merchant_category": "sporting_goods",
+         "merchant_mcc": "5941",
+         "merchant_country": "CH",
+         "merchant_city": "Lucerne",
+         "availability": "store_and_online",
+         "recurring_capable": "false"
+        },
+        "timestamp": "2026-08-14T10:00:00Z",
+        "amount": 180,
+        "currency": "CHF",
+        "billing_amount_chf": 180,
+        "items_subtotal": 180,
+        "delivery_fee": 0,
+        "channel": "ecommerce",
+        "customer_device_id": "DVC-89CB09",
+        "authority_status": "active",
+        "card_status_at_attempt": "active",
+        "spend_in_period_before_chf": null,
+        "recent_attempt_count_10m": 0,
+        "fulfillment_method": "delivery",
+        "delivery_by": null,
+        "order_returnable": "true",
+        "order_cancellable": "unknown",
+        "related_authorization_id": null,
+        "related_authorization_status": null,
+        "purchase_description": "Running shoes order",
+        "items": [
+         {
+          "line_no": 1,
+          "item_id": "IT0063",
+          "item_name": "Trail-running shoes",
+          "item_category": "sporting_goods",
+          "quantity": 1,
+          "unit_price": 180,
+          "currency": "CHF",
+          "item_details": "Trail-running shoe, size 43; lugged off-road sole; returns accepted within 30 days"
+         }
+        ]
+       },
+       "mandate": {
+        "draft_id": "md_c81e7302e918",
+        "status": "active",
+        "instruction": "Replace my worn road-running shoes in size 43. Buy only from a specialist sports retailer, only if the order can be returned within 14 days or more, and pay no more than CHF 200. Ask me when uncertain.",
+        "hard_rules": [
+         {
+          "field": "authorization.billing_amount_chf",
+          "operator": "<=",
+          "value": 200,
+          "currency": "CHF",
+          "scope": "purchase"
+         },
+         {
+          "field": "basket.requested_item_match",
+          "operator": "=",
+          "value": "true"
+         },
+         {
+          "field": "merchant.merchant_category",
+          "operator": "in",
+          "value": [
+           "sporting_goods"
+          ]
+         },
+         {
+          "field": "basket.return_window_days_min",
+          "operator": ">=",
+          "value": 14
+         },
+         {
+          "field": "basket.excluded_categories",
+          "operator": "not_in",
+          "value": [
+           "gift_card"
+          ]
+         }
+        ],
+        "uncertainty_policy": "ask",
+        "guidance": [
+         "When evidence is missing or ambiguous, the purchase is paused and you decide.",
+         "Uncertainty policy: pause and ask you."
+        ],
+        "open_questions": [],
+        "created_at": "2026-09-25T03:22:35.933Z",
+        "mandate_id": "TM_SIM_e5e732a17733",
+        "confirmed_at": "2026-09-25T03:22:36.029Z",
+        "customer_id": "CU0006"
+       },
+       "context": {
+        "approved_spend_in_period_chf": 165,
+        "recent_authorizations": [
+         {
+          "authorization_id": "AU_LIVE_028b07_AU0012",
+          "decision": "approved"
+         }
+        ]
+       },
+       "runtime": {
+        "received_at": "2026-09-25T03:22:36.289Z",
+        "history_window_minutes": 10,
+        "context_basis": "run_decisions_and_scenario_timestamps"
+       }
+      },
+      "evaluation": {
+       "decision": "step_up",
+       "reason_codes": [
+        "SUBSTITUTION"
+       ],
+       "customer_message": "Paused for your review — TrailSpark, CHF 180.00. Open points: seller offers trail-running shoes instead of road-running shoes",
+       "evidence": [
+        {
+         "label": "Amount",
+         "value": "CHF 180.00 incl. delivery"
+        },
+        {
+         "label": "Related purchase",
+         "value": "none"
+        },
+        {
+         "label": "Per-order cap",
+         "value": "CHF 200.00 → CHF 180.00"
+        },
+        {
+         "label": "Return window",
+         "value": "seller states returns accepted within 30 days"
+        },
+        {
+         "label": "Device",
+         "value": "DVC-89CB09 — known from your history"
+        },
+        {
+         "label": "Recent attempts (10 min)",
+         "value": "0"
+        },
+        {
+         "label": "Behavior model",
+         "value": "normal — 36% off-pattern: larger than 95% of your past purchases, amount far outside your usual range, device never seen in your history"
+        }
+       ],
+       "uncertainties": [
+        {
+         "code": "SUBSTITUTION",
+         "detail": "seller offers trail-running shoes instead of road-running shoes"
+        }
+       ],
+       "rule_results": [
+        {
+         "rule": {
+          "field": "authorization.billing_amount_chf",
+          "operator": "<=",
+          "value": 200,
+          "currency": "CHF",
+          "scope": "purchase"
+         },
+         "status": "pass",
+         "detail": "CHF 180.00 within cap CHF 200.00"
+        },
+        {
+         "rule": {
+          "field": "basket.requested_item_match",
+          "operator": "=",
+          "value": "true"
+         },
+         "status": "uncertain",
+         "detail": "seller offers trail-running shoes instead of road-running shoes"
+        },
+        {
+         "rule": {
+          "field": "merchant.merchant_category",
+          "operator": "in",
+          "value": [
+           "sporting_goods"
+          ]
+         },
+         "status": "pass",
+         "detail": "TrailSpark is “sporting_goods”, needs sporting_goods"
+        },
+        {
+         "rule": {
+          "field": "basket.return_window_days_min",
+          "operator": ">=",
+          "value": 14
+         },
+         "status": "pass",
+         "detail": "seller states returns accepted within 30 days"
+        },
+        {
+         "rule": {
+          "field": "basket.excluded_categories",
+          "operator": "not_in",
+          "value": [
+           "gift_card"
+          ]
+         },
+         "status": "pass",
+         "detail": "no excluded categories in basket"
+        }
+       ],
+       "flags": {
+        "manipulation": [],
+        "integrity": [],
+        "positive": []
+       },
+       "signature": "ME0028|IT0063|180",
+       "evaluation_ms": 4.41,
+       "engine_version": "leash-engine 1.2.0"
+      },
+      "deadline": 1790306676294,
+      "openedAt": 1790306556294
+     }
+    ],
+    [
+     "AU_LIVE_028b07_AU0018",
+     {
+      "event": {
+       "type": "authorization.request",
+       "request_id": "req_au0018_1790306556295",
+       "deadline_at": "2026-09-25T03:22:44.295Z",
+       "authorization": {
+        "authorization_id": "AU_LIVE_028b07_AU0018",
+        "source_authorization_id": "AU0018",
+        "scenario_id": "SCEN0002",
+        "replay_order": 7,
+        "mandate_id": "TM_SIM_e5e732a17733",
+        "profile_id": "PROFILE_AUTH0003",
+        "card_id": "CA0011",
+        "initiator_type": "agent",
+        "merchant": {
+         "merchant_id": "ME0028",
+         "merchant_name": "TrailSpark",
+         "merchant_category": "sporting_goods",
+         "merchant_mcc": "5941",
+         "merchant_country": "CH",
+         "merchant_city": "Lucerne",
+         "availability": "store_and_online",
+         "recurring_capable": "false"
+        },
+        "timestamp": "2026-08-14T15:45:00Z",
+        "amount": 194,
+        "currency": "CHF",
+        "billing_amount_chf": 194,
+        "items_subtotal": 194,
+        "delivery_fee": 0,
+        "channel": "ecommerce",
+        "customer_device_id": "DVC-89CB09",
+        "authority_status": "active",
+        "card_status_at_attempt": "active",
+        "spend_in_period_before_chf": null,
+        "recent_attempt_count_10m": 0,
+        "fulfillment_method": "delivery",
+        "delivery_by": null,
+        "order_returnable": "true",
+        "order_cancellable": "unknown",
+        "related_authorization_id": null,
+        "related_authorization_status": null,
+        "purchase_description": "Running shoes order",
+        "items": [
+         {
+          "line_no": 1,
+          "item_id": "IT0014",
+          "item_name": "Road-running shoes",
+          "item_category": "sporting_goods",
+          "quantity": 1,
+          "unit_price": 165,
+          "currency": "CHF",
+          "item_details": "Road-running shoe, size 43; returns accepted within 30 days"
+         },
+         {
+          "line_no": 2,
+          "item_id": "IT0066",
+          "item_name": "Extended protection plan",
+          "item_category": "subscriptions",
+          "quantity": 1,
+          "unit_price": 29,
+          "currency": "CHF",
+          "item_details": "Optional add-on service, billed monthly after the first year"
+         }
+        ]
+       },
+       "mandate": {
+        "draft_id": "md_c81e7302e918",
+        "status": "active",
+        "instruction": "Replace my worn road-running shoes in size 43. Buy only from a specialist sports retailer, only if the order can be returned within 14 days or more, and pay no more than CHF 200. Ask me when uncertain.",
+        "hard_rules": [
+         {
+          "field": "authorization.billing_amount_chf",
+          "operator": "<=",
+          "value": 200,
+          "currency": "CHF",
+          "scope": "purchase"
+         },
+         {
+          "field": "basket.requested_item_match",
+          "operator": "=",
+          "value": "true"
+         },
+         {
+          "field": "merchant.merchant_category",
+          "operator": "in",
+          "value": [
+           "sporting_goods"
+          ]
+         },
+         {
+          "field": "basket.return_window_days_min",
+          "operator": ">=",
+          "value": 14
+         },
+         {
+          "field": "basket.excluded_categories",
+          "operator": "not_in",
+          "value": [
+           "gift_card"
+          ]
+         }
+        ],
+        "uncertainty_policy": "ask",
+        "guidance": [
+         "When evidence is missing or ambiguous, the purchase is paused and you decide.",
+         "Uncertainty policy: pause and ask you."
+        ],
+        "open_questions": [],
+        "created_at": "2026-09-25T03:22:35.933Z",
+        "mandate_id": "TM_SIM_e5e732a17733",
+        "confirmed_at": "2026-09-25T03:22:36.029Z",
+        "customer_id": "CU0006"
+       },
+       "context": {
+        "approved_spend_in_period_chf": 165,
+        "recent_authorizations": [
+         {
+          "authorization_id": "AU_LIVE_028b07_AU0012",
+          "decision": "approved"
+         }
+        ]
+       },
+       "runtime": {
+        "received_at": "2026-09-25T03:22:36.295Z",
+        "history_window_minutes": 10,
+        "context_basis": "run_decisions_and_scenario_timestamps"
+       }
+      },
+      "evaluation": {
+       "decision": "step_up",
+       "reason_codes": [
+        "ITEM_UNCLEAR",
+        "SIZE_UNVERIFIED",
+        "EXTRA_ITEM"
+       ],
+       "customer_message": "Paused for your review — TrailSpark, CHF 194.00. Open points: cannot confirm product type from \"Extended protection plan\" size not stated by seller order includes “Extended protection plan” (CHF 29.00) beyond the requested road-running shoes in size 43 — confirm you want them",
+       "evidence": [
+        {
+         "label": "Amount",
+         "value": "CHF 194.00 incl. delivery"
+        },
+        {
+         "label": "Related purchase",
+         "value": "none"
+        },
+        {
+         "label": "Per-order cap",
+         "value": "CHF 200.00 → CHF 194.00"
+        },
+        {
+         "label": "Return window",
+         "value": "seller states returns accepted within 30 days"
+        },
+        {
+         "label": "Device",
+         "value": "DVC-89CB09 — known from your history"
+        },
+        {
+         "label": "Recent attempts (10 min)",
+         "value": "0"
+        },
+        {
+         "label": "Behavior model",
+         "value": "normal — 37% off-pattern: larger than 95% of your past purchases, amount far outside your usual range, device never seen in your history"
+        }
+       ],
+       "uncertainties": [
+        {
+         "code": "ITEM_UNCLEAR",
+         "detail": "cannot confirm product type from \"Extended protection plan\""
+        },
+        {
+         "code": "SIZE_UNVERIFIED",
+         "detail": "size not stated by seller"
+        },
+        {
+         "code": "EXTRA_ITEM",
+         "detail": "order includes “Extended protection plan” (CHF 29.00) beyond the requested road-running shoes in size 43 — confirm you want them"
+        }
+       ],
+       "rule_results": [
+        {
+         "rule": {
+          "field": "authorization.billing_amount_chf",
+          "operator": "<=",
+          "value": 200,
+          "currency": "CHF",
+          "scope": "purchase"
+         },
+         "status": "pass",
+         "detail": "CHF 194.00 within cap CHF 200.00"
+        },
+        {
+         "rule": {
+          "field": "basket.requested_item_match",
+          "operator": "=",
+          "value": "true"
+         },
+         "status": "uncertain",
+         "detail": "cannot confirm product type from \"Extended protection plan\"; size not stated by seller"
+        },
+        {
+         "rule": {
+          "field": "merchant.merchant_category",
+          "operator": "in",
+          "value": [
+           "sporting_goods"
+          ]
+         },
+         "status": "pass",
+         "detail": "TrailSpark is “sporting_goods”, needs sporting_goods"
+        },
+        {
+         "rule": {
+          "field": "basket.return_window_days_min",
+          "operator": ">=",
+          "value": 14
+         },
+         "status": "pass",
+         "detail": "seller states returns accepted within 30 days"
+        },
+        {
+         "rule": {
+          "field": "basket.excluded_categories",
+          "operator": "not_in",
+          "value": [
+           "gift_card"
+          ]
+         },
+         "status": "pass",
+         "detail": "no excluded categories in basket"
+        }
+       ],
+       "flags": {
+        "manipulation": [],
+        "integrity": [],
+        "positive": []
+       },
+       "signature": "ME0028|IT0014+IT0066|194",
+       "evaluation_ms": 5.58,
+       "engine_version": "leash-engine 1.2.0"
+      },
+      "deadline": 1790306676302,
+      "openedAt": 1790306556302
+     }
+    ]
+   ]
+  },
+  {
+   "run_id": "run_f7016040f3d8",
+   "scenario_id": "SCEN0001",
+   "mandate_id": "TM_SIM_aa658687e72d",
+   "mandateSnapshot": {
+    "draft_id": "md_de980cb138d0",
+    "status": "active",
+    "instruction": "Groceries only, max CHF 120 per order",
+    "hard_rules": [
+     {
+      "field": "authorization.billing_amount_chf",
+      "operator": "<=",
+      "value": 120,
+      "currency": "CHF",
+      "scope": "purchase"
+     }
+    ],
+    "uncertainty_policy": "ask",
+    "guidance": [],
+    "open_questions": [],
+    "created_at": "2026-09-25T04:27:44.645Z",
+    "mandate_id": "TM_SIM_aa658687e72d",
+    "confirmed_at": "2026-09-25T04:27:44.712Z"
+   },
+   "totalEvents": 10,
+   "customerIds": [],
+   "status": "running",
+   "spend": [
+    {
+     "simTs": 1786353120000,
+     "amount": 44.5,
+     "merchantId": "ME0001",
+     "authorization_id": "AU_LIVE_40f3d8_AU0002"
+    },
+    {
+     "simTs": 1786473300000,
+     "amount": 120,
+     "merchantId": "ME0001",
+     "authorization_id": "AU_LIVE_40f3d8_AU0003"
+    },
+    {
+     "simTs": 1786641600000,
+     "amount": 70,
+     "merchantId": "ME0001",
+     "authorization_id": "AU_LIVE_40f3d8_AU0005"
+    },
+    {
+     "simTs": 1786707600000,
+     "amount": 62,
+     "merchantId": "ME0001",
+     "authorization_id": "AU_LIVE_40f3d8_AU0007"
+    },
+    {
+     "simTs": 1786786200000,
+     "amount": 65.5,
+     "merchantId": "ME0001",
+     "authorization_id": "AU_LIVE_40f3d8_AU0008"
+    },
+    {
+     "simTs": 1786896600000,
+     "amount": 24,
+     "merchantId": "ME0001",
+     "authorization_id": "AU_LIVE_40f3d8_AU0009"
+    }
+   ],
+   "createdAt": 1790310464728,
+   "decisionsSerialized": [
+    [
+     "AU_LIVE_40f3d8_AU0002",
+     {
+      "authorizationId": "AU_LIVE_40f3d8_AU0002",
+      "sourceAuthorizationId": "AU0002",
+      "decision": "approve",
+      "reason_codes": [],
+      "customer_message": "Approved CHF 44.50 at Alpine Basket — within your policy, 92% confidence (11/12 decision facts verified, 1 open). Verified basis: Amount · Related purchase · Per-order cap · Device · Recent attempts (10 min).",
+      "confidence": {
+       "percent": 92,
+       "verified_facts": 11,
+       "open_points": 1,
+       "method": "share of decision-relevant facts verified by deterministic checks"
+      },
+      "evidence": [
+       {
+        "label": "Amount",
+        "value": "CHF 44.50 incl. delivery"
+       },
+       {
+        "label": "Related purchase",
+        "value": "none"
+       },
+       {
+        "label": "Per-order cap",
+        "value": "CHF 120.00 → CHF 44.50"
+       },
+       {
+        "label": "Device",
+        "value": "DVC-13A598 — known from your history"
+       },
+       {
+        "label": "Recent attempts (10 min)",
+        "value": "0"
+       },
+       {
+        "label": "Behavior model",
+        "value": "normal — 27% off-pattern: amount far outside your usual range, device never seen in your history"
+       }
+      ],
+      "uncertainties": [],
+      "flags": {
+       "manipulation": [],
+       "integrity": [],
+       "positive": []
+      },
+      "signature": "ME0001|IT0001+IT0003|44.5",
+      "evaluation_ms": 20.92,
+      "merchant": "Alpine Basket",
+      "merchantId": "ME0001",
+      "merchantUrl": null,
+      "merchantDomain": null,
+      "amount": 44.5,
+      "currency": "CHF",
+      "simTs": 1786353120000,
+      "replay_order": 1,
+      "purchase_description": "Household grocery delivery",
+      "items": [
+       {
+        "name": "Fresh produce selection",
+        "qty": 1,
+        "price": 18.5,
+        "currency": "CHF",
+        "category": "groceries",
+        "details": "Seasonal fruit and vegetables"
+       },
+       {
+        "name": "Breakfast supplies",
+        "qty": 1,
+        "price": 20,
+        "currency": "CHF",
+        "category": "groceries",
+        "details": "Bread, oats, and yoghurt"
+       }
+      ],
+      "finalDecision": "approved",
+      "submitted": true,
+      "decidedAt": 1790310464756
+     }
+    ],
+    [
+     "AU_LIVE_40f3d8_AU0003",
+     {
+      "authorizationId": "AU_LIVE_40f3d8_AU0003",
+      "sourceAuthorizationId": "AU0003",
+      "decision": "approve",
+      "reason_codes": [],
+      "customer_message": "Approved CHF 120.00 at Alpine Basket — within your policy, 92% confidence (11/12 decision facts verified, 1 open). Verified basis: Amount · Related purchase · Per-order cap · Device · Recent attempts (10 min).",
+      "confidence": {
+       "percent": 92,
+       "verified_facts": 11,
+       "open_points": 1,
+       "method": "share of decision-relevant facts verified by deterministic checks"
+      },
+      "evidence": [
+       {
+        "label": "Amount",
+        "value": "CHF 120.00 incl. delivery"
+       },
+       {
+        "label": "Related purchase",
+        "value": "none"
+       },
+       {
+        "label": "Per-order cap",
+        "value": "CHF 120.00 → CHF 120.00"
+       },
+       {
+        "label": "Device",
+        "value": "DVC-13A598 — known from your history"
+       },
+       {
+        "label": "Recent attempts (10 min)",
+        "value": "0"
+       },
+       {
+        "label": "Behavior model",
+        "value": "normal — 38% off-pattern: larger than 95% of your past purchases, amount far outside your usual range, device never seen in your history"
+       }
+      ],
+      "uncertainties": [],
+      "flags": {
+       "manipulation": [],
+       "integrity": [],
+       "positive": []
+      },
+      "signature": "ME0001|IT0001+IT0004|120",
+      "evaluation_ms": 4.89,
+      "merchant": "Alpine Basket",
+      "merchantId": "ME0001",
+      "merchantUrl": null,
+      "merchantDomain": null,
+      "amount": 120,
+      "currency": "CHF",
+      "simTs": 1786473300000,
+      "replay_order": 2,
+      "purchase_description": "Household grocery delivery",
+      "items": [
+       {
+        "name": "Weekly grocery basket",
+        "qty": 1,
+        "price": 92,
+        "currency": "CHF",
+        "category": "groceries",
+        "details": "Weekly food and household staples"
+       },
+       {
+        "name": "Fresh produce selection",
+        "qty": 1,
+        "price": 22,
+        "currency": "CHF",
+        "category": "groceries",
+        "details": "Fruit and vegetables"
+       }
+      ],
+      "finalDecision": "approved",
+      "submitted": true,
+      "decidedAt": 1790310464763
+     }
+    ],
+    [
+     "AU_LIVE_40f3d8_AU0004",
+     {
+      "authorizationId": "AU_LIVE_40f3d8_AU0004",
+      "sourceAuthorizationId": "AU0004",
+      "decision": "decline",
+      "reason_codes": [
+       "LIMIT_EXCEEDED"
+      ],
+      "customer_message": "Declined CHF 126.00 at Alpine Basket — 92% confidence (11/12 decision facts verified, 1 open). Total CHF 126.00 (delivery included) is over your CHF 120.00 per-order cap. Verified basis: Amount · Related purchase · Per-order cap · Device · Recent attempts (10 min).",
+      "confidence": {
+       "percent": 92,
+       "verified_facts": 11,
+       "open_points": 1,
+       "method": "share of decision-relevant facts verified by deterministic checks"
+      },
+      "evidence": [
+       {
+        "label": "Amount",
+        "value": "CHF 126.00 incl. delivery"
+       },
+       {
+        "label": "Related purchase",
+        "value": "none"
+       },
+       {
+        "label": "Per-order cap",
+        "value": "CHF 120.00 → CHF 126.00"
+       },
+       {
+        "label": "Device",
+        "value": "DVC-13A598 — known from your history"
+       },
+       {
+        "label": "Recent attempts (10 min)",
+        "value": "0"
+       },
+       {
+        "label": "Behavior model",
+        "value": "normal — 39% off-pattern: larger than 95% of your past purchases, amount far outside your usual range, device never seen in your history"
+       }
+      ],
+      "uncertainties": [],
+      "flags": {
+       "manipulation": [],
+       "integrity": [],
+       "positive": []
+      },
+      "signature": "ME0001|IT0002+IT0004|126",
+      "evaluation_ms": 4.43,
+      "merchant": "Alpine Basket",
+      "merchantId": "ME0001",
+      "merchantUrl": null,
+      "merchantDomain": null,
+      "amount": 126,
+      "currency": "CHF",
+      "simTs": 1786529100000,
+      "replay_order": 3,
+      "purchase_description": "Household grocery delivery",
+      "items": [
+       {
+        "name": "Weekly grocery basket",
+        "qty": 1,
+        "price": 88,
+        "currency": "CHF",
+        "category": "groceries",
+        "details": "Weekly food and household staples"
+       },
+       {
+        "name": "Pantry staples",
+        "qty": 1,
+        "price": 30,
+        "currency": "CHF",
+        "category": "groceries",
+        "details": "Rice, pasta, and tinned goods"
+       }
+      ],
+      "finalDecision": "declined",
+      "submitted": true,
+      "decidedAt": 1790310464770
+     }
+    ],
+    [
+     "AU_LIVE_40f3d8_AU0005",
+     {
+      "authorizationId": "AU_LIVE_40f3d8_AU0005",
+      "sourceAuthorizationId": "AU0005",
+      "decision": "approve",
+      "reason_codes": [],
+      "customer_message": "Approved CHF 70.00 at Alpine Basket — within your policy, 92% confidence (11/12 decision facts verified, 1 open). Verified basis: Amount · Related purchase · Per-order cap · Device · Recent attempts (10 min).",
+      "confidence": {
+       "percent": 92,
+       "verified_facts": 11,
+       "open_points": 1,
+       "method": "share of decision-relevant facts verified by deterministic checks"
+      },
+      "evidence": [
+       {
+        "label": "Amount",
+        "value": "CHF 70.00 incl. delivery"
+       },
+       {
+        "label": "Related purchase",
+        "value": "none"
+       },
+       {
+        "label": "Per-order cap",
+        "value": "CHF 120.00 → CHF 70.00"
+       },
+       {
+        "label": "Device",
+        "value": "DVC-13A598 — known from your history"
+       },
+       {
+        "label": "Recent attempts (10 min)",
+        "value": "0"
+       },
+       {
+        "label": "Behavior model",
+        "value": "normal — 31% off-pattern: amount far outside your usual range, larger than 95% of your past purchases, device never seen in your history"
+       }
+      ],
+      "uncertainties": [],
+      "flags": {
+       "manipulation": [],
+       "integrity": [],
+       "positive": []
+      },
+      "signature": "ME0001|IT0001+IT0002|70",
+      "evaluation_ms": 3.87,
+      "merchant": "Alpine Basket",
+      "merchantId": "ME0001",
+      "merchantUrl": null,
+      "merchantDomain": null,
+      "amount": 70,
+      "currency": "CHF",
+      "simTs": 1786641600000,
+      "replay_order": 4,
+      "purchase_description": "Household grocery delivery",
+      "items": [
+       {
+        "name": "Fresh produce selection",
+        "qty": 1,
+        "price": 24,
+        "currency": "CHF",
+        "category": "groceries",
+        "details": "Fruit and vegetables"
+       },
+       {
+        "name": "Pantry staples",
+        "qty": 1,
+        "price": 40,
+        "currency": "CHF",
+        "category": "groceries",
+        "details": "Dry store cupboard goods"
+       }
+      ],
+      "finalDecision": "approved",
+      "submitted": true,
+      "decidedAt": 1790310464776
+     }
+    ],
+    [
+     "AU_LIVE_40f3d8_AU0006",
+     {
+      "authorizationId": "AU_LIVE_40f3d8_AU0006",
+      "sourceAuthorizationId": "AU0006",
+      "decision": "step_up",
+      "reason_codes": [
+       "SPLIT_ORDER"
+      ],
+      "customer_message": "Paused for your review — Alpine Basket, CHF 65.00 — 85% confidence (11/13 decision facts verified, 2 open). Open points: Another order at Alpine Basket (CHF 70.00) was approved only 6 min ago — this looks like the same purchase split in two. Verified basis: Amount · Related purchase · Per-order cap · Device · Recent attempts (10 min).",
+      "confidence": {
+       "percent": 85,
+       "verified_facts": 11,
+       "open_points": 2,
+       "method": "share of decision-relevant facts verified by deterministic checks"
+      },
+      "evidence": [
+       {
+        "label": "Amount",
+        "value": "CHF 65.00 incl. delivery"
+       },
+       {
+        "label": "Related purchase",
+        "value": "none"
+       },
+       {
+        "label": "Per-order cap",
+        "value": "CHF 120.00 → CHF 65.00"
+       },
+       {
+        "label": "Device",
+        "value": "DVC-13A598 — known from your history"
+       },
+       {
+        "label": "Recent attempts (10 min)",
+        "value": "1"
+       },
+       {
+        "label": "Behavior model",
+        "value": "suspect — 54% off-pattern: burst of attempts within 10 minutes, amount far outside your usual range, larger than 95% of your past purchases"
+       }
+      ],
+      "uncertainties": [
+       {
+        "code": "SPLIT_ORDER",
+        "detail": "another order at Alpine Basket (CHF 70.00) was approved only 6 min ago — this looks like the same purchase split in two"
+       }
+      ],
+      "flags": {
+       "manipulation": [],
+       "integrity": [],
+       "positive": []
+      },
+      "signature": "ME0001|IT0001+IT0003|65",
+      "evaluation_ms": 4.28,
+      "merchant": "Alpine Basket",
+      "merchantId": "ME0001",
+      "merchantUrl": null,
+      "merchantDomain": null,
+      "amount": 65,
+      "currency": "CHF",
+      "simTs": 1786641960000,
+      "replay_order": 5,
+      "purchase_description": "Household grocery delivery",
+      "items": [
+       {
+        "name": "Breakfast supplies",
+        "qty": 1,
+        "price": 27,
+        "currency": "CHF",
+        "category": "groceries",
+        "details": "Breakfast staples"
+       },
+       {
+        "name": "Fresh produce selection",
+        "qty": 1,
+        "price": 32,
+        "currency": "CHF",
+        "category": "groceries",
+        "details": "Fruit and vegetables"
+       }
+      ],
+      "finalDecision": null,
+      "submitted": true,
+      "decidedAt": 1790310464782
+     }
+    ],
+    [
+     "AU_LIVE_40f3d8_AU0007",
+     {
+      "authorizationId": "AU_LIVE_40f3d8_AU0007",
+      "sourceAuthorizationId": "AU0007",
+      "decision": "approve",
+      "reason_codes": [],
+      "customer_message": "Approved CHF 62.00 at Alpine Basket — within your policy, 92% confidence (11/12 decision facts verified, 1 open). Verified basis: Amount · Related purchase · Per-order cap · Device · Recent attempts (10 min).",
+      "confidence": {
+       "percent": 92,
+       "verified_facts": 11,
+       "open_points": 1,
+       "method": "share of decision-relevant facts verified by deterministic checks"
+      },
+      "evidence": [
+       {
+        "label": "Amount",
+        "value": "CHF 62.00 incl. delivery"
+       },
+       {
+        "label": "Related purchase",
+        "value": "none"
+       },
+       {
+        "label": "Per-order cap",
+        "value": "CHF 120.00 → CHF 62.00"
+       },
+       {
+        "label": "Device",
+        "value": "DVC-13A598 — known from your history"
+       },
+       {
+        "label": "Recent attempts (10 min)",
+        "value": "0"
+       },
+       {
+        "label": "Behavior model",
+        "value": "normal — 30% off-pattern: amount far outside your usual range, larger than 95% of your past purchases, device never seen in your history"
+       }
+      ],
+      "uncertainties": [],
+      "flags": {
+       "manipulation": [],
+       "integrity": [],
+       "positive": []
+      },
+      "signature": "ME0001|IT0001+IT0062|62",
+      "evaluation_ms": 3.42,
+      "merchant": "Alpine Basket",
+      "merchantId": "ME0001",
+      "merchantUrl": null,
+      "merchantDomain": null,
+      "amount": 62,
+      "currency": "CHF",
+      "simTs": 1786707600000,
+      "replay_order": 6,
+      "purchase_description": "Household grocery delivery",
+      "items": [
+       {
+        "name": "Fresh produce selection",
+        "qty": 1,
+        "price": 24,
+        "currency": "CHF",
+        "category": "groceries",
+        "details": "Fruit and vegetables"
+       },
+       {
+        "name": "Fragrance and beauty gift",
+        "qty": 1,
+        "price": 32,
+        "currency": "CHF",
+        "category": "cosmetics",
+        "details": "Boxed fragrance and beauty gift set"
+       }
+      ],
+      "finalDecision": "approved",
+      "submitted": true,
+      "decidedAt": 1790310464789
+     }
+    ],
+    [
+     "AU_LIVE_40f3d8_AU0008",
+     {
+      "authorizationId": "AU_LIVE_40f3d8_AU0008",
+      "sourceAuthorizationId": "AU0008",
+      "decision": "approve",
+      "reason_codes": [],
+      "customer_message": "Approved CHF 65.50 at Alpine Basket — within your policy, 92% confidence (11/12 decision facts verified, 1 open). Verified basis: Amount · Related purchase · Per-order cap · Device · Recent attempts (10 min).",
+      "confidence": {
+       "percent": 92,
+       "verified_facts": 11,
+       "open_points": 1,
+       "method": "share of decision-relevant facts verified by deterministic checks"
+      },
+      "evidence": [
+       {
+        "label": "Amount",
+        "value": "CHF 65.50 incl. delivery"
+       },
+       {
+        "label": "Related purchase",
+        "value": "none"
+       },
+       {
+        "label": "Per-order cap",
+        "value": "CHF 120.00 → CHF 65.50"
+       },
+       {
+        "label": "Device",
+        "value": "DVC-13A598 — known from your history"
+       },
+       {
+        "label": "Recent attempts (10 min)",
+        "value": "0"
+       },
+       {
+        "label": "Behavior model",
+        "value": "normal — 31% off-pattern: amount far outside your usual range, larger than 95% of your past purchases, device never seen in your history"
+       }
+      ],
+      "uncertainties": [],
+      "flags": {
+       "manipulation": [],
+       "integrity": [],
+       "positive": []
+      },
+      "signature": "ME0001|IT0001+IT0004|65.5",
+      "evaluation_ms": 3.76,
+      "merchant": "Alpine Basket",
+      "merchantId": "ME0001",
+      "merchantUrl": null,
+      "merchantDomain": null,
+      "amount": 65.5,
+      "currency": "CHF",
+      "simTs": 1786786200000,
+      "replay_order": 7,
+      "purchase_description": "Household grocery delivery",
+      "items": [
+       {
+        "name": "Weekly grocery basket",
+        "qty": 1,
+        "price": 45,
+        "currency": "CHF",
+        "category": "groceries",
+        "details": "Food and household staples"
+       },
+       {
+        "name": "Fresh produce selection",
+        "qty": 1,
+        "price": 14.5,
+        "currency": "CHF",
+        "category": "groceries",
+        "details": "Fruit and vegetables"
+       }
+      ],
+      "finalDecision": "approved",
+      "submitted": true,
+      "decidedAt": 1790310464796
+     }
+    ],
+    [
+     "AU_LIVE_40f3d8_AU0009",
+     {
+      "authorizationId": "AU_LIVE_40f3d8_AU0009",
+      "sourceAuthorizationId": "AU0009",
+      "decision": "approve",
+      "reason_codes": [],
+      "customer_message": "Approved CHF 24.00 at Alpine Basket — within your policy, 92% confidence (11/12 decision facts verified, 1 open). Verified basis: Amount · Related purchase · Per-order cap · Device · Recent attempts (10 min).",
+      "confidence": {
+       "percent": 92,
+       "verified_facts": 11,
+       "open_points": 1,
+       "method": "share of decision-relevant facts verified by deterministic checks"
+      },
+      "evidence": [
+       {
+        "label": "Amount",
+        "value": "CHF 24.00 incl. delivery"
+       },
+       {
+        "label": "Related purchase",
+        "value": "none"
+       },
+       {
+        "label": "Per-order cap",
+        "value": "CHF 120.00 → CHF 24.00"
+       },
+       {
+        "label": "Device",
+        "value": "DVC-13A598 — known from your history"
+       },
+       {
+        "label": "Recent attempts (10 min)",
+        "value": "0"
+       },
+       {
+        "label": "Behavior model",
+        "value": "normal — 24% off-pattern: device never seen in your history"
+       }
+      ],
+      "uncertainties": [],
+      "flags": {
+       "manipulation": [],
+       "integrity": [],
+       "positive": []
+      },
+      "signature": "ME0001|IT0003|24",
+      "evaluation_ms": 3.7,
+      "merchant": "Alpine Basket",
+      "merchantId": "ME0001",
+      "merchantUrl": null,
+      "merchantDomain": null,
+      "amount": 24,
+      "currency": "CHF",
+      "simTs": 1786896600000,
+      "replay_order": 8,
+      "purchase_description": "Household grocery delivery",
+      "items": [
+       {
+        "name": "Breakfast supplies",
+        "qty": 1,
+        "price": 18,
+        "currency": "CHF",
+        "category": "groceries",
+        "details": "Breakfast staples"
+       }
+      ],
+      "finalDecision": "approved",
+      "submitted": true,
+      "decidedAt": 1790310464802
+     }
+    ],
+    [
+     "AU_LIVE_40f3d8_AU0010",
+     {
+      "authorizationId": "AU_LIVE_40f3d8_AU0010",
+      "sourceAuthorizationId": "AU0010",
+      "decision": "decline",
+      "reason_codes": [
+       "LIMIT_EXCEEDED"
+      ],
+      "customer_message": "Declined CHF 138.00 at Alpine Basket — 92% confidence (11/12 decision facts verified, 1 open). Total CHF 138.00 (delivery included) is over your CHF 120.00 per-order cap. Verified basis: Amount · Related purchase · Per-order cap · Device · Recent attempts (10 min).",
+      "confidence": {
+       "percent": 92,
+       "verified_facts": 11,
+       "open_points": 1,
+       "method": "share of decision-relevant facts verified by deterministic checks"
+      },
+      "evidence": [
+       {
+        "label": "Amount",
+        "value": "CHF 138.00 incl. delivery"
+       },
+       {
+        "label": "Related purchase",
+        "value": "none"
+       },
+       {
+        "label": "Per-order cap",
+        "value": "CHF 120.00 → CHF 138.00"
+       },
+       {
+        "label": "Device",
+        "value": "DVC-13A598 — known from your history"
+       },
+       {
+        "label": "Recent attempts (10 min)",
+        "value": "0"
+       },
+       {
+        "label": "Behavior model",
+        "value": "normal — 40% off-pattern: larger than 95% of your past purchases, amount far outside your usual range, device never seen in your history"
+       }
+      ],
+      "uncertainties": [],
+      "flags": {
+       "manipulation": [],
+       "integrity": [],
+       "positive": []
+      },
+      "signature": "ME0001|IT0002+IT0004|138",
+      "evaluation_ms": 4.14,
+      "merchant": "Alpine Basket",
+      "merchantId": "ME0001",
+      "merchantUrl": null,
+      "merchantDomain": null,
+      "amount": 138,
+      "currency": "CHF",
+      "simTs": 1787047200000,
+      "replay_order": 9,
+      "purchase_description": "Household grocery delivery",
+      "items": [
+       {
+        "name": "Weekly grocery basket",
+        "qty": 1,
+        "price": 95,
+        "currency": "CHF",
+        "category": "groceries",
+        "details": "Weekly food and household staples"
+       },
+       {
+        "name": "Pantry staples",
+        "qty": 1,
+        "price": 35,
+        "currency": "CHF",
+        "category": "groceries",
+        "details": "Dry store cupboard goods"
+       }
+      ],
+      "finalDecision": "declined",
+      "submitted": true,
+      "decidedAt": 1790310464808
+     }
+    ],
+    [
+     "AU_LIVE_40f3d8_AU0011",
+     {
+      "authorizationId": "AU_LIVE_40f3d8_AU0011",
+      "sourceAuthorizationId": "AU0011",
+      "decision": "approve",
+      "reason_codes": [],
+      "customer_message": "Approved CHF 88.00 at Alpine Basket — within your policy, 92% confidence (11/12 decision facts verified, 1 open). Verified basis: Amount · Related purchase · Per-order cap · Device · Recent attempts (10 min).",
+      "confidence": {
+       "percent": 92,
+       "verified_facts": 11,
+       "open_points": 1,
+       "method": "share of decision-relevant facts verified by deterministic checks"
+      },
+      "evidence": [
+       {
+        "label": "Amount",
+        "value": "CHF 88.00 incl. delivery"
+       },
+       {
+        "label": "Related purchase",
+        "value": "none"
+       },
+       {
+        "label": "Per-order cap",
+        "value": "CHF 120.00 → CHF 88.00"
+       },
+       {
+        "label": "Device",
+        "value": "DVC-13A598 — known from your history"
+       },
+       {
+        "label": "Recent attempts (10 min)",
+        "value": "0"
+       },
+       {
+        "label": "Behavior model",
+        "value": "normal — 34% off-pattern: larger than 95% of your past purchases, amount far outside your usual range, device never seen in your history"
+       }
+      ],
+      "uncertainties": [],
+      "flags": {
+       "manipulation": [],
+       "integrity": [],
+       "positive": []
+      },
+      "signature": "ME0001|IT0001+IT0004|88",
+      "evaluation_ms": 4.83,
+      "merchant": "Alpine Basket",
+      "merchantId": "ME0001",
+      "merchantUrl": null,
+      "merchantDomain": null,
+      "amount": 88,
+      "currency": "CHF",
+      "simTs": 1787132700000,
+      "replay_order": 10,
+      "purchase_description": "Household grocery delivery",
+      "items": [
+       {
+        "name": "Weekly grocery basket",
+        "qty": 1,
+        "price": 52,
+        "currency": "CHF",
+        "category": "groceries",
+        "details": "Food and household staples"
+       },
+       {
+        "name": "Fresh produce selection",
+        "qty": 1,
+        "price": 30,
+        "currency": "CHF",
+        "category": "groceries",
+        "details": "Fruit and vegetables"
+       }
+      ],
+      "finalDecision": "approved",
+      "submitted": true,
+      "decidedAt": 1790310464816
+     }
+    ]
+   ],
+   "stepUpsSerialized": [
+    [
+     "AU_LIVE_40f3d8_AU0006",
+     {
+      "event": {
+       "type": "authorization.request",
+       "request_id": "req_au0006_1790310464778",
+       "deadline_at": "2026-09-25T04:27:52.778Z",
+       "authorization": {
+        "authorization_id": "AU_LIVE_40f3d8_AU0006",
+        "source_authorization_id": "AU0006",
+        "scenario_id": "SCEN0001",
+        "replay_order": 5,
+        "mandate_id": "TM_SIM_aa658687e72d",
+        "profile_id": "PROFILE_AUTH0002",
+        "card_id": "CA0001",
+        "initiator_type": "agent",
+        "merchant": {
+         "merchant_id": "ME0001",
+         "merchant_name": "Alpine Basket",
+         "merchant_category": "groceries",
+         "merchant_mcc": "5411",
+         "merchant_country": "CH",
+         "merchant_city": "Zurich",
+         "availability": "store_and_online",
+         "recurring_capable": "false"
+        },
+        "timestamp": "2026-08-13T17:26:00Z",
+        "amount": 65,
+        "currency": "CHF",
+        "billing_amount_chf": 65,
+        "items_subtotal": 59,
+        "delivery_fee": 6,
+        "channel": "ecommerce",
+        "customer_device_id": "DVC-13A598",
+        "authority_status": "active",
+        "card_status_at_attempt": "active",
+        "spend_in_period_before_chf": null,
+        "recent_attempt_count_10m": 1,
+        "fulfillment_method": "delivery",
+        "delivery_by": "2026-08-14",
+        "order_returnable": "false",
+        "order_cancellable": "unknown",
+        "related_authorization_id": null,
+        "related_authorization_status": null,
+        "purchase_description": "Household grocery delivery",
+        "items": [
+         {
+          "line_no": 1,
+          "item_id": "IT0003",
+          "item_name": "Breakfast supplies",
+          "item_category": "groceries",
+          "quantity": 1,
+          "unit_price": 27,
+          "currency": "CHF",
+          "item_details": "Breakfast staples"
+         },
+         {
+          "line_no": 2,
+          "item_id": "IT0001",
+          "item_name": "Fresh produce selection",
+          "item_category": "groceries",
+          "quantity": 1,
+          "unit_price": 32,
+          "currency": "CHF",
+          "item_details": "Fruit and vegetables"
+         }
+        ]
+       },
+       "mandate": {
+        "draft_id": "md_de980cb138d0",
+        "status": "active",
+        "instruction": "Groceries only, max CHF 120 per order",
+        "hard_rules": [
+         {
+          "field": "authorization.billing_amount_chf",
+          "operator": "<=",
+          "value": 120,
+          "currency": "CHF",
+          "scope": "purchase"
+         }
+        ],
+        "uncertainty_policy": "ask",
+        "guidance": [],
+        "open_questions": [],
+        "created_at": "2026-09-25T04:27:44.645Z",
+        "mandate_id": "TM_SIM_aa658687e72d",
+        "confirmed_at": "2026-09-25T04:27:44.712Z",
+        "customer_id": "CU0001"
+       },
+       "context": {
+        "approved_spend_in_period_chf": 234.5,
+        "recent_authorizations": [
+         {
+          "authorization_id": "AU_LIVE_40f3d8_AU0002",
+          "decision": "approved"
+         },
+         {
+          "authorization_id": "AU_LIVE_40f3d8_AU0003",
+          "decision": "approved"
+         },
+         {
+          "authorization_id": "AU_LIVE_40f3d8_AU0005",
+          "decision": "approved"
+         }
+        ]
+       },
+       "runtime": {
+        "received_at": "2026-09-25T04:27:44.778Z",
+        "history_window_minutes": 10,
+        "context_basis": "run_decisions_and_scenario_timestamps"
+       }
+      },
+      "evaluation": {
+       "decision": "step_up",
+       "reason_codes": [
+        "SPLIT_ORDER"
+       ],
+       "customer_message": "Paused for your review — Alpine Basket, CHF 65.00 — 85% confidence (11/13 decision facts verified, 2 open). Open points: Another order at Alpine Basket (CHF 70.00) was approved only 6 min ago — this looks like the same purchase split in two. Verified basis: Amount · Related purchase · Per-order cap · Device · Recent attempts (10 min).",
+       "confidence": {
+        "percent": 85,
+        "verified_facts": 11,
+        "open_points": 2,
+        "method": "share of decision-relevant facts verified by deterministic checks"
+       },
+       "evidence": [
+        {
+         "label": "Amount",
+         "value": "CHF 65.00 incl. delivery"
+        },
+        {
+         "label": "Related purchase",
+         "value": "none"
+        },
+        {
+         "label": "Per-order cap",
+         "value": "CHF 120.00 → CHF 65.00"
+        },
+        {
+         "label": "Device",
+         "value": "DVC-13A598 — known from your history"
+        },
+        {
+         "label": "Recent attempts (10 min)",
+         "value": "1"
+        },
+        {
+         "label": "Behavior model",
+         "value": "suspect — 54% off-pattern: burst of attempts within 10 minutes, amount far outside your usual range, larger than 95% of your past purchases"
+        }
+       ],
+       "uncertainties": [
+        {
+         "code": "SPLIT_ORDER",
+         "detail": "another order at Alpine Basket (CHF 70.00) was approved only 6 min ago — this looks like the same purchase split in two"
+        }
+       ],
+       "rule_results": [
+        {
+         "rule": {
+          "field": "authorization.billing_amount_chf",
+          "operator": "<=",
+          "value": 120,
+          "currency": "CHF",
+          "scope": "purchase"
+         },
+         "status": "pass",
+         "detail": "CHF 65.00 within cap CHF 120.00"
+        }
+       ],
+       "flags": {
+        "manipulation": [],
+        "integrity": [],
+        "positive": []
+       },
+       "signature": "ME0001|IT0001+IT0003|65",
+       "evaluation_ms": 4.28,
+       "engine_version": "leash-engine 1.3.0"
+      },
+      "deadline": 1790310584784,
+      "openedAt": 1790310464784
+     }
+    ]
+   ]
   }
  ]
 }
