@@ -39,9 +39,9 @@ const CATALOG = [
   { domain: "justeat.ch", name: "Just Eat Switzerland", category: "Food delivery" },
   { domain: "smood.ch", name: "Smood", category: "Food delivery" },
   { domain: "deliveroo.ch", name: "Deliveroo", category: "Food delivery" },
-  { domain: "pizza-hut.ch", name: "Pizza Hut CH", category: "Food delivery" },
-  { domain: "mcdonalds.ch", name: "McDonald's CH", category: "Food delivery" },
-  { domain: "dominos.ch", name: "Domino's Pizza CH", category: "Food delivery" },
+  { domain: "pizza-hut.ch", name: "Pizza Hut CH", category: "Food delivery", agent_friendly: 0 },
+  { domain: "mcdonalds.ch", name: "McDonald's CH", category: "Food delivery", agent_friendly: 0 },
+  { domain: "dominos.ch", name: "Domino's Pizza CH", category: "Food delivery", agent_friendly: 1 },
   { domain: "lieferando.ch", name: "Lieferando", category: "Food delivery" },
   // groceries
   { domain: "migros.ch", name: "Migros Online", category: "Groceries" },
@@ -73,7 +73,7 @@ const CATALOG = [
   { domain: "ricardo.ch", name: "Ricardo", category: "Marketplace" },
   { domain: "ebay.ch", name: "eBay.ch", category: "Marketplace" },
   { domain: "amazon.de", name: "Amazon.de", category: "Marketplace" },
-  { domain: "aliexpress.com", name: "AliExpress", category: "Marketplace" },
+  { domain: "aliexpress.com", name: "AliExpress", category: "Marketplace", agent_friendly: 1 },
   { domain: "temu.com", name: "Temu", category: "Marketplace" },
   { domain: "shein.com", name: "SHEIN", category: "Fashion" },
   { domain: "etsy.com", name: "Etsy", category: "Marketplace" },
@@ -234,11 +234,40 @@ function categoriesForDomains(domains) {
 const searchCache = new Map(); // q -> { ts, results }
 const SEARCH_TTL_MS = 10 * 60 * 1000;
 
+/* Agent-friendly gate. data/merchants.json `agent_friendly: 0` marks shops that
+ * bot-wall automated shoppers (DataDome, Cloudflare, Akamai, … — measured by
+ * scripts/agent-friendly-check.mjs). They never surface in catalog site
+ * search, so the shopping agent only discovers agent-friendly shops.
+ * The dataset is repo-level (same file server.js MERCHANTS_FILE reads) — NOT
+ * account data — so it stays at __dirname/data regardless of
+ * ACCOUNTS_DATA_DIR; MERCHANTS_JSON_PATH overrides for tests. Missing file →
+ * no exclusions (fail-open; whitelist still gates purchases). 60s cache,
+ * same as server.js merchantsData(). */
+let agentBlockedCache = { at: 0, set: null };
+function agentBlockedSet() {
+  if (!agentBlockedCache.set || Date.now() - agentBlockedCache.at > 60_000) {
+    const set = new Set();
+    try {
+      const file = process.env.MERCHANTS_JSON_PATH || path.join(__dirname, "data", "merchants.json");
+      const db = JSON.parse(fs.readFileSync(file, "utf8"));
+      for (const m of db.merchants || []) {
+        if (m.agent_friendly === 0) set.add(String(m.domain).replace(/^www\./, ""));
+      }
+    } catch { /* file missing or unreadable → empty exclusion set */ }
+    agentBlockedCache = { at: Date.now(), set };
+  }
+  return agentBlockedCache.set;
+}
+function agentFriendly(entry) {
+  if (entry.agent_friendly === 0) return false; // inline flag for non-dataset catalog entries
+  return !agentBlockedSet().has(entry.domain);
+}
+
 function catalogSearch(q) {
   const needle = String(q || "").trim().toLowerCase();
   if (!needle) return [];
   return CATALOG.filter((e) =>
-    e.domain.includes(needle) || e.name.toLowerCase().includes(needle) || e.category.toLowerCase().includes(needle)
+    agentFriendly(e) && (e.domain.includes(needle) || e.name.toLowerCase().includes(needle) || e.category.toLowerCase().includes(needle))
   ).map((e) => ({ domain: e.domain, name: e.name, category: e.category, source: "catalog" }));
 }
 

@@ -34,10 +34,17 @@
           "positives": 2,
           "negatives": 0,
           "unknowns": 5
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "blocked_generic",
+          "http_status": 403,
+          "marker": "http 403"
         }
       },
       "checked_at": "2026-09-25T04:56:17.221Z",
-      "tier": "listed"
+      "tier": "listed",
+      "agent_friendly": 0
     },
     {
       "domain": "coop.ch",
@@ -70,10 +77,17 @@
           "positives": 2,
           "negatives": 0,
           "unknowns": 5
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "blocked_generic",
+          "http_status": 403,
+          "marker": "thin page in browser (0 chars): \"coop.ch\""
         }
       },
       "checked_at": "2026-09-25T04:56:17.221Z",
-      "tier": "listed"
+      "tier": "listed",
+      "agent_friendly": 0
     },
     {
       "domain": "aldi-suisse.ch",
@@ -106,10 +120,17 @@
           "positives": 1,
           "negatives": 0,
           "unknowns": 6
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "blocked_generic",
+          "http_status": 403,
+          "marker": "http 403"
         }
       },
       "checked_at": "2026-09-25T04:56:17.221Z",
-      "tier": "reviewed"
+      "tier": "reviewed",
+      "agent_friendly": 0
     },
     {
       "domain": "lidl.ch",
@@ -142,10 +163,17 @@
           "positives": 7,
           "negatives": 0,
           "unknowns": 2
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "ok",
+          "http_status": 200,
+          "marker": null
         }
       },
       "checked_at": "2026-09-25T04:56:17.221Z",
-      "tier": "reviewed"
+      "tier": "reviewed",
+      "agent_friendly": 1
     },
     {
       "domain": "volg.ch",
@@ -178,10 +206,17 @@
           "positives": 6,
           "negatives": 0,
           "unknowns": 3
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "ok",
+          "http_status": 200,
+          "marker": null
         }
       },
       "checked_at": "2026-09-25T04:56:17.221Z",
-      "tier": "reviewed"
+      "tier": "reviewed",
+      "agent_friendly": 1
     },
     {
       "domain": "farmy.ch",
@@ -214,10 +249,17 @@
           "positives": 2,
           "negatives": 1,
           "unknowns": 4
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "blocked_generic",
+          "http_status": 502,
+          "marker": "page never loaded in managed browser (navigation timeout)"
         }
       },
       "checked_at": "2026-09-25T04:56:17.221Z",
-      "tier": "listed"
+      "tier": "listed",
+      "agent_friendly": 0
     },
     {
       "domain": "digitec.ch",
@@ -250,10 +292,17 @@
           "positives": 2,
           "negatives": 0,
           "unknowns": 5
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "blocked_generic",
+          "http_status": 403,
+          "marker": "http 403"
         }
       },
       "checked_at": "2026-09-25T04:56:17.221Z",
-      "tier": "listed"
+      "tier": "listed",
+      "agent_friendly": 0
     },
     {
       "domain": "galaxus.ch",
@@ -286,10 +335,17 @@
           "positives": 2,
           "negatives": 0,
           "unknowns": 5
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "blocked_generic",
+          "http_status": 403,
+          "marker": "http 403"
         }
       },
       "checked_at": "2026-09-25T04:56:17.221Z",
-      "tier": "listed"
+      "tier": "listed",
+      "agent_friendly": 0
     },
     {
       "domain": "brack.ch",
@@ -322,10 +378,17 @@
           "positives": 2,
           "negatives": 0,
           "unknowns": 5
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "ok",
+          "http_status": 200,
+          "marker": null
         }
       },
       "checked_at": "2026-09-25T04:56:17.221Z",
-      "tier": "listed"
+      "tier": "listed",
+      "agent_friendly": 1
     },
     {
       "domain": "interdiscount.ch",
@@ -358,10 +421,17 @@
           "positives": 2,
           "negatives": 0,
           "unknowns": 5
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "blocked_datadome",
+          "http_status": 403,
+          "marker": "captcha-delivery.com"
         }
       },
       "checked_at": "2026-09-25T04:56:17.221Z",
-      "tier": "listed"
+      "tier": "listed",
+      "agent_friendly": 0
     },
     {
       "domain": "microspot.ch",
@@ -394,10 +464,17 @@
           "positives": 2,
           "negatives": 0,
           "unknowns": 5
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "blocked_datadome",
+          "http_status": 403,
+          "marker": "captcha-delivery.com"
         }
       },
       "checked_at": "2026-09-25T04:56:17.221Z",
-      "tier": "listed"
+      "tier": "listed",
+      "agent_friendly": 0
     },
     {
       "domain": "fust.ch",
@@ -430,10 +507,17 @@
           "positives": 2,
           "negatives": 0,
           "unknowns": 5
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "blocked_generic",
+          "http_status": 403,
+          "marker": "http 403"
         }
       },
       "checked_at": "2026-09-25T04:56:17.221Z",
-      "tier": "listed"
+      "tier": "listed",
+      "agent_friendly": 0
     },
     {
       "domain": "melectronics.ch",
@@ -466,10 +550,17 @@
           "positives": 2,
           "negatives": 0,
           "unknowns": 5
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "blocked_generic",
+          "http_status": 403,
+          "marker": "maintenance page (browser): \"maintenance\" — re-check later"
         }
       },
       "checked_at": "2026-09-25T04:56:17.221Z",
-      "tier": "listed"
+      "tier": "listed",
+      "agent_friendly": 0
     },
     {
       "domain": "zalando.ch",
@@ -502,10 +593,17 @@
           "positives": 2,
           "negatives": 0,
           "unknowns": 5
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "blocked_generic",
+          "http_status": 403,
+          "marker": "thin page in browser (184 chars): \"\""
         }
       },
       "checked_at": "2026-09-25T04:56:17.221Z",
-      "tier": "listed"
+      "tier": "listed",
+      "agent_friendly": 0
     },
     {
       "domain": "aboutyou.ch",
@@ -540,10 +638,17 @@
           "positives": 4,
           "negatives": 1,
           "unknowns": 2
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "ok",
+          "http_status": 200,
+          "marker": null
         }
       },
       "checked_at": "2026-09-25T04:56:17.221Z",
-      "tier": "listed"
+      "tier": "listed",
+      "agent_friendly": 1
     },
     {
       "domain": "hm.com",
@@ -576,10 +681,17 @@
           "positives": 1,
           "negatives": 0,
           "unknowns": 6
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "blocked_generic",
+          "http_status": 403,
+          "marker": "challenge in managed browser: \"Access Denied\""
         }
       },
       "checked_at": "2026-09-25T04:56:17.221Z",
-      "tier": "listed"
+      "tier": "listed",
+      "agent_friendly": 0
     },
     {
       "domain": "zara.com",
@@ -612,10 +724,17 @@
           "positives": 0,
           "negatives": 1,
           "unknowns": 6
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "blocked_generic",
+          "http_status": 200,
+          "marker": "challenge in managed browser: \"Access Denied\""
         }
       },
       "checked_at": "2026-09-25T04:56:17.221Z",
-      "tier": "reviewed"
+      "tier": "reviewed",
+      "agent_friendly": 0
     },
     {
       "domain": "uniqlo.com",
@@ -648,10 +767,17 @@
           "positives": 0,
           "negatives": 1,
           "unknowns": 6
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "blocked_generic",
+          "http_status": 403,
+          "marker": "challenge in managed browser: \"Access Denied\""
         }
       },
       "checked_at": "2026-09-25T04:56:17.221Z",
-      "tier": "reviewed"
+      "tier": "reviewed",
+      "agent_friendly": 0
     },
     {
       "domain": "snoooze.ch",
@@ -684,10 +810,17 @@
           "positives": 1,
           "negatives": 1,
           "unknowns": 5
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "blocked_generic",
+          "http_status": 502,
+          "marker": "thin page in browser (0 chars): \"\""
         }
       },
       "checked_at": "2026-09-25T04:56:17.221Z",
-      "tier": "reviewed"
+      "tier": "reviewed",
+      "agent_friendly": 0
     },
     {
       "domain": "ricardo.ch",
@@ -720,10 +853,17 @@
           "positives": 2,
           "negatives": 0,
           "unknowns": 5
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "blocked_generic",
+          "http_status": 403,
+          "marker": "challenge in managed browser: \"Just a moment...\""
         }
       },
       "checked_at": "2026-09-25T04:56:17.221Z",
-      "tier": "listed"
+      "tier": "listed",
+      "agent_friendly": 0
     },
     {
       "domain": "ebay.ch",
@@ -756,10 +896,17 @@
           "positives": 1,
           "negatives": 0,
           "unknowns": 6
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "blocked_generic",
+          "http_status": 403,
+          "marker": "thin page in browser (193 chars): \"Error Page | eBay\""
         }
       },
       "checked_at": "2026-09-25T04:56:17.221Z",
-      "tier": "reviewed"
+      "tier": "reviewed",
+      "agent_friendly": 0
     },
     {
       "domain": "amazon.de",
@@ -792,10 +939,17 @@
           "positives": 1,
           "negatives": 2,
           "unknowns": 4
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "ok",
+          "http_status": 202,
+          "marker": "browser-pass: \"Amazon.de: Low Prices in Electronics, Books, Sports Equipmen\" (12680 chars)"
         }
       },
       "checked_at": "2026-09-25T04:56:17.221Z",
-      "tier": "listed"
+      "tier": "listed",
+      "agent_friendly": 1
     },
     {
       "domain": "etsy.com",
@@ -828,10 +982,17 @@
           "positives": 1,
           "negatives": 0,
           "unknowns": 6
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "blocked_datadome",
+          "http_status": 403,
+          "marker": "captcha-delivery.com"
         }
       },
       "checked_at": "2026-09-25T04:56:17.221Z",
-      "tier": "listed"
+      "tier": "listed",
+      "agent_friendly": 0
     },
     {
       "domain": "shein.com",
@@ -864,10 +1025,17 @@
           "positives": 2,
           "negatives": 1,
           "unknowns": 4
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "ok",
+          "http_status": 200,
+          "marker": null
         }
       },
       "checked_at": "2026-09-25T04:56:17.222Z",
-      "tier": "listed"
+      "tier": "listed",
+      "agent_friendly": 1
     },
     {
       "domain": "temu.com",
@@ -900,10 +1068,17 @@
           "positives": 1,
           "negatives": 1,
           "unknowns": 5
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "ok",
+          "http_status": 200,
+          "marker": "browser-pass: \"Temu Switzerland | Explore the Latest Clothing, Beauty, Home\" (8308 chars)"
         }
       },
       "checked_at": "2026-09-25T04:56:17.222Z",
-      "tier": "listed"
+      "tier": "listed",
+      "agent_friendly": 1
     },
     {
       "domain": "ubereats.com",
@@ -936,10 +1111,17 @@
           "positives": 0,
           "negatives": 0,
           "unknowns": 7
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "blocked_generic",
+          "http_status": 403,
+          "marker": "challenge in managed browser: \"Just a moment...\""
         }
       },
       "checked_at": "2026-09-25T04:56:17.222Z",
-      "tier": "reviewed"
+      "tier": "reviewed",
+      "agent_friendly": 0
     },
     {
       "domain": "justeat.ch",
@@ -972,10 +1154,17 @@
           "positives": 1,
           "negatives": 0,
           "unknowns": 6
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "blocked_cloudflare",
+          "http_status": 403,
+          "marker": "Just a moment..."
         }
       },
       "checked_at": "2026-09-25T04:56:17.222Z",
-      "tier": "reviewed"
+      "tier": "reviewed",
+      "agent_friendly": 0
     },
     {
       "domain": "smood.ch",
@@ -1008,10 +1197,17 @@
           "positives": 1,
           "negatives": 0,
           "unknowns": 6
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "blocked_generic",
+          "http_status": 403,
+          "marker": "challenge in managed browser: \"Smood Security\""
         }
       },
       "checked_at": "2026-09-25T04:56:17.222Z",
-      "tier": "reviewed"
+      "tier": "reviewed",
+      "agent_friendly": 0
     },
     {
       "domain": "deliveroo.ch",
@@ -1044,10 +1240,17 @@
           "positives": 1,
           "negatives": 1,
           "unknowns": 5
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "blocked_generic",
+          "http_status": 502,
+          "marker": "thin page in browser (0 chars): \"\""
         }
       },
       "checked_at": "2026-09-25T04:56:17.222Z",
-      "tier": "reviewed"
+      "tier": "reviewed",
+      "agent_friendly": 0
     },
     {
       "domain": "lieferando.ch",
@@ -1080,10 +1283,17 @@
           "positives": 1,
           "negatives": 0,
           "unknowns": 6
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "blocked_cloudflare",
+          "http_status": 403,
+          "marker": "Just a moment..."
         }
       },
       "checked_at": "2026-09-25T04:56:17.222Z",
-      "tier": "reviewed"
+      "tier": "reviewed",
+      "agent_friendly": 0
     },
     {
       "domain": "manor.ch",
@@ -1118,10 +1328,17 @@
           "positives": 7,
           "negatives": 0,
           "unknowns": 2
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "ok",
+          "http_status": 200,
+          "marker": null
         }
       },
       "checked_at": "2026-09-25T04:56:17.222Z",
-      "tier": "listed"
+      "tier": "listed",
+      "agent_friendly": 1
     },
     {
       "domain": "jumbo.ch",
@@ -1154,10 +1371,17 @@
           "positives": 2,
           "negatives": 0,
           "unknowns": 5
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "blocked_datadome",
+          "http_status": 403,
+          "marker": "captcha-delivery.com"
         }
       },
       "checked_at": "2026-09-25T04:56:17.222Z",
-      "tier": "listed"
+      "tier": "listed",
+      "agent_friendly": 0
     },
     {
       "domain": "hornbach.ch",
@@ -1190,10 +1414,17 @@
           "positives": 2,
           "negatives": 1,
           "unknowns": 4
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "ok",
+          "http_status": 200,
+          "marker": null
         }
       },
       "checked_at": "2026-09-25T04:56:17.222Z",
-      "tier": "listed"
+      "tier": "listed",
+      "agent_friendly": 1
     },
     {
       "domain": "oto.ch",
@@ -1226,10 +1457,17 @@
           "positives": 2,
           "negatives": 2,
           "unknowns": 3
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "blocked_generic",
+          "http_status": 200,
+          "marker": "thin page in browser (0 chars): \"\""
         }
       },
       "checked_at": "2026-09-25T04:56:17.222Z",
-      "tier": "listed"
+      "tier": "listed",
+      "agent_friendly": 0
     },
     {
       "domain": "zurrose.ch",
@@ -1262,10 +1500,17 @@
           "positives": 5,
           "negatives": 0,
           "unknowns": 4
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "ok",
+          "http_status": 200,
+          "marker": null
         }
       },
       "checked_at": "2026-09-25T04:56:17.222Z",
-      "tier": "listed"
+      "tier": "listed",
+      "agent_friendly": 1
     },
     {
       "domain": "shop-apotheke.ch",
@@ -1302,10 +1547,17 @@
           "positives": 2,
           "negatives": 2,
           "unknowns": 3
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "ok",
+          "http_status": 200,
+          "marker": null
         }
       },
       "checked_at": "2026-09-25T04:56:17.222Z",
-      "tier": "reviewed"
+      "tier": "reviewed",
+      "agent_friendly": 1
     },
     {
       "domain": "dm.ch",
@@ -1338,10 +1590,17 @@
           "positives": 1,
           "negatives": 1,
           "unknowns": 5
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "blocked_generic",
+          "http_status": 502,
+          "marker": "thin page in browser (0 chars): \"\""
         }
       },
       "checked_at": "2026-09-25T04:56:17.222Z",
-      "tier": "reviewed"
+      "tier": "reviewed",
+      "agent_friendly": 0
     },
     {
       "domain": "exlibris.ch",
@@ -1376,10 +1635,17 @@
           "positives": 7,
           "negatives": 0,
           "unknowns": 2
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "ok",
+          "http_status": 200,
+          "marker": null
         }
       },
       "checked_at": "2026-09-25T04:56:17.222Z",
-      "tier": "listed"
+      "tier": "listed",
+      "agent_friendly": 1
     },
     {
       "domain": "orellfuessli.ch",
@@ -1412,10 +1678,17 @@
           "positives": 2,
           "negatives": 0,
           "unknowns": 5
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "blocked_cloudflare",
+          "http_status": 403,
+          "marker": "cf_chl_"
         }
       },
       "checked_at": "2026-09-25T04:56:17.222Z",
-      "tier": "listed"
+      "tier": "listed",
+      "agent_friendly": 0
     },
     {
       "domain": "dds.ch",
@@ -1448,10 +1721,17 @@
           "positives": 1,
           "negatives": 1,
           "unknowns": 5
+        },
+        "agent_check": {
+          "at": "2026-09-25T07:09:09.750Z",
+          "verdict": "ok",
+          "http_status": 200,
+          "marker": null
         }
       },
       "checked_at": "2026-09-25T04:56:17.222Z",
-      "tier": "reviewed"
+      "tier": "reviewed",
+      "agent_friendly": 1
     }
   ]
 }

@@ -1194,7 +1194,12 @@ async function handle(req, res) {
 
   if (req.method === "GET" && pathname === "/api/merchants") {
     const data = merchantsData();
-    const list = Array.isArray(data?.merchants) ? data.merchants : [];
+    // Only recommend shops that let automated agents actually browse and buy
+    // (agent_friendly=0 marks bot-walled shops — DataDome, Cloudflare, …).
+    // Flag is set by scripts/agent-friendly-check.mjs; unknown (unprobed)
+    // entries stay recommended until proven hostile.
+    const all = Array.isArray(data?.merchants) ? data.merchants : [];
+    const list = all.filter((m) => m.agent_friendly !== 0);
     return sendJson(res, 200, { ok: true, updated_at: data?.updated_at || null, count: list.length, merchants: list });
   }
 
