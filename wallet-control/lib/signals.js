@@ -146,8 +146,8 @@ export function trustLookup(merchant, trust) {
   // 1) exact/normalized domain-style hit against malicious list
   const candidates = [normalizeName(merchant.merchant_name)];
   for (const dom of Object.keys(trust.malicious_domains)) {
-    const base = dom.replace(/\.[a-z.]+$/, '');
-    if (base.length >= 5 && (name === normalizeName(base) || name.includes(base))) {
+    const base = normalizeName(dom.replace(/\.[a-z.]+$/, ''));
+    if (base.length >= 5 && (name === base || name.includes(base))) {
       return { malicious: true, evidence: `merchant name matches malicious domain "${dom}" in LEASH threat-intel dataset` };
     }
   }

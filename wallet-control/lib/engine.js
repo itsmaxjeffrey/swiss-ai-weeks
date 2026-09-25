@@ -22,7 +22,7 @@ import {
 import { requestedItemSpec } from './policy-compiler.js';
 import { scanInjectionModel, getInjectionModel } from './injection-model.js';
 import { scoreBehavior } from './behavior-model.js';
-import { describeResult } from './trustedshops.js';
+import { describeResult, normalizeDomain } from './trustedshops.js';
 
 const INTEGRITY_SIGNAL_CODES = new Set(['DEVICE_NOVELTY', 'VELOCITY_BURST', 'UNUSUAL_HOUR']);
 
@@ -195,6 +195,14 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
   }
   ev('Related purchase', relatedStatus ? `${a.related_authorization_id || 'earlier purchase'} → ${relatedStatus}` : 'none');
 
+  // -- 3b. Merchant website domain + customer trust status ----------------------
+  // The domain drives the yellow-list path: a domain the customer explicitly
+  // trusted (approved on a step-up card) counts as familiar; a domain on NEITHER
+  // the trusted list NOR a known-bad list is an open question for the customer
+  // (see 8c) — never silent permission.
+  const merchantDomain = normalizeDomain(a.merchant?.merchant_url || a.merchant?.website_url || a.merchant?.merchant_domain || a.merchant?.url || null)?.domain?.replace(/^www\./, '') || null;
+  const trustedMeta = merchantDomain && state.trustedDomainCheck ? state.trustedDomainCheck(merchantDomain) : null;
+
   // -- 4. Hard rules ------------------------------------------------------------
   const rules = mandate.hard_rules || [];
   const requestedSpec = requestedItemSpec(mandate.instruction);
@@ -256,9 +264,13 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
     } else if (f === 'merchant.familiar_to_customer' && op === '=' && String(rule.value) === 'true') {
       const hist = profiles.merchantFamiliar(customerId, a.merchant?.merchant_id);
       const inRun = state.inRunApprovedMerchant(a.merchant?.merchant_id);
-      const familiar = hist.familiar || inRun;
-      res = check(rule, familiar ? 'pass' : 'fail', familiar ? `${a.merchant?.merchant_name}: ${hist.approvedCount || 'run'} approved purchase(s) on record` : `${a.merchant?.merchant_name}: no purchases on record for you`);
-      ev('Merchant familiarity', familiar ? `${a.merchant?.merchant_name} — ${hist.approvedCount || 0} earlier approved purchase(s)${inRun ? ' + this run' : ''}` : `${a.merchant?.merchant_name} — never bought here before`);
+      const trusted = Boolean(trustedMeta);
+      const familiar = hist.familiar || inRun || trusted;
+      const basis = trusted && !hist.familiar && !inRun
+        ? `on your trusted merchant list since ${new Date(trustedMeta.addedAt).toISOString().slice(0, 10)}`
+        : `${hist.approvedCount || 'run'} approved purchase(s) on record`;
+      res = check(rule, familiar ? 'pass' : 'fail', familiar ? `${a.merchant?.merchant_name}: ${basis}` : `${a.merchant?.merchant_name}: no purchases on record for you`);
+      ev('Merchant familiarity', familiar ? `${a.merchant?.merchant_name} — ${basis}` : `${a.merchant?.merchant_name} — never bought here before`);
       if (!familiar) addFail('MERCHANT_UNFAMILIAR', `${a.merchant?.merchant_name} (${a.merchant?.merchant_city ?? a.merchant?.merchant_country ?? 'unknown'}) is not a shop you have bought from before`);
     } else if (f === 'basket.return_window_days_min') {
       const need = rule.value;
@@ -422,6 +434,21 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
     ev('Fake-shop check', describeResult(tsResult));
   }
 
+  // -- 8c. Yellow-list review: domain on neither the trusted list nor a known-bad list
+  // For an unfamiliar merchant with a website, absence from the trusted list AND
+  // from every known-bad source (threat intel, fake-shop warnings) is NOT
+  // permission — it is uncertainty. The customer decides, with the merchant
+  // dossier (Zefix registry, imprint comparison, socials, payment methods,
+  // country, reviews) rendered on the step-up card by the UI.
+  const blacklistedMerchant = fails.some(f => f.code === 'TRUSTLIST_HIT' || f.code === 'TRUSTEDSHOPS_FAKE_SHOP');
+  if (merchantDomain && trustedMeta) {
+    ev('Merchant trust status', `${merchantDomain} — on your trusted list since ${new Date(trustedMeta.addedAt).toISOString().slice(0, 10)}`);
+    flags.positive.push({ code: 'MERCHANT_TRUSTED', detail: `${merchantDomain} is on your trusted merchant list (added ${new Date(trustedMeta.addedAt).toISOString().slice(0, 10)})` });
+  } else if (merchantDomain && !histFam.familiar && !blacklistedMerchant) {
+    addUnc('MERCHANT_UNREVIEWED', `the shop's domain ${merchantDomain} is on neither your trusted list nor any known-bad list, and you have never bought there — a merchant dossier is prepared for your review`);
+    ev('Merchant trust status', `${merchantDomain} — unreviewed (yellow)`);
+  }
+
   // -- 9. Description-vs-basket contradiction -----------------------------------------
   const desc = a.purchase_description || '';
   const basketText = F.lines.map(l => `${l.raw.item_name} ${l.raw.item_category}`).join(' ').toLowerCase();
@@ -459,7 +486,9 @@ export function evaluate(event, state, profiles, trust, extras = {}) {
       ? `⚠️ Manipulation attempt detected in ${merchantName}'s product text — the purchase is paused for your review; the embedded instructions were NOT followed.`
       : integrityBreach
         ? `Paused for you: this purchase shows session signals that don't look like you (${flags.integrity.map(i => i.detail).join('; ')}).`
-        : `Paused for your review — ${merchantName}, ${amountStr}.`;
+        : uncert.some(u => u.code === 'MERCHANT_UNREVIEWED')
+          ? `Paused for your review — ${merchantName}, ${amountStr}. This shop is on neither your trusted list nor a known-bad list; its merchant dossier (registry, imprint, reviews) is shown below so you can decide whether to trust it.`
+          : `Paused for your review — ${merchantName}, ${amountStr}.`;
     message = `${lead} ${uncert.length ? 'Open points: ' + uncert.map(u => u.detail).join(' ') : ''}`.trim();
   } else {
     const notes = [...flags.integrity.map(i => i.detail)];

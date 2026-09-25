@@ -4,6 +4,7 @@
 // the 8-second deadline. Step-ups are surfaced to the customer UI and resolved via
 // /resolve with the real customer's answer (never invented by the worker).
 import { evaluate } from './engine.js';
+import { normalizeDomain } from './trustedshops.js';
 
 export class Worker {
   constructor({ client, store, profiles, trust, trustedShops = null, log = console }) {
@@ -87,6 +88,7 @@ export class Worker {
     // that misses the budget keeps running and lands in the checker cache, so
     // later events for the same merchant get the evidence instantly.
     const merchantSite = a.merchant?.merchant_url || a.merchant?.website_url || a.merchant?.merchant_domain || a.merchant?.url || null;
+    const merchantDomain = normalizeDomain(merchantSite)?.domain?.replace(/^www\./, '') || null;
     let extras = {};
     if (this.trustedShops && merchantSite) {
       extras.trustedShops = await Promise.race([
@@ -110,6 +112,8 @@ export class Worker {
       evaluation_ms: evaluation.evaluation_ms,
       merchant: a.merchant?.merchant_name,
       merchantId: a.merchant?.merchant_id,
+      merchantUrl: merchantSite,
+      merchantDomain,
       amount: a.billing_amount_chf,
       currency: a.currency,
       simTs: new Date(a.timestamp).getTime(),
@@ -168,8 +172,10 @@ export class Worker {
     };
   }
 
-  /** Customer answered a step-up from the UI. */
-  async resolveStepUp(runId, authorizationId, decision, customerMessage) {
+  /** Customer answered a step-up from the UI. When `opts.whitelist` is set the
+   *  customer explicitly trusted the merchant: the domain joins the persisted
+   *  trusted list, so future purchases there skip the yellow-list review. */
+  async resolveStepUp(runId, authorizationId, decision, customerMessage, opts = {}) {
     if (!['approve', 'decline'].includes(decision)) throw new Error('decision must be approve|decline');
     await this.client.resolve(authorizationId, {
       decision,
@@ -177,11 +183,18 @@ export class Worker {
     });
     const normalized = decision === 'approve' ? 'approved' : 'declined';
     const { decision: rec } = this.store.recordStepUpResolution(runId, authorizationId, normalized, customerMessage) || {};
+    let whitelistAdded = null;
+    if (opts.whitelist && decision === 'approve' && rec?.merchantDomain) {
+      whitelistAdded = this.store.addTrustedDomain(rec.merchantDomain, 'customer approved during purchase review');
+      if (whitelistAdded) {
+        this.pushFeed({ kind: 'trust', run_id: runId, text: `🤝 ${whitelistAdded} added to your trusted merchants — future purchases there skip the yellow-list review.` });
+      }
+    }
     this.pushFeed({
       kind: 'resolution', run_id: runId, authorization_id: authorizationId,
       decision: normalized, text: `Customer ${normalized} the paused purchase${rec?.merchant ? ` at ${rec.merchant}` : ''}.`,
     });
-    return { ok: true };
+    return { ok: true, whitelist_added: whitelistAdded };
   }
 }
 

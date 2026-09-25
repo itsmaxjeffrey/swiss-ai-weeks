@@ -13,6 +13,7 @@ import { Worker } from './lib/worker.js';
 import { compilePolicy } from './lib/policy-compiler.js';
 import { buildTrustIndex } from './lib/signals.js';
 import { TrustedShopsChecker } from './lib/trustedshops.js';
+import { MerchantDossier } from './lib/yellowlist.js';
 import { readJsonIfExists, loadCsv } from './lib/util.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -27,6 +28,7 @@ const trustRaw = readJsonIfExists(path.join(ROOT, 'data/leash_trust.json'));
 const trust = buildTrustIndex(trustRaw);
 const client = makeClient(store);
 const trustedShops = new TrustedShopsChecker();
+const dossierService = new MerchantDossier({ trustedShops });
 const worker = new Worker({ client, store, profiles, trust, trustedShops });
 const pack = {
   scenarios: loadCsv(path.join(PACK_DIR, 'scenario_catalogue.csv')),
@@ -87,6 +89,8 @@ function snapshot() {
         pending.push({
           authorization_id: authId,
           merchant: d.merchant, amount: d.amount, currency: d.currency,
+          merchant_site: d.merchantDomain || null,
+          merchant_url: d.merchantUrl || null,
           message: d.customer_message, evidence: d.evidence, uncertainties: d.uncertainties,
           manipulation: d.flags?.manipulation || [],
           items: d.items, deadline: s.deadline, opened_at: s.openedAt,
@@ -193,7 +197,7 @@ const server = http.createServer(async (req, res) => {
     if (m && req.method === 'POST') {
       const body = await readBody(req); // {decision: approve|decline, message}
       if (!activeRunId) return json(res, 409, { error: 'no active run' });
-      const out = await worker.resolveStepUp(activeRunId, m[1], body.decision, body.message);
+      const out = await worker.resolveStepUp(activeRunId, m[1], body.decision, body.message, { whitelist: Boolean(body.whitelist) });
       return json(res, 200, out);
     }
 
@@ -220,6 +224,31 @@ const server = http.createServer(async (req, res) => {
       }
       const out = await trustedShops.check(merchants);
       return json(res, 200, { count: out.results.length, took_ms: out.tookMs, cache: trustedShops.stats, results: out.results });
+    }
+
+    if (p === '/api/merchant/dossier' && (req.method === 'POST' || req.method === 'GET')) {
+      // Agent/UI-facing yellow-list dossier for a domain that is on neither the
+      // trusted list nor a known-bad list: Zefix registry (token-free Lindas
+      // SPARQL; API adds registration date/age when LEASH_ZEFIX_TOKEN is set),
+      // imprint + registry comparison, LinkedIn/Instagram, payment methods,
+      // country vs the customer, Trusted Shops + product-page reviews.
+      let inputs = null;
+      if (req.method === 'POST') {
+        const body = await readBody(req);
+        const productUrl = body.product_url || body.productUrl || null;
+        const raw = body.merchants || body.domains || body.merchant || body.domain || null;
+        const wrap = (x) => (typeof x === 'string' ? { domain: x, product_url: productUrl } : { product_url: productUrl, ...x });
+        inputs = Array.isArray(raw) ? raw.map(wrap) : (raw ? wrap(raw) : null);
+      } else {
+        const m = url.searchParams.get('merchant') || url.searchParams.get('domain') || url.searchParams.get('q');
+        const pu = url.searchParams.get('product_url') || url.searchParams.get('productUrl') || null;
+        inputs = m ? { domain: m, product_url: pu } : null;
+      }
+      if (!inputs) {
+        return json(res, 400, { error: 'provide a merchant: POST {merchant: url-or-domain, product_url?} or GET ?merchant=<domain>&product_url=<url>' });
+      }
+      const out = await dossierService.check(inputs);
+      return json(res, 200, { took_ms: out.tookMs, cache: dossierService.stats, results: out.results });
     }
 
     if (p.startsWith('/api/')) return json(res, 404, { error: 'unknown api path' });

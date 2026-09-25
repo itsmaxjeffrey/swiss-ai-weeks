@@ -193,6 +193,69 @@ function renderProgress(state) {
 }
 
 // ---------- approvals ----------
+// ---------- approvals ----------
+
+// Yellow-list dossier client cache: domain -> {status, data} — the approval list
+// re-renders every poll tick, so dossier fetches are de-duplicated here.
+const dossierCache = new Map();
+
+function renderDossier(d) {
+  const verdict = d?.registry?.compare?.verdict || 'unknown';
+  const vLabel = verdict === 'strong' ? 'imprint = registry ✓' : verdict === 'partial' ? 'imprint ≈ registry' : verdict === 'mismatch' ? 'imprint ≠ registry ✗' : 'registry compare n/a';
+  const sum = (arr, cls, mark) => arr.map(s => `<div class="${cls}">${mark} ${esc(s)}</div>`).join('');
+  const r = d?.registry || {};
+  const i = d?.imprint || {};
+  const c = d?.country || {};
+  const cell = (label, val) => val ? `<div class="cell"><b>${esc(label)}</b><span>${val}</span></div>` : '';
+  const link = (u) => u ? `<a href="${esc(u)}" target="_blank" rel="noreferrer">${esc(u.replace(/^https?:\/\/(?:www\.)?/, '').slice(0, 42))}</a>` : '—';
+  const ts = d?.reviews?.shop;
+  const pr = d?.reviews?.product;
+  const chips = (d?.payments?.methods || []).map(m => `<span class="dz-chip">${esc(m)}</span>`).join(' ') || '<span style="color:var(--ink-soft)">not detected</span>';
+  return `
+    <div style="font-size:13px">Merchant: <b>${esc(d.domain)}</b>
+      <span class="dz-verdict ${esc(verdict)}">${esc(vLabel)}</span>
+      ${c.same_country === true ? '<span class="dz-verdict strong">same country ✓</span>' : c.same_country === false ? `<span class="dz-verdict mismatch">${esc(c.merchant_country)} ≠ your ${esc(c.customer_country)}</span>` : ''}
+    </div>
+    <div class="dz-sum">
+      ${sum(d.summary?.positives || [], 'pos', '✓')}
+      ${sum(d.summary?.negatives || [], 'neg', '✗')}
+      ${sum(d.summary?.unknowns || [], 'unk', '?')}
+    </div>
+    <div class="dz-grid">
+      ${cell('Swiss registry (Zefix)', r.status === 'found' ? `${esc(r.company_name || '')}${r.uid ? ` · ${esc(r.uid)}` : ''}${r.address?.city ? ` · seat ${esc(r.address.city)}` : ''}` : r.status === 'not_found' ? 'no Swiss register entry' : esc(r.status || 'n/a'))}
+      ${cell('Registry age', r.age_years != null ? `${r.age_years} year${r.age_years === 1 ? '' : 's'} (since ${esc(r.registration_date)})` : 'unknown')}
+      ${cell('Imprint (Impressum)', i.status === 'found' ? `${esc(i.company_name || '')}${i.address ? ` · ${esc(i.address.street || '')}, ${esc(i.address.postal_code || '')} ${esc(i.address.city || '')}` : ''}` : esc(i.status || 'n/a'))}
+      ${cell('Social presence', `LinkedIn: ${link(d.social?.linkedin)} · Instagram: ${link(d.social?.instagram)}`)}
+      ${cell('Payment methods', chips)}
+      ${cell('Reviews', ts?.listed === true && ts.rating != null ? `Trusted Shops ${esc(String(ts.rating))}/5 (${esc(String(ts.review_count ?? '?'))} reviews)` : ts?.listed === true ? 'Trusted Shops listed (no rating)' : pr?.rating != null ? `Product page ${esc(String(pr.rating))}/${esc(String(pr.best || 5))} (${esc(String(pr.count ?? '?'))} reviews)` : 'no ratings found')}
+    </div>
+    ${d.product_url ? `<div class="dz-url">Product URL the agent wants to buy from: <a href="${esc(d.product_url)}" target="_blank" rel="noreferrer">${esc(d.product_url)}</a></div>` : `<div class="dz-url">Shop URL: <a href="https://${esc(d.domain)}" target="_blank" rel="noreferrer">https://${esc(d.domain)}</a></div>`}
+  `;
+}
+
+async function hydrateDossiers(root) {
+  const slots = [...root.querySelectorAll('.ap-dossier[data-site]')];
+  for (const slot of slots) {
+    const site = slot.dataset.site;
+    let entry = dossierCache.get(site);
+    if (!entry) {
+      entry = { status: 'loading', data: null };
+      dossierCache.set(site, entry);
+      api(`/api/merchant/dossier?merchant=${encodeURIComponent(site)}`)
+        .then((out) => { entry.status = 'done'; entry.data = out.results?.[0] || { domain: site, error: 'empty dossier response' }; })
+        .catch((e) => { entry.status = 'done'; entry.data = { domain: site, error: e.message }; })
+        .finally(() => {
+          document.querySelectorAll(`.ap-dossier[data-site="${CSS.escape(site)}"]`).forEach(el => { el.innerHTML = entry.data ? renderDossier(entry.data) : '<span class="dz-loading">Dossier unavailable.</span>'; });
+        });
+    }
+    if (entry.status === 'loading') {
+      slot.innerHTML = '<span class="dz-loading">⏳ Building merchant dossier — Zefix register, imprint, socials, payments, reviews…</span>';
+    } else if (entry.data) {
+      slot.innerHTML = renderDossier(entry.data);
+    }
+  }
+}
+
 function renderApprovals(state) {
   const wrap = $('approvals');
   const list = state.pending_step_ups || [];
@@ -204,6 +267,19 @@ function renderApprovals(state) {
     const inj = (p.manipulation && p.manipulation.length)
       ? `<div class="inj-banner">🚨 Merchant text contains a manipulation attempt: “<code>${esc(p.manipulation[0].snippet)}</code>” — the wallet did not follow it.</div>` : '';
     const evs = (p.evidence || []).map(e => `<span class="ev">${esc(e.label)}: <b>${esc(e.value)}</b></span>`).join('');
+    const yellow = p.merchant_site
+      ? `<div class="ap-dossier" data-site="${esc(p.merchant_site)}" data-auth="${esc(p.authorization_id)}"></div>`
+      : '';
+    const actions = p.merchant_site
+      ? `<div class="ap-actions">
+          <button class="btn primary" data-do="approve" data-wl="1">🤝 Trust merchant &amp; approve</button>
+          <button class="btn" data-do="approve">Approve once</button>
+          <button class="btn danger" data-do="decline">Decline</button>
+        </div>`
+      : `<div class="ap-actions">
+          <button class="btn primary" data-do="approve">Approve purchase</button>
+          <button class="btn danger" data-do="decline">Decline</button>
+        </div>`;
     return `<div class="approval-card" data-auth="${esc(p.authorization_id)}">
       <div class="dc-head"><span class="dc-title">${esc(p.merchant)} — ${chf(p.amount)}</span><span class="ap-count" data-left>${Math.ceil(left / 1000)}s left</span></div>
       <div class="ap-bar"><div style="width:${pct}%"></div></div>
@@ -211,19 +287,24 @@ function renderApprovals(state) {
       ${inj}
       <div class="dc-msg">${esc(p.message)}</div>
       <div class="evidence-grid">${evs}</div>
-      <div class="ap-actions">
-        <button class="btn primary" data-do="approve">Approve purchase</button>
-        <button class="btn danger" data-do="decline">Decline</button>
-      </div>
+      ${yellow}
+      ${actions}
     </div>`;
   }).join('');
+  hydrateDossiers(wrap);
   wrap.querySelectorAll('button[data-do]').forEach(b => {
     b.onclick = async () => {
       const card = b.closest('.approval-card');
       const authId = card.dataset.auth;
       b.disabled = true;
       try {
-        await api(`/api/stepups/${authId}/resolve`, 'POST', { decision: b.dataset.do, message: `Customer ${b.dataset.do}d this purchase in the wallet UI.` });
+        await api(`/api/stepups/${authId}/resolve`, 'POST', {
+          decision: b.dataset.do,
+          whitelist: b.dataset.wl === '1',
+          message: b.dataset.wl === '1'
+            ? 'Customer reviewed the merchant dossier and chose to trust this merchant and approve the purchase in the wallet UI.'
+            : `Customer ${b.dataset.do === 'approve' ? 'approved once' : 'declined'} this purchase in the wallet UI.`,
+        });
         refresh();
       } catch (e) { alert(e.message); b.disabled = false; }
     };

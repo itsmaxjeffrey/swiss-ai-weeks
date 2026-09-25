@@ -10,6 +10,7 @@ export class Store {
     this.persistPath = persistPath;
     this.mandates = new Map();   // mandate_id -> {mandate_id, status, instruction, hard_rules, uncertainty_policy, guidance, open_questions, created_at, draft_id}
     this.runs = new Map();       // run_id -> RunState
+    this.trustedDomains = new Map(); // domain -> {addedAt, note} — customer-approved ("yellow-list resolved") merchants
     if (this.persistPath) this.#load();
   }
 
@@ -17,6 +18,7 @@ export class Store {
     try {
       const raw = JSON.parse(fs.readFileSync(this.persistPath, 'utf8'));
       for (const m of raw.mandates || []) this.mandates.set(m.mandate_id, m);
+      for (const [d, meta] of raw.trusted_domains || []) this.trustedDomains.set(d, meta);
       for (const r of raw.runs || []) {
         r.decisions = new Map(r.decisionsSerialized || []);
         r.stepUps = new Map(r.stepUpsSerialized || []);
@@ -34,13 +36,41 @@ export class Store {
       stepUpsSerialized: [...(r.stepUps?.entries?.() || [])],
     }));
     try {
-      fs.writeFileSync(this.persistPath, JSON.stringify({ mandates: [...this.mandates.values()], runs }, null, 1));
+      fs.writeFileSync(this.persistPath, JSON.stringify({ mandates: [...this.mandates.values()], trusted_domains: [...this.trustedDomains.entries()], runs }, null, 1));
     } catch { /* best-effort */ }
   }
 
   // ---- Mandates ------------------------------------------------------------
   putMandate(m) { this.mandates.set(m.mandate_id, m); this.#persist(); }
   getMandate(id) { return this.mandates.get(id) || null; }
+
+  // ---- Trusted merchant domains ("whitelist"; filled by customer approval) ----
+  /** Add a domain to the customer's trusted list. Tolerates URL-shaped input;
+   *  stores the bare registrable host (no scheme, path, or www). Idempotent. */
+  addTrustedDomain(domain, note) {
+    let d = String(domain || '').toLowerCase().trim();
+    if (/^[a-z][a-z0-9+.-]*:\/\//i.test(d) || d.includes('/')) {
+      try { d = new URL(d.includes('://') ? d : `https://${d}`).hostname; } catch { /* keep raw */ }
+    }
+    d = d.replace(/^www\./, '');
+    if (!d || !d.includes('.')) return null;
+    const meta = this.trustedDomains.get(d) || { addedAt: Date.now() };
+    meta.note = note || meta.note || 'customer approved';
+    this.trustedDomains.set(d, meta);
+    this.#persist();
+    return d;
+  }
+
+  /** Exact or subdomain match: trusting example.com covers shop.example.com. */
+  isTrustedDomain(domain) {
+    const d = String(domain || '').toLowerCase().trim().replace(/^www\./, '');
+    if (!d || !d.includes('.')) return null;
+    if (this.trustedDomains.has(d)) return this.trustedDomains.get(d);
+    for (const [trusted, meta] of this.trustedDomains) {
+      if (d.endsWith('.' + trusted)) return meta;
+    }
+    return null;
+  }
 
   // ---- Runs ----------------------------------------------------------------
   createRun({ run_id, scenario_id, mandate_id, mandateSnapshot, totalEvents, customerIds }) {
@@ -72,6 +102,7 @@ export class Store {
         return round2(sum);
       },
       inRunApprovedMerchant: (merchantId) => run.spend.some(s => s.merchantId === merchantId),
+      trustedDomainCheck: (domain) => this.isTrustedDomain(domain),
       findDuplicate: ({ signature, authId, simTs, merchantId, billing }) => {
         for (const [aid, d] of run.decisions) {
           if (aid === authId) continue;

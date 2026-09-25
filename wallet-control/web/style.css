@@ -157,3 +157,22 @@ textarea:focus, select:focus, input:focus { outline: 2px solid var(--ink); outli
 footer { margin-top: 34px; border-top: 1px solid var(--line); padding-top: 14px; font-size: 11.5px; color: var(--ink-soft); }
 .hidden { display: none !important; }
 .mono { font-family: var(--mono); }
+
+/* ---------- yellow-list merchant dossier (approval card) ---------- */
+.ap-dossier { margin-top: 10px; border: 1.5px dashed var(--amber); border-radius: 8px; padding: 10px 12px; background: #fffdf5; }
+.dz-verdict { display: inline-block; font-family: var(--mono); font-size: 10.5px; padding: 1px 8px 2px; border: 1px solid currentColor; border-radius: 6px; margin-left: 6px; }
+.dz-verdict.strong { color: var(--green); }
+.dz-verdict.partial { color: var(--amber); }
+.dz-verdict.mismatch { color: var(--red); }
+.dz-verdict.unknown { color: var(--ink-soft); }
+.dz-sum { margin: 8px 0 4px; font-size: 13px; }
+.dz-sum div { margin: 2px 0; }
+.dz-sum .pos { color: var(--green); }
+.dz-sum .neg { color: var(--red); }
+.dz-sum .unk { color: var(--ink-soft); }
+.dz-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px 16px; margin-top: 8px; font-size: 12.5px; }
+.dz-grid .cell b { display: block; font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .07em; color: var(--ink-soft); margin-bottom: 2px; }
+.dz-grid a { color: var(--ink); }
+.dz-chip { display: inline-block; border: 1px solid var(--line); border-radius: 6px; padding: 0 6px 1px; margin: 1px 2px 1px 0; font-size: 11.5px; background: #fff; }
+.dz-loading { font-family: var(--mono); font-size: 12px; color: var(--ink-soft); }
+.dz-url { font-family: var(--mono); font-size: 11px; word-break: break-all; margin-top: 8px; color: var(--ink-soft); }
